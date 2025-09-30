@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from djongo import models as djongo_models
 
 
 class User(AbstractUser):
