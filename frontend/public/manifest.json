@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "RED-RED Social",
+  "short_name": "RED-RED",
+  "description": "Red social completa con Django y React",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ef4444",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
