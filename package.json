@@ -1,0 +1,59 @@
+{
+  "name": "red-red-social-network",
+  "version": "1.0.0",
+  "description": "Red social completa con Django backend y React frontend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && python manage.py runserver",
+    "dev:frontend": "cd frontend && npm start",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "install:frontend": "cd frontend && npm install",
+    "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
+    "test:backend": "cd backend && python manage.py test",
+    "test:frontend": "cd frontend && npm test -- --coverage --no-watch",
+    "lint": "concurrently \"npm run lint:backend\" \"npm run lint:frontend\"",
+    "lint:backend": "cd backend && flake8 .",
+    "lint:frontend": "cd frontend && npm run lint",
+    "format": "concurrently \"npm run format:backend\" \"npm run format:frontend\"",
+    "format:backend": "cd backend && black .",
+    "format:frontend": "cd frontend && prettier --write src/",
+    "build": "cd frontend && npm run build",
+    "migrate": "cd backend && python manage.py migrate",
+    "makemigrations": "cd backend && python manage.py makemigrations",
+    "createsuperuser": "cd backend && python manage.py createsuperuser",
+    "collectstatic": "cd backend && python manage.py collectstatic --noinput",
+    "start:prod": "concurrently \"npm run start:backend:prod\" \"npm run start:frontend:prod\"",
+    "start:backend:prod": "cd backend && gunicorn config.wsgi:application",
+    "start:frontend:prod": "cd frontend && serve -s build",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
+  },
+  "keywords": [
+    "django",
+    "react",
+    "social-network",
+    "mongodb",
+    "websockets",
+    "jwt"
+  ],
+  "author": "DAM2 Frameworks Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hectorllb-insti/RED-RED.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hectorllb-insti/RED-RED/issues"
+  },
+  "homepage": "https://github.com/hectorllb-insti/RED-RED#readme"
+}
