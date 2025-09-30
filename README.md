@@ -1,7 +1,7 @@
 # 🌐 RED-RED Social Network
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Django](https://img.shields.io/badge/Django-5.0-green.svg)](https://djangoproject.com/)
+[![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://djangoproject.com/)
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-green.svg)](https://www.mongodb.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -55,7 +55,7 @@ Una aplicación de red social moderna y completa desarrollada con Django (backen
 
 #### Backend
 
-- **Framework**: Django 5.0.1 + Django REST Framework 3.14.0
+- **Framework**: Django 4.2.11 LTS + Django REST Framework 3.14.0
 - **Autenticación**: JWT (djangorestframework-simplejwt 5.3.0)
 - **WebSockets**: Django Channels 4.0.0 + Redis 5.0.1
 - **Base de Datos**: MongoDB 7.0+ con djongo 1.3.6
