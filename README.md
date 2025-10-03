@@ -8,6 +8,8 @@
 
 Una aplicación de red social moderna y completa desarrollada con Django (backend), React (frontend) y MongoDB (base de datos). Incluye funcionalidades en tiempo real mediante WebSockets para una experiencia de usuario fluida y contemporánea.
 
+![](main_screenshot.png)
+
 ## 📋 Tabla de Contenidos
 
 - [🚀 Características](#-características)
