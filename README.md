@@ -76,6 +76,67 @@ Una aplicación de red social moderna y completa desarrollada con Django (backen
 - **Principal**: MongoDB 7.0+ (Documentos NoSQL)
 - **Cache/Sessions**: Redis 7.0+ (Para WebSockets y cache)
 
+#### Estructura del Proyecto
+
+```
+RED-RED/
+├── backend/
+│   ├── config/
+│   ├── apps/
+│   │   ├── authentication/
+│   │   ├── posts/
+│   │   ├── stories/
+│   │   ├── messages/
+│   │   └── users/
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── utils/
+│   └── package.json
+└── database/
+    └── init_scripts/
+```
+
+#### Guía de Archivos Principales
+
+- 🫚 Raíz del Proyecto
+
+  - [requirements.txt](requirements.txt) -> Dependencias del Proyecto
+
+  - [package.json](package.json) -> Dependencias y scripts de Node.js/React
+  - [install.bat](install.bat) -> Script de instalación automática
+  - [start.bat](start.bat) -> Script para lanzar el proyecto
+
+- 🔑 Archivos ".env"
+
+  - Variables de entorno sensibles: Contiene configuración crítica como claves secretas de Django, credenciales de base de datos, tokens de API y configuraciones específicas del entorno (desarrollo/producción). Siempre deben de ser declaradas por la persona que ejecute el proyecto.
+
+- 🧩 Back-End
+
+  - [manage.py](backend/manage.py) -> Ejecuta el servidor Django y realiza comandos de gestión
+
+  - [settings.py](backend/config/settings.py) -> Configuración principal de Django (BD, apps, middleware)
+  - [urls.py](backend/config/urls.py) -> Enrutamiento principal del backend
+
+- ⚛️ Front-End
+
+  - [index.js](frontend/src/index.js) -> Punto de entrada de React
+  - [App.js](frontend/src/App.js) -> Componente raíz del Frontend
+  - [api.js](frontend/src/services/api.js) -> Configura la conexión base con el backend (URL, headers, interceptores de token)
+  - [auth.js](frontend/src/services/auth.js) -> Maneja toda la autenticación: login, registro, refresh tokens, verificar sesión.
+  - [socket.js](frontend/src/services/socket.js) -> Gestiona WebSockets para funcionalidades en tiempo real como mensajes y notificaciones
+
+  - [Home.js](frontend/src/pages/Home.js) -> Página principal / feed de publicaciones
+  - [Register.js](frontend/src/pages/Register.js) -> Pantalla de inicio de sesión
+  - [Login.js](frontend/src/pages/Login.js) -> Pantalla de registro de usuarios
+
+- 🗄️ Databases
+
+  - Todavía por desarrollar, principalmente se implementará la gestión de MongoDB: instalación, variables de entorno, estructura de colecciones (users, posts, messages, stories), índices de optimización y scripts de backup/restauración.
+
 ## 🔧 Configuración del Entorno de Desarrollo
 
 ### 📋 Requisitos Previos
