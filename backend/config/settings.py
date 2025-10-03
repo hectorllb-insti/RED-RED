@@ -36,7 +36,7 @@ LOCAL_APPS = [
     'apps.users',
     'apps.posts',
     'apps.stories',
-    'apps.messages',
+    'apps.chat',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -73,16 +73,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# Database configuration for MongoDB
+# Database configuration
+# Usando SQLite para desarrollo (más compatible que djongo)
+# Para producción se puede cambiar a MongoDB o PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': config('DB_NAME', default='red_red_db'),
-        'CLIENT': {
-            'host': config('DB_HOST', default='mongodb://localhost:27017'),
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Configuración alternativa para MongoDB (comentada por ahora)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'djongo',
+#         'NAME': config('DB_NAME', default='red_red_db'),
+#         'CLIENT': {
+#             'host': config('DB_HOST', default='mongodb://localhost:27017'),
+#         }
+#     }
+# }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

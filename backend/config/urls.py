@@ -9,7 +9,7 @@ urlpatterns = [
     path('api/users/', include('apps.users.urls')),
     path('api/posts/', include('apps.posts.urls')),
     path('api/stories/', include('apps.stories.urls')),
-    path('api/messages/', include('apps.messages.urls')),
+    path('api/chat/', include('apps.chat.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { Search, Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "react-query";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import socketService from "../services/socket";
-import { useAuth } from "../context/AuthContext";
-import { Send, Search } from "lucide-react";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -47,9 +47,7 @@ const Messages = () => {
 
   const loadMessages = async (chatId) => {
     try {
-      const response = await api.get(
-        `/messages/conversations/${chatId}/messages/`
-      );
+      const response = await api.get(`/chat/conversations/${chatId}/messages/`);
       setMessages(response.data.results || []);
     } catch (error) {
       console.error("Error loading messages:", error);

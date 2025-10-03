@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,7 @@ const Register = () => {
       username: data.username,
       email: data.email,
       password: data.password,
+      password_confirm: data.confirmPassword,
       first_name: data.first_name,
       last_name: data.last_name,
     });
