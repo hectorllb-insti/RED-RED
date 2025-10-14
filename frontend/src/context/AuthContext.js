@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       let errorMessage = "Error al iniciar sesión";
-      
+
       if (error.response?.data) {
         const data = error.response.data;
         if (data.detail) {
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
           errorMessage = data.error;
         }
       }
-      
+
       return {
         success: false,
         error: errorMessage,
