@@ -20,6 +20,15 @@ class PostListCreateView(generics.ListCreateAPIView):
         return PostSerializer
     
     def get_queryset(self):
+        # Verificar si se solicita posts de un autor específico
+        author_id = self.request.query_params.get('author', None)
+        if author_id:
+            try:
+                author_id = int(author_id)
+                return Post.objects.filter(author_id=author_id)
+            except (ValueError, TypeError):
+                return Post.objects.none()
+        
         # Mostrar posts del usuario y de usuarios que sigue
         following_users = Follow.objects.filter(follower=self.request.user).values_list('following', flat=True)
         return Post.objects.filter(

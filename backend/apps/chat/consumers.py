@@ -9,21 +9,24 @@ User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        # Obtener room_name de la URL, si no existe usar 'general'
+        self.room_name = self.scope['url_route']['kwargs'].get('room_name', 'general')
         self.room_group_name = f'chat_{self.room_name}'
         self.user = self.scope['user']
+        self.current_room = None
 
         if not self.user.is_authenticated:
             await self.close()
             return
 
-        # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-
         await self.accept()
+        
+        # Enviar mensaje de bienvenida
+        await self.send(text_data=json.dumps({
+            'type': 'connection_established',
+            'message': 'Conectado al servidor de chat',
+            'user': self.user.username
+        }))
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -33,45 +36,83 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message_type = text_data_json.get('type', 'message')
-        
-        if message_type == 'message':
-            message_content = text_data_json['message']
+        try:
+            text_data_json = json.loads(text_data)
+            message_type = text_data_json.get('type', 'message')
             
-            # Save message to database
-            message = await self.save_message(message_content)
+            if message_type == 'join_room':
+                # Manejar unión a sala
+                room_id = text_data_json.get('room')
+                if room_id:
+                    # Salir de la sala actual si existe
+                    if self.current_room:
+                        await self.channel_layer.group_discard(
+                            f'chat_{self.current_room}',
+                            self.channel_name
+                        )
+                    
+                    # Unirse a la nueva sala
+                    self.current_room = room_id
+                    await self.channel_layer.group_add(
+                        f'chat_{room_id}',
+                        self.channel_name
+                    )
+                    
+                    await self.send(text_data=json.dumps({
+                        'type': 'room_joined',
+                        'room': room_id,
+                        'message': f'Te has unido a la sala {room_id}'
+                    }))
             
-            # Send message to room group
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': message_content,
-                    'sender': self.user.username,
-                    'timestamp': message.created_at.isoformat(),
-                    'message_id': message.id,
-                }
-            )
-        
-        elif message_type == 'typing':
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'typing_indicator',
-                    'user': self.user.username,
-                    'is_typing': text_data_json.get('is_typing', False),
-                }
-            )
+            elif message_type == 'send_message':
+                message_content = text_data_json.get('message', '')
+                room_id = text_data_json.get('room', self.current_room)
+                
+                if message_content and room_id:
+                    # Save message to database
+                    message = await self.save_message(message_content, room_id)
+                    
+                    # Send message to room group
+                    await self.channel_layer.group_send(
+                        f'chat_{room_id}',
+                        {
+                            'type': 'chat_message',
+                            'message': message_content,
+                            'sender': self.user.username,
+                            'timestamp': message.created_at.isoformat(),
+                            'message_id': message.id,
+                            'room': room_id
+                        }
+                    )
+            
+            elif message_type == 'typing':
+                room_id = text_data_json.get('room', self.current_room)
+                if room_id:
+                    await self.channel_layer.group_send(
+                        f'chat_{room_id}',
+                        {
+                            'type': 'typing_indicator',
+                            'user': self.user.username,
+                            'is_typing': text_data_json.get('is_typing', False),
+                            'room': room_id
+                        }
+                    )
+                    
+        except json.JSONDecodeError:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Formato de mensaje inválido'
+            }))
 
     async def chat_message(self, event):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'type': 'message',
+            'type': 'chat_message',
             'message': event['message'],
             'sender': event['sender'],
             'timestamp': event['timestamp'],
             'message_id': event['message_id'],
+            'room': event.get('room', self.current_room)
         }))
 
     async def typing_indicator(self, event):
@@ -84,15 +125,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
 
     @database_sync_to_async
-    def save_message(self, message_content):
-        # Get or create chat room based on room_name
-        # For now, assume room_name contains participant IDs
+    def save_message(self, message_content, room_id=None):
+        # Get or create chat room
+        room_identifier = room_id or self.room_name
         try:
-            chat_room = ChatRoom.objects.get(id=self.room_name)
+            # Intentar obtener por ID numérico
+            if room_identifier.isdigit():
+                chat_room = ChatRoom.objects.get(id=int(room_identifier))
+            else:
+                # Crear una sala general si no es ID numérico
+                chat_room, created = ChatRoom.objects.get_or_create(
+                    name=room_identifier,
+                    defaults={
+                        'name': room_identifier,
+                        'room_type': 'public'
+                    }
+                )
         except ChatRoom.DoesNotExist:
-            # Create new chat room logic would go here
-            # This is simplified for the example
-            chat_room = None
+            # Crear nueva sala
+            chat_room = ChatRoom.objects.create(
+                name=room_identifier,
+                room_type='public'
+            )
         
         if chat_room:
             message = Message.objects.create(

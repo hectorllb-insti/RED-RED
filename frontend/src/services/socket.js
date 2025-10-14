@@ -1,71 +1,137 @@
-import io from "socket.io-client";
-
 class SocketService {
   constructor() {
     this.socket = null;
+    this.listeners = new Map();
   }
 
   connect(token) {
-    if (!this.socket) {
-      this.socket = io("ws://localhost:8000", {
-        auth: {
-          token: token,
-        },
-        transports: ["websocket"],
-      });
+    if (!this.socket && token) {
+      // Conexión WebSocket segura - token se enviará después de establecer la conexión
+      const wsUrl = `ws://localhost:8000/ws/chat/`;
+      this.socket = new WebSocket(wsUrl);
+      this.token = token;
 
-      this.socket.on("connect", () => {
-        console.log("Conectado al servidor WebSocket");
-      });
+      this.socket.onopen = () => {
+        // Enviar token de autenticación de forma segura después de conectar
+        this.socket.send(
+          JSON.stringify({
+            type: "authenticate",
+            token: this.token,
+          })
+        );
+        // Conexión WebSocket establecida
+        this.triggerListener("connect");
+      };
 
-      this.socket.on("disconnect", () => {
-        console.log("Desconectado del servidor WebSocket");
-      });
+      this.socket.onclose = (event) => {
+        // WebSocket desconectado
+        this.socket = null;
+        this.triggerListener("disconnect");
+      };
 
-      this.socket.on("connect_error", (error) => {
-        console.error("Error de conexión WebSocket:", error);
-      });
+      this.socket.onerror = (error) => {
+        // Error de conexión WebSocket manejado
+        this.triggerListener("connect_error", error);
+      };
+
+      this.socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.handleMessage(data);
+        } catch (error) {
+          // Error al parsear mensaje WebSocket
+        }
+      };
     }
     return this.socket;
   }
 
+  // Agregar listener personalizado
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event).push(callback);
+  }
+
+  // Disparar listeners
+  triggerListener(event, data = null) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).forEach((callback) => callback(data));
+    }
+  }
+
+  // Manejar mensajes entrantes
+  handleMessage(data) {
+    const { type, message, room } = data;
+
+    switch (type) {
+      case "chat_message":
+        this.triggerListener("message", { message, room });
+        break;
+      case "user_joined":
+        this.triggerListener("user_joined", { room, user: data.user });
+        break;
+      case "user_left":
+        this.triggerListener("user_left", { room, user: data.user });
+        break;
+      default:
+      // Mensaje WebSocket no reconocido
+    }
+  }
+
   disconnect() {
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.close();
       this.socket = null;
+      this.listeners.clear();
+    }
+  }
+
+  // Enviar mensaje al WebSocket
+  send(data) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(data));
+    } else {
+      // WebSocket no disponible para envío
     }
   }
 
   // Unirse a una sala de chat
   joinRoom(roomId) {
-    if (this.socket) {
-      this.socket.emit("join_room", { room: roomId });
-    }
+    this.send({
+      type: "join_room",
+      room: roomId,
+    });
   }
 
   // Enviar mensaje
   sendMessage(roomId, message) {
-    if (this.socket) {
-      this.socket.emit("send_message", {
-        room: roomId,
-        message: message,
-      });
-    }
+    this.send({
+      type: "send_message",
+      room: roomId,
+      message: message,
+    });
   }
 
   // Escuchar mensajes
   onMessage(callback) {
-    if (this.socket) {
-      this.socket.on("receive_message", callback);
-    }
+    this.on("message", callback);
   }
 
   // Remover listener de mensajes
   offMessage() {
-    if (this.socket) {
-      this.socket.off("receive_message");
+    if (this.listeners.has("message")) {
+      this.listeners.delete("message");
     }
+  }
+
+  // Verificar si está conectado
+  isConnected() {
+    return this.socket && this.socket.readyState === WebSocket.OPEN;
   }
 }
 
-export default new SocketService();
+// Crear instancia única del servicio de socket
+const socketService = new SocketService();
+export default socketService;

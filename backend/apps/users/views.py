@@ -24,9 +24,28 @@ class UserDetailView(generics.RetrieveAPIView):
     lookup_field = 'username'
 
 
+class UserDetailByIdView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'pk'
+
+
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    
+    def get_queryset(self):
+        queryset = User.objects.all()
+        search = self.request.query_params.get('search', None)
+        if search is not None:
+            queryset = queryset.filter(
+                username__icontains=search
+            ) | queryset.filter(
+                first_name__icontains=search
+            ) | queryset.filter(
+                last_name__icontains=search
+            )
+        return queryset
 
 
 @api_view(['POST'])

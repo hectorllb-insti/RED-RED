@@ -1,20 +1,22 @@
-import React from "react";
+import { Toaster } from "react-hot-toast";
+import { QueryClient, QueryClientProvider } from "react-query";
 import {
+  Navigate,
+  Route,
   BrowserRouter as Router,
   Routes,
-  Route,
-  Navigate,
 } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "react-query";
-import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Páginas
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Home from "./pages/Home";
-import Profile from "./pages/Profile";
+import Login from "./pages/Login";
 import Messages from "./pages/Messages";
+import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
+import Register from "./pages/Register";
+import Search from "./pages/Search";
+import Settings from "./pages/Settings";
 import Stories from "./pages/Stories";
 
 // Componentes
@@ -54,7 +56,12 @@ const PublicRoute = ({ children }) => {
 
 function AppRoutes() {
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route
           path="/login"
@@ -108,6 +115,36 @@ function AppRoutes() {
             <ProtectedRoute>
               <Layout>
                 <Stories />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Search />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Notifications />
               </Layout>
             </ProtectedRoute>
           }

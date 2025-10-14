@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 import { authService } from "../services/auth";
 import socketService from "../services/socket";
+import { tokenManager } from "../services/tokenManager";
 
 const AuthContext = createContext();
 
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
           const token = localStorage.getItem("access_token");
           socketService.connect(token);
         } catch (error) {
-          console.error("Error al obtener usuario:", error);
+          // Error loading user handled
           authService.logout();
           dispatch({ type: "LOGOUT" });
         }
@@ -69,19 +70,32 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const data = await authService.login(email, password);
+      await authService.login(email, password);
       const user = await authService.getCurrentUser();
       dispatch({ type: "LOGIN_SUCCESS", payload: user });
 
-      // Conectar WebSocket
-      const token = localStorage.getItem("access_token");
+      // Conectar WebSocket con token seguro
+      const token = tokenManager.getToken();
       socketService.connect(token);
 
       return { success: true };
     } catch (error) {
+      let errorMessage = "Error al iniciar sesión";
+      
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.detail) {
+          errorMessage = "Credenciales inválidas";
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error) {
+          errorMessage = data.error;
+        }
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.message || "Error al iniciar sesión",
+        error: errorMessage,
       };
     }
   };
@@ -91,9 +105,29 @@ export const AuthProvider = ({ children }) => {
       await authService.register(userData);
       return { success: true };
     } catch (error) {
+      let errorMessage = "Error al registrarse";
+
+      if (error.response?.data) {
+        const data = error.response.data;
+        // Manejar diferentes formatos de error del backend
+        if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error) {
+          errorMessage = data.error;
+        } else if (data.detail) {
+          errorMessage = data.detail;
+        } else if (data.username) {
+          errorMessage = "Usuario ya existe";
+        } else if (data.email) {
+          errorMessage = "Email ya está registrado";
+        } else if (data.password) {
+          errorMessage = "Contraseña inválida";
+        }
+      }
+
       return {
         success: false,
-        error: error.response?.data?.message || "Error al registrarse",
+        error: errorMessage,
       };
     }
   };

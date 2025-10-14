@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "react-query";
-import api from "../services/api";
-import { useAuth } from "../context/AuthContext";
-import { Settings, UserPlus, UserMinus, Camera } from "lucide-react";
+import { Camera, Settings, UserMinus, UserPlus } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
 const Profile = () => {
   const { userId } = useParams();
@@ -13,48 +13,79 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("posts");
 
   // Si no hay userId, mostrar perfil del usuario actual
-  const profileUserId = userId || currentUser?.id;
+  const isOwnProfile =
+    !userId ||
+    userId === currentUser?.id?.toString() ||
+    userId === currentUser?.username;
+  const profileIdentifier = userId || currentUser?.id;
 
   // Obtener datos del perfil
   const { data: profileUser, isLoading } = useQuery(
-    ["profile", profileUserId],
+    ["profile", profileIdentifier],
     async () => {
-      if (profileUserId === currentUser?.id) {
+      if (isOwnProfile) {
         const response = await api.get("/users/profile/");
         return response.data;
       } else {
-        const response = await api.get(`/users/${profileUserId}/`);
-        return response.data;
+        // Intentar por ID primero, si falla por username
+        try {
+          const response = await api.get(`/users/${profileIdentifier}/`);
+          return response.data;
+        } catch (error) {
+          if (error.response?.status === 404 && isNaN(profileIdentifier)) {
+            // Si el identificador no es numérico, podría ser un username
+            const response = await api.get(`/users/${profileIdentifier}/`);
+            return response.data;
+          }
+          throw error;
+        }
       }
     }
   );
 
   // Obtener publicaciones del usuario
   const { data: userPosts } = useQuery(
-    ["userPosts", profileUserId],
+    ["userPosts", profileUser?.username],
     async () => {
-      const response = await api.get(`/posts/?author=${profileUserId}`);
-      return response.data;
+      if (profileUser?.username) {
+        const response = await api.get(`/posts/user/${profileUser.username}/`);
+        return response.data;
+      }
+      return [];
+    },
+    {
+      enabled: !!profileUser?.username,
     }
   );
 
   // Mutation para seguir/dejar de seguir
   const followMutation = useMutation(
     async () => {
-      const response = await api.post(`/users/${profileUserId}/follow/`);
-      return response.data;
+      if (profileUser.is_following) {
+        const response = await api.post(
+          `/users/unfollow/${profileUser.username}/`
+        );
+        return response.data;
+      } else {
+        const response = await api.post(
+          `/users/follow/${profileUser.username}/`
+        );
+        return response.data;
+      }
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["profile", profileUserId]);
+        queryClient.invalidateQueries(["profile", profileIdentifier]);
         toast.success(
           profileUser?.is_following
-            ? "Dejaste de seguir"
+            ? "Dejaste de seguir a este usuario"
             : "Ahora sigues a este usuario"
         );
       },
-      onError: () => {
-        toast.error("Error al actualizar el seguimiento");
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.error || "Error al actualizar el seguimiento"
+        );
       },
     }
   );
@@ -62,8 +93,6 @@ const Profile = () => {
   const handleFollow = () => {
     followMutation.mutate();
   };
-
-  const isOwnProfile = profileUserId === currentUser?.id;
 
   if (isLoading) {
     return (

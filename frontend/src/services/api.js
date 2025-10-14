@@ -1,4 +1,5 @@
 import axios from "axios";
+import { tokenManager } from "./tokenManager";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -12,10 +13,16 @@ const api = axios.create({
 
 // Interceptor para agregar token de autenticación
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
+  const token = tokenManager.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Si es FormData, remover Content-Type para que axios lo configure automáticamente
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
+
   return config;
 });
 
@@ -24,19 +31,26 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      const refreshToken = localStorage.getItem("refresh_token");
+      const refreshToken = tokenManager.getRefreshToken();
       if (refreshToken) {
         try {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-            refresh: refreshToken,
-          });
+          const response = await axios.post(
+            `${API_BASE_URL}/auth/token/refresh/`,
+            {
+              refresh: refreshToken,
+            }
+          );
           const newToken = response.data.access;
-          localStorage.setItem("access_token", newToken);
+          // Actualizar token usando token manager seguro
+          tokenManager.setToken(
+            newToken,
+            refreshToken,
+            response.data.expires_in || 3600
+          );
           error.config.headers.Authorization = `Bearer ${newToken}`;
           return api.request(error.config);
         } catch (refreshError) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          tokenManager.clearTokens();
           window.location.href = "/login";
         }
       } else {

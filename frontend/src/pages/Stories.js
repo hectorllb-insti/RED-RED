@@ -1,15 +1,17 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "react-query";
-import api from "../services/api";
-import { useAuth } from "../context/AuthContext";
-import { Plus, X, Camera } from "lucide-react";
+import { Camera, ImageIcon, Plus, X } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
 const Stories = () => {
   const { user } = useAuth();
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [storyContent, setStoryContent] = useState("");
   const [selectedStory, setSelectedStory] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const queryClient = useQueryClient();
 
   // Obtener historias
@@ -39,12 +41,44 @@ const Stories = () => {
 
   const handleCreateStory = (e) => {
     e.preventDefault();
-    if (storyContent.trim()) {
-      createStoryMutation.mutate({
-        content: storyContent,
-        image: null, // Por ahora solo texto
+    if (storyContent.trim() || selectedImage) {
+      // Crear FormData si hay imagen
+      let storyData;
+      if (selectedImage) {
+        storyData = new FormData();
+        storyData.append("content", storyContent);
+        storyData.append("image", selectedImage);
+      } else {
+        storyData = { content: storyContent };
+      }
+
+      createStoryMutation.mutate(storyData, {
+        onSuccess: () => {
+          setStoryContent("");
+          setSelectedImage(null);
+          setImagePreview(null);
+          setShowCreateStory(false);
+        },
       });
     }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      // Crear preview de la imagen
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   if (isLoading) {
@@ -105,10 +139,46 @@ const Stories = () => {
                 maxLength="500"
               />
 
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">
-                  {storyContent.length}/500
-                </span>
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-500">
+                    {storyContent.length}/500
+                  </span>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="story-image-upload"
+                  />
+                  <label
+                    htmlFor="story-image-upload"
+                    className="cursor-pointer flex items-center space-x-1 text-gray-500 hover:text-primary-600"
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                    <span className="text-sm">Imagen</span>
+                  </label>
+                </div>
+
                 <div className="flex space-x-3">
                   <button
                     type="button"
@@ -120,7 +190,8 @@ const Stories = () => {
                   <button
                     type="submit"
                     disabled={
-                      !storyContent.trim() || createStoryMutation.isLoading
+                      (!storyContent.trim() && !selectedImage) ||
+                      createStoryMutation.isLoading
                     }
                     className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                   >
@@ -149,50 +220,57 @@ const Stories = () => {
         </div>
 
         {/* Stories from others */}
-        {stories?.results?.map((story) => (
-          <div key={story.id} className="relative">
-            <button
-              onClick={() => setSelectedStory(story)}
-              className="w-full h-64 rounded-lg overflow-hidden relative group"
-            >
-              {story.image ? (
-                <img
-                  src={story.image}
-                  alt="Story"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center p-4">
-                  <p className="text-white text-center text-sm font-medium">
-                    {story.content}
-                  </p>
+        {(() => {
+          const storyList = Array.isArray(stories?.results)
+            ? stories.results
+            : Array.isArray(stories)
+            ? stories
+            : [];
+          return storyList.map((story) => (
+            <div key={story.id} className="relative">
+              <button
+                onClick={() => setSelectedStory(story)}
+                className="w-full h-64 rounded-lg overflow-hidden relative group"
+              >
+                {story.image ? (
+                  <img
+                    src={story.image}
+                    alt="Story"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center p-4">
+                    <p className="text-white text-center text-sm font-medium">
+                      {story.content}
+                    </p>
+                  </div>
+                )}
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-opacity" />
+
+                {/* Author info */}
+                <div className="absolute top-4 left-4 flex items-center space-x-2">
+                  <img
+                    className="h-8 w-8 rounded-full border-2 border-white"
+                    src={story.author.profile_picture || "/default-avatar.png"}
+                    alt={story.author.full_name}
+                  />
+                  <span className="text-white text-sm font-medium">
+                    {story.author.full_name}
+                  </span>
                 </div>
-              )}
 
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-opacity" />
-
-              {/* Author info */}
-              <div className="absolute top-4 left-4 flex items-center space-x-2">
-                <img
-                  className="h-8 w-8 rounded-full border-2 border-white"
-                  src={story.author.profile_picture || "/default-avatar.png"}
-                  alt={story.author.full_name}
-                />
-                <span className="text-white text-sm font-medium">
-                  {story.author.full_name}
-                </span>
-              </div>
-
-              {/* Time */}
-              <div className="absolute bottom-4 left-4">
-                <span className="text-white text-xs">
-                  {new Date(story.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </button>
-          </div>
-        ))}
+                {/* Time */}
+                <div className="absolute bottom-4 left-4">
+                  <span className="text-white text-xs">
+                    {new Date(story.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </button>
+            </div>
+          ));
+        })()}
       </div>
 
       {/* Story Viewer Modal */}

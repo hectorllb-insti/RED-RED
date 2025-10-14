@@ -1,4 +1,5 @@
 import api from "./api";
+import { tokenManager } from "./tokenManager";
 
 export const authService = {
   // Registro de usuario
@@ -11,21 +12,24 @@ export const authService = {
   login: async (email, password) => {
     const response = await api.post("/auth/login/", { email, password });
     if (response.data.access) {
-      localStorage.setItem("access_token", response.data.access);
-      localStorage.setItem("refresh_token", response.data.refresh);
+      // Usar token manager seguro
+      tokenManager.setToken(
+        response.data.access,
+        response.data.refresh,
+        response.data.expires_in || 3600 // 1 hora por defecto
+      );
     }
     return response.data;
   },
 
   // Logout
   logout: () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    tokenManager.clearTokens();
   },
 
   // Verificar si está autenticado
   isAuthenticated: () => {
-    return !!localStorage.getItem("access_token");
+    return tokenManager.isAuthenticated();
   },
 
   // Obtener perfil actual
