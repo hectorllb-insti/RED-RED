@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from .models import Follow
 from .serializers import UserSerializer, UserProfileSerializer, FollowSerializer
 
@@ -37,13 +38,12 @@ class UserListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = User.objects.all()
         search = self.request.query_params.get('search', None)
-        if search is not None:
+        if search is not None and search.strip():
             queryset = queryset.filter(
-                username__icontains=search
-            ) | queryset.filter(
-                first_name__icontains=search
-            ) | queryset.filter(
-                last_name__icontains=search
+                Q(username__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(email__icontains=search)
             )
         return queryset
 

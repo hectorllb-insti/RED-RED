@@ -1,5 +1,5 @@
 import { Plus, Search, Send, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useAuth } from "../context/AuthContext";
@@ -45,16 +45,18 @@ const Messages = () => {
     }
   );
 
-  // Mutation para marcar mensajes como leídos
-  const markReadMutation = useMutation(
+  // Función estable para marcar mensajes como leídos
+  const markAsRead = useCallback(
     async (chatId) => {
-      await api.post(`/chat/chats/${chatId}/read/`);
+      try {
+        await api.post(`/chat/chats/${chatId}/read/`);
+        // Invalidar solo las conversaciones sin refetch automático
+        queryClient.setQueryData("conversations", (oldData) => oldData);
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries("conversations");
-      },
-    }
+    [queryClient]
   );
 
   const handleCreateChat = (e) => {
@@ -118,7 +120,7 @@ const Messages = () => {
         setMessages((prev) => [...prev, data.message]);
         // Marcar mensajes como leídos cuando se reciben
         if (data.message.sender !== user.id) {
-          markReadMutation.mutate(selectedChat.id);
+          markAsRead(selectedChat.id);
         }
       });
 
@@ -138,8 +140,14 @@ const Messages = () => {
         }
       });
 
-      // Marcar mensajes como leídos al abrir el chat
-      markReadMutation.mutate(selectedChat.id);
+      // Marcar mensajes como leídos al abrir el chat (con delay para evitar bucles)
+      const markReadTimer = setTimeout(() => {
+        markAsRead(selectedChat.id);
+      }, 100);
+
+      return () => {
+        clearTimeout(markReadTimer);
+      };
     }
 
     return () => {
@@ -148,7 +156,7 @@ const Messages = () => {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [selectedChat, markReadMutation, user.id]);
+  }, [selectedChat, user.id, markAsRead]);
 
   const loadMessages = async (chatId) => {
     try {
@@ -245,14 +253,15 @@ const Messages = () => {
                   <img
                     className="h-10 w-10 rounded-full"
                     src={
-                      conversation.other_user.profile_picture ||
+                      conversation.other_user?.profile_picture ||
                       "/default-avatar.png"
                     }
-                    alt={conversation.other_user.full_name}
+                    alt={conversation.other_user?.full_name || "Usuario"}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 truncate">
-                      {conversation.other_user.full_name}
+                      {conversation.other_user?.full_name ||
+                        "Usuario desconocido"}
                     </p>
                     <p className="text-sm text-gray-500 truncate">
                       {conversation.last_message?.content || "Sin mensajes"}
@@ -275,17 +284,18 @@ const Messages = () => {
                 <img
                   className="h-10 w-10 rounded-full"
                   src={
-                    selectedChat.other_user.profile_picture ||
+                    selectedChat.other_user?.profile_picture ||
                     "/default-avatar.png"
                   }
-                  alt={selectedChat.other_user.full_name}
+                  alt={selectedChat.other_user?.full_name || "Usuario"}
                 />
                 <div>
                   <p className="font-medium text-gray-900">
-                    {selectedChat.other_user.full_name}
+                    {selectedChat.other_user?.full_name ||
+                      "Usuario desconocido"}
                   </p>
                   <p className="text-sm text-gray-500">
-                    @{selectedChat.other_user.username}
+                    @{selectedChat.other_user?.username || "usuario"}
                   </p>
                 </div>
               </div>

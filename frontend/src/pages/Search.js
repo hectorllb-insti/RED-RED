@@ -38,7 +38,7 @@ const Search = () => {
     }
   );
 
-  const users = usersResponse?.data || [];
+  const users = usersResponse?.data?.results || [];
 
   // Mutation para seguir usuario
   const followMutation = useMutation(

@@ -16,13 +16,19 @@ const NotificationCenter = () => {
     "notifications",
     async () => {
       const response = await api.get("/notifications/");
-      return response.data;
+      // Asegurar que devolvemos un array
+      return Array.isArray(response.data) ? response.data : [];
     },
     {
       refetchInterval: 30000, // Refrescar cada 30 segundos
       onSuccess: (data) => {
-        const unread = data.filter((n) => !n.is_read).length;
-        setUnreadCount(unread);
+        // Verificar que data es un array antes de usar filter
+        if (Array.isArray(data)) {
+          const unread = data.filter((n) => !n.is_read).length;
+          setUnreadCount(unread);
+        } else {
+          setUnreadCount(0);
+        }
       },
     }
   );

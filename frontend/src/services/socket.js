@@ -6,8 +6,10 @@ class SocketService {
 
   connect(token) {
     if (!this.socket && token) {
-      // Conexión WebSocket segura - token se enviará después de establecer la conexión
-      const wsUrl = `ws://localhost:8000/ws/chat/`;
+      // Conexión WebSocket segura - token enviado en query string para autenticación
+      const wsUrl = `ws://localhost:8000/ws/chat/?token=${encodeURIComponent(
+        token
+      )}`;
       this.socket = new WebSocket(wsUrl);
       this.token = token;
 

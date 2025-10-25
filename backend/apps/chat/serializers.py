@@ -19,10 +19,11 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     participants = serializers.StringRelatedField(many=True)
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
+    other_user = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'participants', 'last_message', 'unread_count', 'created_at', 'updated_at']
+        fields = ['id', 'participants', 'last_message', 'unread_count', 'other_user', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_last_message(self, obj):
@@ -38,6 +39,24 @@ class ChatRoomSerializer(serializers.ModelSerializer):
                 read_by__user=request.user
             ).count()
         return 0
+    
+    def get_other_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            # Para chats privados (2 participantes), obtener el otro usuario
+            participants = obj.participants.all()
+            if participants.count() == 2:
+                other_user = participants.exclude(id=request.user.id).first()
+                if other_user:
+                    return {
+                        'id': other_user.id,
+                        'username': other_user.username,
+                        'first_name': other_user.first_name,
+                        'last_name': other_user.last_name,
+                        'full_name': f"{other_user.first_name} {other_user.last_name}",
+                        'profile_picture': other_user.profile_picture.url if other_user.profile_picture else None
+                    }
+        return None
 
 
 class CreateChatRoomSerializer(serializers.Serializer):

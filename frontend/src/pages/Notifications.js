@@ -24,7 +24,8 @@ const Notifications = () => {
     async () => {
       const params = filter !== "all" ? `?filter=${filter}` : "";
       const response = await api.get(`/notifications/${params}`);
-      return response.data;
+      // Asegurar que devolvemos un array
+      return Array.isArray(response.data) ? response.data : [];
     }
   );
 

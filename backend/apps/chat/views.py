@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import ChatRoom, Message, MessageRead
 from .serializers import ChatRoomSerializer, MessageSerializer, CreateChatRoomSerializer
 
@@ -90,8 +90,10 @@ def create_private_chat(request, username):
         participants=request.user
     ).filter(
         participants=other_user
+    ).annotate(
+        participant_count=Count('participants')
     ).filter(
-        participants__count=2
+        participant_count=2
     ).first()
     
     if existing_chat:

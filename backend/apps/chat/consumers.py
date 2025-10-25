@@ -130,14 +130,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         room_identifier = room_id or self.room_name
         try:
             # Intentar obtener por ID numérico
-            if room_identifier.isdigit():
+            if isinstance(room_identifier, int):
+                chat_room = ChatRoom.objects.get(id=room_identifier)
+            elif (isinstance(room_identifier, str) and
+                  room_identifier.isdigit()):
                 chat_room = ChatRoom.objects.get(id=int(room_identifier))
             else:
                 # Crear una sala general si no es ID numérico
                 chat_room, created = ChatRoom.objects.get_or_create(
-                    name=room_identifier,
+                    name=str(room_identifier),
                     defaults={
-                        'name': room_identifier,
+                        'name': str(room_identifier),
                         'room_type': 'public'
                     }
                 )
