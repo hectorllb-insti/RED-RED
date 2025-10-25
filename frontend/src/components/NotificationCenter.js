@@ -1,15 +1,18 @@
-import { Bell, Camera, Heart, MessageCircle, UserPlus, X } from "lucide-react";
+import { Bell, Heart, MessageCircle, UserPlus, X } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import socketService from "../services/socket";
+import notificationService from "../services/notificationService";
 
 const NotificationCenter = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Query para obtener notificaciones
   const { data: notifications = [], isLoading } = useQuery(
@@ -20,7 +23,7 @@ const NotificationCenter = () => {
       return Array.isArray(response.data) ? response.data : [];
     },
     {
-      refetchInterval: 30000, // Refrescar cada 30 segundos
+      enabled: !!user,
       onSuccess: (data) => {
         // Verificar que data es un array antes de usar filter
         if (Array.isArray(data)) {
@@ -80,8 +83,8 @@ const NotificationCenter = () => {
           return <MessageCircle className="h-5 w-5 text-blue-500" />;
         case "follow":
           return <UserPlus className="h-5 w-5 text-green-500" />;
-        case "story":
-          return <Camera className="h-5 w-5 text-purple-500" />;
+        case "post":
+          return <MessageCircle className="h-5 w-5 text-purple-500" />;
         default:
           return <Bell className="h-5 w-5 text-gray-500" />;
       }
@@ -89,39 +92,89 @@ const NotificationCenter = () => {
     []
   );
 
-  // Escuchar notificaciones en tiempo real
+  // Conectar WebSocket y escuchar notificaciones en tiempo real
   useEffect(() => {
-    const handleNewNotification = (data) => {
-      // Agregar nueva notificación a la lista
-      queryClient.setQueryData("notifications", (oldData) => {
-        return [data.notification, ...(oldData || [])];
-      });
+    if (!user) return;
 
-      // Incrementar contador
-      setUnreadCount((prev) => prev + 1);
+    // Obtener token del localStorage
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
 
-      // Mostrar toast
-      toast(
-        <div className="flex items-center space-x-3">
-          {getNotificationIcon(data.notification.type)}
-          <div>
-            <p className="font-medium text-sm">{data.notification.title}</p>
-            <p className="text-xs text-gray-600">{data.notification.message}</p>
-          </div>
-        </div>,
-        {
-          duration: 5000,
-        }
-      );
-    };
+    // Conectar al servicio de notificaciones
+    notificationService.connect(token);
 
-    // Configurar WebSocket para notificaciones
-    socketService.on("notification", handleNewNotification);
+    // Listener para mensajes del WebSocket
+    const removeListener = notificationService.addListener((data) => {
+      console.log("Notificación recibida:", data);
 
+      switch (data.type) {
+        case "connected":
+          setIsConnected(true);
+          break;
+
+        case "disconnected":
+          setIsConnected(false);
+          break;
+
+        case "new_notification":
+          // Agregar nueva notificación a la lista
+          queryClient.setQueryData("notifications", (oldData) => {
+            return [data.notification, ...(oldData || [])];
+          });
+
+          // Incrementar contador
+          setUnreadCount((prev) => prev + 1);
+
+          // Reproducir sonido (opcional)
+          try {
+            const audio = new Audio("/notification.mp3");
+            audio.volume = 0.3;
+            audio.play().catch(() => {});
+          } catch (e) {}
+
+          // Mostrar toast
+          toast(
+            <div className="flex items-center space-x-3">
+              {getNotificationIcon(data.notification.notification_type)}
+              <div>
+                <p className="font-medium text-sm">{data.notification.title}</p>
+                <p className="text-xs text-gray-600">
+                  {data.notification.message}
+                </p>
+              </div>
+            </div>,
+            {
+              duration: 5000,
+              position: "top-right",
+            }
+          );
+          break;
+
+        case "unread_count":
+          setUnreadCount(data.count);
+          break;
+
+        case "notification_marked_read":
+          if (data.success) {
+            queryClient.invalidateQueries("notifications");
+          }
+          break;
+
+        case "all_notifications_marked_read":
+          setUnreadCount(0);
+          queryClient.invalidateQueries("notifications");
+          break;
+
+        default:
+          break;
+      }
+    });
+
+    // Cleanup al desmontar
     return () => {
-      socketService.offMessage();
+      removeListener();
     };
-  }, [queryClient, getNotificationIcon]);
+  }, [user, queryClient, getNotificationIcon]);
 
   const formatRelativeTime = useCallback((dateString) => {
     const now = new Date();
@@ -142,6 +195,8 @@ const NotificationCenter = () => {
     (notification) => {
       if (!notification.is_read) {
         markReadMutation.mutate(notification.id);
+        // También marcar en el WebSocket
+        notificationService.markAsRead(notification.id);
       }
       setIsOpen(false);
       // Aquí podrías agregar lógica para navegar a la URL específica
@@ -149,16 +204,26 @@ const NotificationCenter = () => {
     [markReadMutation]
   );
 
+  const handleMarkAllRead = useCallback(() => {
+    markAllReadMutation.mutate();
+    notificationService.markAllAsRead();
+  }, [markAllReadMutation]);
+
   return (
     <div className="relative">
       {/* Bell Icon Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-400 hover:text-gray-500"
+        className={`relative p-2 transition-colors ${
+          isConnected
+            ? "text-primary-500 hover:text-primary-600"
+            : "text-gray-400 hover:text-gray-500"
+        }`}
+        title={isConnected ? "Notificaciones (Tiempo real)" : "Notificaciones"}
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -169,16 +234,25 @@ const NotificationCenter = () => {
         <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           {/* Header */}
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Notificaciones
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Notificaciones
+              </h3>
+              {isConnected && (
+                <span
+                  className="w-2 h-2 bg-green-500 rounded-full animate-pulse"
+                  title="Conectado en tiempo real"
+                ></span>
+              )}
+            </div>
             <div className="flex items-center space-x-2">
               {unreadCount > 0 && (
                 <button
-                  onClick={() => markAllReadMutation.mutate()}
-                  className="text-sm text-primary-600 hover:text-primary-700"
+                  onClick={handleMarkAllRead}
+                  disabled={markAllReadMutation.isLoading}
+                  className="text-sm text-primary-600 hover:text-primary-700 disabled:opacity-50"
                 >
-                  Marcar todas como leídas
+                  Marcar todas
                 </button>
               )}
               <button

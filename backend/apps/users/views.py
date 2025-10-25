@@ -36,7 +36,9 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
     
     def get_queryset(self):
-        queryset = User.objects.all()
+        # Excluir el usuario actual de los resultados
+        queryset = User.objects.exclude(id=self.request.user.id)
+        
         search = self.request.query_params.get('search', None)
         if search is not None and search.strip():
             queryset = queryset.filter(

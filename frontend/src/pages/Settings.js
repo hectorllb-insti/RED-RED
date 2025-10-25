@@ -39,6 +39,15 @@ const Settings = () => {
     message_notifications: true,
   });
 
+  // Estados para cambio de contraseña
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+
+  const [passwordErrors, setPasswordErrors] = useState({});
+
   // Query para obtener configuraciones actuales
   const { isLoading } = useQuery(
     "user-settings",
@@ -116,6 +125,32 @@ const Settings = () => {
     }
   );
 
+  // Mutation para cambiar contraseña
+  const changePasswordMutation = useMutation(
+    async (passwords) => {
+      const response = await api.post("/users/change-password/", passwords);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        toast.success("Contraseña actualizada exitosamente");
+        setPasswordData({
+          current_password: "",
+          new_password: "",
+          confirm_password: "",
+        });
+        setPasswordErrors({});
+      },
+      onError: (error) => {
+        const errors = error.response?.data || {};
+        setPasswordErrors(errors);
+        toast.error(
+          errors.error || errors.message || "Error al cambiar la contraseña"
+        );
+      },
+    }
+  );
+
   const handlePrivacySave = () => {
     updatePrivacyMutation.mutate(privacySettings);
   };
@@ -126,6 +161,38 @@ const Settings = () => {
 
   const handleNotificationsSave = () => {
     updateNotificationsMutation.mutate(notificationSettings);
+  };
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    setPasswordErrors({});
+
+    // Validaciones
+    const errors = {};
+
+    if (!passwordData.current_password) {
+      errors.current_password = "La contraseña actual es requerida";
+    }
+
+    if (!passwordData.new_password) {
+      errors.new_password = "La nueva contraseña es requerida";
+    } else if (passwordData.new_password.length < 8) {
+      errors.new_password = "La contraseña debe tener al menos 8 caracteres";
+    }
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      errors.confirm_password = "Las contraseñas no coinciden";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      return;
+    }
+
+    changePasswordMutation.mutate({
+      current_password: passwordData.current_password,
+      new_password: passwordData.new_password,
+    });
   };
 
   if (isLoading) {
@@ -635,31 +702,125 @@ const Settings = () => {
                   Seguridad de la Cuenta
                 </h3>
 
+                {/* Cambiar Contraseña */}
+                <div className="border border-gray-200 rounded-lg p-6 mb-6">
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    Cambiar Contraseña
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Actualiza tu contraseña regularmente para mantener tu cuenta
+                    segura
+                  </p>
+
+                  <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Contraseña Actual
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordData.current_password}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            current_password: e.target.value,
+                          })
+                        }
+                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          passwordErrors.current_password
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Ingresa tu contraseña actual"
+                      />
+                      {passwordErrors.current_password && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {passwordErrors.current_password}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordData.new_password}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            new_password: e.target.value,
+                          })
+                        }
+                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          passwordErrors.new_password
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Mínimo 8 caracteres"
+                      />
+                      {passwordErrors.new_password && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {passwordErrors.new_password}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Confirmar Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordData.confirm_password}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            confirm_password: e.target.value,
+                          })
+                        }
+                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          passwordErrors.confirm_password
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Repite la nueva contraseña"
+                      />
+                      {passwordErrors.confirm_password && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {passwordErrors.confirm_password}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={changePasswordMutation.isLoading}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Lock className="h-4 w-4" />
+                        <span>
+                          {changePasswordMutation.isLoading
+                            ? "Cambiando..."
+                            : "Cambiar Contraseña"}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Próximamente */}
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                   <p className="text-yellow-800">
-                    <strong>Próximamente:</strong> Cambio de contraseña,
-                    autenticación de dos factores, sesiones activas y
-                    configuración de seguridad avanzada.
+                    <strong>Próximamente:</strong> Autenticación de dos
+                    factores, sesiones activas y configuración de seguridad
+                    avanzada.
                   </p>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">
-                      Cambiar Contraseña
-                    </h4>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Actualiza tu contraseña regularmente para mantener tu
-                      cuenta segura
-                    </p>
-                    <button
-                      disabled
-                      className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
-                    >
-                      Próximamente
-                    </button>
-                  </div>
-
                   <div className="border border-gray-200 rounded-lg p-4">
                     <h4 className="font-medium text-gray-900 mb-2">
                       Autenticación de Dos Factores

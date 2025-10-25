@@ -4,8 +4,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from .models import Post, Like, Comment
-from .serializers import PostSerializer, PostCreateSerializer, CommentSerializer
+from .models import Post, Like, Comment, SharedPost
+from .serializers import (
+    PostSerializer, PostCreateSerializer, CommentSerializer,
+    SharePostSerializer, SharedPostSerializer
+)
 from apps.users.models import Follow
 
 User = get_user_model()
@@ -95,4 +98,54 @@ def post_comments(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     comments = Comment.objects.filter(post=post)
     serializer = CommentSerializer(comments, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def share_post(request, post_id):
+    """Compartir una publicación con un usuario específico o públicamente"""
+    post = get_object_or_404(Post, id=post_id)
+    
+    serializer = SharePostSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    shared_with_username = serializer.validated_data.get('shared_with_username')
+    message = serializer.validated_data.get('message', '')
+    
+    shared_with = None
+    if shared_with_username:
+        shared_with = User.objects.get(username=shared_with_username)
+        
+        # Verificar que no intente compartir consigo mismo
+        if shared_with == request.user:
+            return Response(
+                {'error': 'No puedes compartir una publicación contigo mismo'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    # Crear el registro de compartición
+    shared_post = SharedPost.objects.create(
+        shared_by=request.user,
+        original_post=post,
+        shared_with=shared_with,
+        message=message
+    )
+    
+    response_serializer = SharedPostSerializer(shared_post)
+    
+    target = f" con {shared_with.username}" if shared_with else " públicamente"
+    return Response({
+        'message': f'Publicación compartida{target}',
+        'shared_post': response_serializer.data
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def shared_posts_list(request):
+    """Listar publicaciones compartidas con el usuario actual"""
+    shared_posts = SharedPost.objects.filter(shared_with=request.user)
+    serializer = SharedPostSerializer(shared_posts, many=True)
     return Response(serializer.data)

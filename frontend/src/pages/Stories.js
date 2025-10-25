@@ -2,6 +2,7 @@ import { Camera, ImageIcon, Plus, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
@@ -83,9 +84,7 @@ const Stories = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-      </div>
+      <LoadingSpinner variant="pulse" text="Cargando historias..." fullScreen />
     );
   }
 
@@ -253,11 +252,11 @@ const Stories = () => {
                 <div className="absolute top-4 left-4 flex items-center space-x-2">
                   <img
                     className="h-8 w-8 rounded-full border-2 border-white"
-                    src={story.author.profile_picture || "/default-avatar.png"}
-                    alt={story.author.full_name}
+                    src={story.author_profile_picture || "/default-avatar.png"}
+                    alt={`${story.author_first_name} ${story.author_last_name}`}
                   />
                   <span className="text-white text-sm font-medium">
-                    {story.author.full_name}
+                    {story.author_first_name} {story.author_last_name}
                   </span>
                 </div>
 
@@ -305,14 +304,15 @@ const Stories = () => {
                   <img
                     className="h-10 w-10 rounded-full"
                     src={
-                      selectedStory.author.profile_picture ||
+                      selectedStory.author_profile_picture ||
                       "/default-avatar.png"
                     }
-                    alt={selectedStory.author.full_name}
+                    alt={`${selectedStory.author_first_name} ${selectedStory.author_last_name}`}
                   />
                   <div>
                     <p className="text-white font-medium">
-                      {selectedStory.author.full_name}
+                      {selectedStory.author_first_name}{" "}
+                      {selectedStory.author_last_name}
                     </p>
                     <p className="text-gray-300 text-sm">
                       {new Date(selectedStory.created_at).toLocaleString()}

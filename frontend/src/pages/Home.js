@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Edit2,
   Heart,
@@ -11,6 +13,8 @@ import {
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import EmptyState from "../components/EmptyState";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { securityUtils } from "../utils/security";
@@ -28,10 +32,17 @@ const Home = () => {
   const queryClient = useQueryClient();
 
   // Obtener publicaciones del feed
-  const { data: posts, isLoading } = useQuery("posts", async () => {
-    const response = await api.get("/posts/");
-    return response.data;
-  });
+  const { data: posts, isLoading } = useQuery(
+    ["posts"],
+    async () => {
+      const response = await api.get("/posts/");
+      return response.data;
+    },
+    {
+      staleTime: 3 * 60 * 1000, // 3 minutos
+      refetchOnMount: false,
+    }
+  );
 
   // Mutation para crear nueva publicación
   const createPostMutation = useMutation(
@@ -114,6 +125,26 @@ const Home = () => {
       },
       onError: () => {
         toast.error("Error al agregar comentario");
+      },
+    }
+  );
+
+  // Mutation para compartir post
+  const shareMutation = useMutation(
+    async ({ postId, shared_with_username, message }) => {
+      const data = { message };
+      if (shared_with_username) {
+        data.shared_with_username = shared_with_username;
+      }
+      const response = await api.post(`/posts/${postId}/share/`, data);
+      return response.data;
+    },
+    {
+      onSuccess: (data) => {
+        toast.success(data.message || "¡Publicación compartida!");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.error || "Error al compartir");
       },
     }
   );
@@ -217,6 +248,33 @@ const Home = () => {
     });
   };
 
+  const handleSharePost = (postId) => {
+    const username = prompt(
+      "Ingresa el nombre de usuario con quien compartir (o deja vacío para compartir públicamente):"
+    );
+
+    // Si el usuario cancela, username será null
+    if (username === null) return;
+
+    const message = prompt(
+      "¿Quieres agregar un mensaje al compartir? (opcional)"
+    );
+
+    // Si el usuario cancela el mensaje también, no compartir
+    if (message === null) return;
+
+    const shareData = {
+      message: message || "",
+    };
+
+    // Solo agregar shared_with_username si se proporcionó
+    if (username && username.trim()) {
+      shareData.shared_with_username = username.trim();
+    }
+
+    shareMutation.mutate({ postId, ...shareData });
+  };
+
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -237,38 +295,35 @@ const Home = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-      </div>
+      <LoadingSpinner variant="skeleton" text="Cargando publicaciones..." />
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Create Post */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center space-x-3">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-3">
           <img
-            className="h-10 w-10 rounded-full"
+            className="h-11 w-11 rounded-full ring-2 ring-gray-100"
             src={user?.profile_picture || "/default-avatar.png"}
             alt={user?.full_name}
           />
           <button
             onClick={() => setShowCreatePost(true)}
-            className="flex-1 text-left px-4 py-2 bg-gray-50 rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+            className="flex-1 text-left px-5 py-3 bg-gray-50 rounded-full text-gray-500 hover:bg-gray-100 transition-all text-sm font-medium"
           >
             ¿Qué estás pensando, {user?.first_name}?
           </button>
         </div>
 
         {showCreatePost && (
-          <form onSubmit={handleCreatePost} className="mt-4 space-y-4">
+          <form onSubmit={handleCreatePost} className="mt-5 space-y-4">
             <textarea
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="¿Qué estás pensando?"
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              rows="3"
+              className="w-full p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-400"
+              rows="4"
               autoFocus
             />
 
@@ -276,22 +331,22 @@ const Home = () => {
             {imagePreview && (
               <div className="mt-3 relative">
                 <img
-                  src={imagePreview}
+                  src={imagePreview || "/placeholder.svg"}
                   alt="Preview"
-                  className="max-w-full h-48 object-cover rounded-lg"
+                  className="max-w-full h-64 object-cover rounded-xl"
                 />
                 <button
                   type="button"
                   onClick={removeImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  className="absolute top-3 right-3 bg-gray-900/80 text-white rounded-full p-2 hover:bg-gray-900 transition-all backdrop-blur-sm"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             )}
 
-            <div className="flex justify-between items-center mt-3">
-              <div className="flex items-center space-x-2">
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2">
                 <input
                   type="file"
                   accept="image/*"
@@ -301,16 +356,16 @@ const Home = () => {
                 />
                 <label
                   htmlFor="image-upload"
-                  className="cursor-pointer flex items-center space-x-1 text-gray-500 hover:text-primary-600"
+                  className="cursor-pointer flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
                 >
                   <ImageIcon className="h-5 w-5" />
-                  <span className="text-sm">Foto</span>
+                  <span className="text-sm font-medium">Foto</span>
                 </label>
 
                 <button
                   type="button"
                   onClick={() => setShowCreatePost(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all font-medium"
                 >
                   Cancelar
                 </button>
@@ -322,7 +377,7 @@ const Home = () => {
                   (!newPost.trim() && !selectedImage) ||
                   createPostMutation.isLoading
                 }
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-lg shadow-primary-500/30 transition-all"
               >
                 {createPostMutation.isLoading ? "Publicando..." : "Publicar"}
               </button>
@@ -331,7 +386,6 @@ const Home = () => {
         )}
       </div>
 
-      {/* Posts Feed */}
       <div className="space-y-6">
         {(() => {
           const postList = Array.isArray(posts?.results)
@@ -339,40 +393,57 @@ const Home = () => {
             : Array.isArray(posts)
             ? posts
             : [];
+
+          if (isLoading) {
+            return <LoadingSpinner variant="dots" text="Cargando posts..." />;
+          }
+
+          if (postList.length === 0) {
+            return (
+              <EmptyState
+                Icon={MessageCircle}
+                title="No hay publicaciones"
+                description="Sé el primero en compartir algo con la comunidad"
+                actionLabel="Crear publicación"
+                onAction={() => setShowCreatePost(true)}
+              />
+            );
+          }
+
           return postList.map((post) => (
             <div
               key={post.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200"
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               {/* Post Header */}
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <img
-                    className="h-10 w-10 rounded-full"
-                    src={post.author.profile_picture || "/default-avatar.png"}
-                    alt={post.author.full_name}
+                    className="h-11 w-11 rounded-full ring-2 ring-gray-100"
+                    src={post.author_profile_picture || "/default-avatar.png"}
+                    alt={`${post.author_first_name} ${post.author_last_name}`}
                   />
                   <div>
-                    <p className="font-medium text-gray-900">
-                      {post.author.full_name}
+                    <p className="font-semibold text-gray-900">
+                      {post.author_first_name} {post.author_last_name}
                     </p>
                     <p className="text-sm text-gray-500">
-                      @{post.author.username}
+                      @{post.author_username}
                     </p>
                   </div>
                 </div>
-                {post.author.id === user?.id && (
-                  <div className="flex items-center space-x-2">
+                {post.author_id === user?.id && (
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleStartEdit(post)}
-                      className="text-gray-400 hover:text-blue-600 p-1"
+                      className="text-gray-400 hover:text-primary-600 hover:bg-primary-50 p-2 rounded-lg transition-all"
                       title="Editar publicación"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeletePost(post.id)}
-                      className="text-gray-400 hover:text-red-600 p-1"
+                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
                       title="Eliminar publicación"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -382,20 +453,20 @@ const Home = () => {
               </div>
 
               {/* Post Content */}
-              <div className="px-4 pb-4">
+              <div className="px-5 pb-4">
                 {editingPost === post.id ? (
                   <div className="space-y-3">
                     <textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-gray-50"
                       rows="3"
                       placeholder="¿Qué estás pensando?"
                     />
-                    <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={handleCancelEdit}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center space-x-1"
+                        className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-2 transition-all font-medium"
                       >
                         <X className="h-4 w-4" />
                         <span>Cancelar</span>
@@ -405,7 +476,7 @@ const Home = () => {
                         disabled={
                           !editContent.trim() || editPostMutation.isLoading
                         }
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center space-x-1"
+                        className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 flex items-center gap-2 font-semibold shadow-lg shadow-primary-500/30 transition-all"
                       >
                         <Save className="h-4 w-4" />
                         <span>
@@ -418,26 +489,25 @@ const Home = () => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-800 whitespace-pre-wrap">
+                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
                       {post.content}
                     </p>
                     {post.image && (
                       <img
-                        src={post.image}
+                        src={post.image || "/placeholder.svg"}
                         alt="Contenido del post"
-                        className="mt-3 rounded-lg max-w-full h-auto"
+                        className="mt-4 rounded-xl max-w-full h-auto"
                       />
                     )}
                   </>
                 )}
               </div>
 
-              {/* Post Actions */}
-              <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-                <div className="flex items-center space-x-6">
+              <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-6">
                   <button
                     onClick={() => handleLike(post.id)}
-                    className={`flex items-center space-x-2 ${
+                    className={`flex items-center gap-2 transition-all ${
                       post.is_liked
                         ? "text-red-500"
                         : "text-gray-500 hover:text-red-500"
@@ -448,21 +518,29 @@ const Home = () => {
                         post.is_liked ? "fill-current" : ""
                       }`}
                     />
-                    <span className="text-sm">{post.likes_count}</span>
+                    <span className="text-sm font-medium">
+                      {post.likes_count}
+                    </span>
                   </button>
                   <button
                     onClick={() => toggleComments(post.id)}
-                    className="flex items-center space-x-2 text-gray-500 hover:text-blue-500"
+                    className="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition-all"
                   >
                     <MessageCircle className="h-5 w-5" />
-                    <span className="text-sm">{post.comments_count}</span>
+                    <span className="text-sm font-medium">
+                      {post.comments_count}
+                    </span>
                   </button>
-                  <button className="flex items-center space-x-2 text-gray-500 hover:text-green-500">
+                  <button
+                    onClick={() => handleSharePost(post.id)}
+                    className="flex items-center gap-2 text-gray-500 hover:text-green-600 transition-all"
+                    title="Compartir publicación"
+                  >
                     <Share2 className="h-5 w-5" />
-                    <span className="text-sm">Compartir</span>
+                    <span className="text-sm font-medium">Compartir</span>
                   </button>
                 </div>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 font-medium">
                   {new Date(post.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -554,9 +632,7 @@ const CommentsSection = ({
       {/* Lista de comentarios */}
       <div className="p-4">
         {isLoading ? (
-          <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-500"></div>
-          </div>
+          <LoadingSpinner variant="pulse" size="sm" />
         ) : (
           <div className="space-y-3">
             {comments && comments.length > 0 ? (
@@ -565,14 +641,14 @@ const CommentsSection = ({
                   <img
                     className="h-8 w-8 rounded-full"
                     src={
-                      comment.author.profile_picture || "/default-avatar.png"
+                      comment.author_profile_picture || "/default-avatar.png"
                     }
-                    alt={comment.author.full_name}
+                    alt={comment.author_username}
                   />
                   <div className="flex-1">
                     <div className="bg-gray-50 rounded-lg p-3">
                       <p className="font-medium text-sm text-gray-900">
-                        {comment.author.full_name}
+                        {comment.author_username}
                       </p>
                       <p className="text-sm text-gray-800 mt-1">
                         {comment.content}

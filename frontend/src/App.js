@@ -1,3 +1,5 @@
+"use client";
+
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "react-query";
 import {
@@ -28,6 +30,11 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      cacheTime: 10 * 60 * 1000, // 10 minutos
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });
@@ -165,8 +172,18 @@ function App() {
             toastOptions={{
               duration: 4000,
               style: {
-                background: "#363636",
+                background: "#171717",
                 color: "#fff",
+                borderRadius: "12px",
+                padding: "16px",
+                fontSize: "14px",
+                fontWeight: "500",
+              },
+              success: {
+                iconTheme: {
+                  primary: "#ef4444",
+                  secondary: "#fff",
+                },
               },
             }}
           />

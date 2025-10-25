@@ -48,3 +48,19 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.author.username}: {self.content[:30]}..."
+
+
+class SharedPost(models.Model):
+    """Modelo para compartir publicaciones"""
+    shared_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shared_posts')
+    original_post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='shares')
+    shared_with = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_shares', null=True, blank=True)
+    message = models.TextField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        target = f" with {self.shared_with.username}" if self.shared_with else " publicly"
+        return f"{self.shared_by.username} shared post {self.original_post.id}{target}"

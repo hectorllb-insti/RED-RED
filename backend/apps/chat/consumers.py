@@ -77,10 +77,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         f'chat_{room_id}',
                         {
                             'type': 'chat_message',
-                            'message': message_content,
-                            'sender': self.user.username,
-                            'timestamp': message.created_at.isoformat(),
-                            'message_id': message.id,
+                            'message': {
+                                'id': message.id,
+                                'content': message_content,
+                                'sender': self.user.id,
+                                'sender_id': self.user.id,
+                                'sender_username': self.user.username,
+                                'timestamp': message.created_at.isoformat(),
+                                'is_read': False,
+                            },
                             'room': room_id
                         }
                     )
@@ -109,9 +114,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
             'message': event['message'],
-            'sender': event['sender'],
-            'timestamp': event['timestamp'],
-            'message_id': event['message_id'],
             'room': event.get('room', self.current_room)
         }))
 

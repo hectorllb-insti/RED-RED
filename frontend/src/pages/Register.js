@@ -32,176 +32,249 @@ const Register = () => {
       toast.success("¡Registro exitoso! Ahora puedes iniciar sesión");
       navigate("/login");
     } else {
-      toast.error(result.error);
+      // Mostrar errores específicos del backend
+      if (result.error && typeof result.error === "object") {
+        // Si hay errores de campo específicos
+        Object.keys(result.error).forEach((key) => {
+          const messages = Array.isArray(result.error[key])
+            ? result.error[key]
+            : [result.error[key]];
+          messages.forEach((msg) => {
+            toast.error(`${key}: ${msg}`);
+          });
+        });
+      } else {
+        // Error general
+        toast.error(result.error || "Error al registrarse");
+      }
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            RED-RED
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Crea tu cuenta
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+              RED-RED
+            </h2>
+            <p className="mt-3 text-sm text-gray-600 font-medium">
+              Crea tu cuenta
+            </p>
+          </div>
+          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nombre
+                  </label>
+                  <input
+                    {...register("first_name", {
+                      required: "El nombre es requerido",
+                    })}
+                    type="text"
+                    className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm bg-gray-50 hover:bg-white"
+                    placeholder="Juan"
+                  />
+                  {errors.first_name && (
+                    <p className="mt-2 text-sm text-red-600 font-medium">
+                      {errors.first_name.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Apellido
+                  </label>
+                  <input
+                    {...register("last_name", {
+                      required: "El apellido es requerido",
+                    })}
+                    type="text"
+                    className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm bg-gray-50 hover:bg-white"
+                    placeholder="Pérez"
+                  />
+                  {errors.last_name && (
+                    <p className="mt-2 text-sm text-red-600 font-medium">
+                      {errors.last_name.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nombre
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nombre de usuario
                 </label>
                 <input
-                  {...register("first_name", {
-                    required: "El nombre es requerido",
+                  {...register("username", {
+                    required: "El nombre de usuario es requerido",
+                    minLength: {
+                      value: 3,
+                      message: "Mínimo 3 caracteres",
+                    },
+                    maxLength: {
+                      value: 30,
+                      message: "Máximo 30 caracteres",
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9_]+$/,
+                      message: "Solo letras, números y guión bajo",
+                    },
                   })}
                   type="text"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Juan"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm bg-gray-50 hover:bg-white"
+                  placeholder="juanperez"
                 />
-                {errors.first_name && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.first_name.message}
+                {errors.username && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">
+                    {errors.username.message}
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Solo letras, números y guión bajo. Sin espacios.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Correo electrónico
+                </label>
+                <input
+                  {...register("email", {
+                    required: "El correo es requerido",
+                    pattern: {
+                      value: /^\S+@\S+$/i,
+                      message: "Correo inválido",
+                    },
+                  })}
+                  type="email"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm bg-gray-50 hover:bg-white"
+                  placeholder="juan@ejemplo.com"
+                />
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">
+                    {errors.email.message}
                   </p>
                 )}
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Apellido
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Contraseña
                 </label>
                 <input
-                  {...register("last_name", {
-                    required: "El apellido es requerido",
+                  {...register("password", {
+                    required: "La contraseña es requerida",
+                    minLength: {
+                      value: 8,
+                      message: "Mínimo 8 caracteres",
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message: "Debe contener mayúsculas, minúsculas y números",
+                    },
                   })}
-                  type="text"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Pérez"
+                  type="password"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm bg-gray-50 hover:bg-white"
+                  placeholder="••••••••"
                 />
-                {errors.last_name && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.last_name.message}
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">
+                    {errors.password.message}
+                  </p>
+                )}
+                {password && password.length > 0 && (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={`h-1 flex-1 rounded ${
+                          password.length >= 8 &&
+                          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)
+                            ? "bg-green-500"
+                            : password.length >= 6
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      <div
+                        className={`h-1 flex-1 rounded ${
+                          password.length >= 8 &&
+                          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)
+                            ? "bg-green-500"
+                            : password.length >= 6
+                            ? "bg-yellow-500"
+                            : "bg-gray-200"
+                        }`}
+                      />
+                      <div
+                        className={`h-1 flex-1 rounded ${
+                          password.length >= 8 &&
+                          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)
+                            ? "bg-green-500"
+                            : "bg-gray-200"
+                        }`}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {password.length >= 8 &&
+                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)
+                        ? "Contraseña fuerte ✓"
+                        : password.length >= 6
+                        ? "Contraseña media"
+                        : "Contraseña débil"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Confirmar contraseña
+                </label>
+                <input
+                  {...register("confirmPassword", {
+                    required: "Confirma tu contraseña",
+                    validate: (value) =>
+                      value === password || "Las contraseñas no coinciden",
+                  })}
+                  type="password"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm bg-gray-50 hover:bg-white"
+                  placeholder="••••••••"
+                />
+                {errors.confirmPassword && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">
+                    {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nombre de usuario
-              </label>
-              <input
-                {...register("username", {
-                  required: "El nombre de usuario es requerido",
-                  minLength: {
-                    value: 3,
-                    message: "Mínimo 3 caracteres",
-                  },
-                })}
-                type="text"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="juanperez"
-              />
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.username.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Correo electrónico
-              </label>
-              <input
-                {...register("email", {
-                  required: "El correo es requerido",
-                  pattern: {
-                    value: /^\S+@\S+$/i,
-                    message: "Correo inválido",
-                  },
-                })}
-                type="email"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="juan@ejemplo.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Contraseña
-              </label>
-              <input
-                {...register("password", {
-                  required: "La contraseña es requerida",
-                  minLength: {
-                    value: 8,
-                    message: "Mínimo 8 caracteres",
-                  },
-                })}
-                type="password"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Contraseña"
-              />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Confirmar contraseña
-              </label>
-              <input
-                {...register("confirmPassword", {
-                  required: "Confirma tu contraseña",
-                  validate: (value) =>
-                    value === password || "Las contraseñas no coinciden",
-                })}
-                type="password"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Confirmar contraseña"
-              />
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-            >
-              {loading ? "Registrando..." : "Registrarse"}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <span className="text-sm text-gray-600">
-              ¿Ya tienes cuenta?{" "}
-              <Link
-                to="/login"
-                className="font-medium text-primary-600 hover:text-primary-500"
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/30 transition-all"
               >
-                Inicia sesión aquí
-              </Link>
-            </span>
-          </div>
-        </form>
+                {loading ? "Registrando..." : "Registrarse"}
+              </button>
+            </div>
+
+            <div className="text-center pt-4 border-t border-gray-100">
+              <span className="text-sm text-gray-600">
+                ¿Ya tienes cuenta?{" "}
+                <Link
+                  to="/login"
+                  className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  Inicia sesión aquí
+                </Link>
+              </span>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

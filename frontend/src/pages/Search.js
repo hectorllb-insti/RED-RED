@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Link } from "react-router-dom";
+import LoadingSpinner from "../components/LoadingSpinner";
 import api from "../services/api";
 
 const Search = () => {
@@ -56,8 +57,28 @@ const Search = () => {
     }
   );
 
+  // Mutation para dejar de seguir usuario
+  const unfollowMutation = useMutation(
+    async (username) => {
+      await api.delete(`/users/unfollow/${username}/`);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["users", debouncedSearchTerm]);
+        toast.success("Has dejado de seguir al usuario");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.error || "Error al dejar de seguir");
+      },
+    }
+  );
+
   const handleFollow = (username) => {
     followMutation.mutate(username);
+  };
+
+  const handleUnfollow = (username) => {
+    unfollowMutation.mutate(username);
   };
 
   return (
@@ -83,9 +104,7 @@ const Search = () => {
 
         {/* Resultados */}
         {isLoading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
+          <LoadingSpinner variant="dots" text="Buscando usuarios..." />
         )}
 
         {error && (
@@ -151,13 +170,25 @@ const Search = () => {
                       )}
                     </div>
                   </Link>
-                  <button
-                    onClick={() => handleFollow(user.username)}
-                    className="flex items-center px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    <UserPlus className="h-4 w-4 mr-1" />
-                    Seguir
-                  </button>
+
+                  {user.is_following ? (
+                    <button
+                      onClick={() => handleUnfollow(user.username)}
+                      disabled={unfollowMutation.isLoading}
+                      className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      Siguiendo
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleFollow(user.username)}
+                      disabled={followMutation.isLoading}
+                      className="flex items-center px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Seguir
+                    </button>
+                  )}
                 </div>
               ));
             })()}

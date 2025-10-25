@@ -2,14 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Enhanced color palette with refined shades for modern aesthetic */
+  /* Primary Brand Color - Vibrant Red */
+  --color-primary-50: #fef2f2;
+  --color-primary-100: #fee2e2;
+  --color-primary-200: #fecaca;
+  --color-primary-300: #fca5a5;
+  --color-primary-400: #f87171;
+  --color-primary-500: #ef4444;
+  --color-primary-600: #dc2626;
+  --color-primary-700: #b91c1c;
+  --color-primary-800: #991b1b;
+  --color-primary-900: #7f1d1d;
+
+  /* Neutral Colors - Refined grays */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+
+  /* Accent Color - Deep Navy */
+  --color-accent-50: #f0f4ff;
+  --color-accent-100: #e0e9ff;
+  --color-accent-200: #c7d7fe;
+  --color-accent-300: #a5b8fc;
+  --color-accent-400: #8b93f8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #1e1b4b;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
+  background-color: #fafafa;
+  color: #171717;
+  line-height: 1.6;
 }
 
 code {
@@ -24,4 +65,154 @@ code {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Enhanced custom scrollbar with modern styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4d4d4 0%, #a3a3a3 100%);
+  border-radius: 5px;
+  border: 2px solid #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a3a3a3 0%, #737373 100%);
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button,
+a {
+  transition: all 0.2s ease;
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Enhanced color palette with refined shades for modern aesthetic */
+  /* Primary Brand Color - Vibrant Red */
+  --color-primary-50: #fef2f2;
+  --color-primary-100: #fee2e2;
+  --color-primary-200: #fecaca;
+  --color-primary-300: #fca5a5;
+  --color-primary-400: #f87171;
+  --color-primary-500: #ef4444;
+  --color-primary-600: #dc2626;
+  --color-primary-700: #b91c1c;
+  --color-primary-800: #991b1b;
+  --color-primary-900: #7f1d1d;
+
+  /* Neutral Colors - Refined grays */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+
+  /* Accent Color - Deep Navy */
+  --color-accent-50: #f0f4ff;
+  --color-accent-100: #e0e9ff;
+  --color-accent-200: #c7d7fe;
+  --color-accent-300: #a5b8fc;
+  --color-accent-400: #8b93f8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #1e1b4b;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fafafa;
+  color: #171717;
+  line-height: 1.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Enhanced custom scrollbar with modern styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4d4d4 0%, #a3a3a3 100%);
+  border-radius: 5px;
+  border: 2px solid #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a3a3a3 0%, #737373 100%);
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button,
+a {
+  transition: all 0.2s ease;
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
 }

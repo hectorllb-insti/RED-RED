@@ -1,7 +1,8 @@
-import { Plus, Search, Send, X } from "lucide-react";
+import { MessageSquare, Plus, Search, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import EmptyState from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import socketService from "../services/socket";
@@ -14,16 +15,29 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const [showCreateChat, setShowCreateChat] = useState(false);
   const [searchUsername, setSearchUsername] = useState("");
+  const [searchConversation, setSearchConversation] = useState("");
   const [typingUsers, setTypingUsers] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // Obtener lista de conversaciones
-  const { data: conversations = [] } = useQuery("conversations", async () => {
-    const response = await api.get("/chat/chats/");
-    return response.data;
-  });
+  const { data: conversations = [] } = useQuery(
+    ["conversations"],
+    async () => {
+      const response = await api.get("/chat/chats/");
+      return response.data;
+    },
+    {
+      staleTime: 2 * 60 * 1000, // 2 minutos para conversaciones
+      refetchInterval: 30000, // Refetch cada 30 segundos
+    }
+  );
 
   // Mutation para crear chat privado
   const createChatMutation = useMutation(
@@ -108,6 +122,31 @@ const Messages = () => {
   }, [messages]);
 
   useEffect(() => {
+    socketService.on("reconnecting", (data) => {
+      setIsReconnecting(true);
+      toast.loading(`Reconectando... (${data.attempt}/${data.maxAttempts})`, {
+        id: "reconnecting",
+      });
+    });
+
+    socketService.on("connect", () => {
+      setIsReconnecting(false);
+      toast.dismiss("reconnecting");
+      toast.success("Conectado al chat", { duration: 2000 });
+    });
+
+    socketService.on("disconnect", () => {
+      toast.error("Desconectado del chat", { duration: 3000 });
+    });
+
+    return () => {
+      socketService.listeners.delete("reconnecting");
+      socketService.listeners.delete("connect");
+      socketService.listeners.delete("disconnect");
+    };
+  }, []);
+
+  useEffect(() => {
     if (selectedChat) {
       // Cargar mensajes del chat seleccionado
       loadMessages(selectedChat.id);
@@ -117,9 +156,13 @@ const Messages = () => {
 
       // Escuchar nuevos mensajes
       socketService.onMessage((data) => {
-        setMessages((prev) => [...prev, data.message]);
+        console.log("Mensaje recibido por WebSocket:", data);
+        // Asegurar que el mensaje tenga la estructura correcta
+        const newMessage = data.message || data;
+        console.log("Mensaje procesado:", newMessage);
+        setMessages((prev) => [...prev, newMessage]);
         // Marcar mensajes como leídos cuando se reciben
-        if (data.message.sender !== user.id) {
+        if (newMessage.sender_id !== user.id && newMessage.sender !== user.id) {
           markAsRead(selectedChat.id);
         }
       });
@@ -158,14 +201,56 @@ const Messages = () => {
     };
   }, [selectedChat, user.id, markAsRead]);
 
-  const loadMessages = async (chatId) => {
+  const loadMessages = async (chatId, page = 1) => {
     try {
-      const response = await api.get(`/chat/chats/${chatId}/messages/`);
-      setMessages(response.data.results || []);
+      if (page === 1) {
+        setMessages([]);
+        setCurrentPage(1);
+        setHasMoreMessages(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      const response = await api.get(
+        `/chat/chats/${chatId}/messages/?page=${page}`
+      );
+      const messagesList = response.data.results || response.data || [];
+
+      // Si es la primera página, reemplazar. Si no, agregar al principio
+      if (page === 1) {
+        setMessages(messagesList.reverse());
+      } else {
+        setMessages((prev) => [...messagesList.reverse(), ...prev]);
+      }
+
+      // Verificar si hay más mensajes
+      setHasMoreMessages(!!response.data.next);
+      setCurrentPage(page);
     } catch (error) {
-      // Error loading messages handled
+      console.error("Error loading messages:", error);
+      toast.error("Error al cargar mensajes");
+    } finally {
+      setIsLoadingMore(false);
     }
   };
+
+  // Manejar scroll para cargar mensajes antiguos
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container || isLoadingMore || !hasMoreMessages) return;
+
+    // Si el usuario scrollea hasta arriba (con un margen de 50px)
+    if (container.scrollTop < 50) {
+      const prevScrollHeight = container.scrollHeight;
+      loadMessages(selectedChat.id, currentPage + 1).then(() => {
+        // Mantener la posición del scroll después de cargar mensajes antiguos
+        requestAnimationFrame(() => {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = newScrollHeight - prevScrollHeight;
+        });
+      });
+    }
+  }, [selectedChat, currentPage, isLoadingMore, hasMoreMessages]);
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -228,6 +313,8 @@ const Messages = () => {
               <input
                 type="text"
                 placeholder="Buscar conversaciones..."
+                value={searchConversation}
+                onChange={(e) => setSearchConversation(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
@@ -241,7 +328,54 @@ const Messages = () => {
               : Array.isArray(conversations)
               ? conversations
               : [];
-            return convList.map((conversation) => (
+
+            // Filtrar conversaciones por búsqueda
+            const filteredConvs = searchConversation.trim()
+              ? convList.filter((conv) => {
+                  const searchLower = searchConversation.toLowerCase();
+                  const fullName =
+                    conv.other_user?.full_name?.toLowerCase() || "";
+                  const username =
+                    conv.other_user?.username?.toLowerCase() || "";
+                  const lastMessage =
+                    conv.last_message?.content?.toLowerCase() || "";
+                  return (
+                    fullName.includes(searchLower) ||
+                    username.includes(searchLower) ||
+                    lastMessage.includes(searchLower)
+                  );
+                })
+              : convList;
+
+            if (filteredConvs.length === 0 && !showCreateChat) {
+              return (
+                <div className="flex items-center justify-center h-full p-4">
+                  <EmptyState
+                    Icon={MessageSquare}
+                    title={
+                      searchConversation
+                        ? "No se encontraron conversaciones"
+                        : "No tienes conversaciones"
+                    }
+                    description={
+                      searchConversation
+                        ? "Intenta con otro término de búsqueda"
+                        : "Inicia una nueva conversación haciendo clic en el botón +"
+                    }
+                    actionLabel={
+                      !searchConversation ? "Nueva conversación" : undefined
+                    }
+                    onAction={
+                      !searchConversation
+                        ? () => setShowCreateChat(true)
+                        : undefined
+                    }
+                  />
+                </div>
+              );
+            }
+
+            return filteredConvs.map((conversation) => (
               <button
                 key={conversation.id}
                 onClick={() => setSelectedChat(conversation)}
@@ -250,14 +384,21 @@ const Messages = () => {
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <img
-                    className="h-10 w-10 rounded-full"
-                    src={
-                      conversation.other_user?.profile_picture ||
-                      "/default-avatar.png"
-                    }
-                    alt={conversation.other_user?.full_name || "Usuario"}
-                  />
+                  <div className="relative">
+                    <img
+                      className="h-10 w-10 rounded-full"
+                      src={
+                        conversation.other_user?.profile_picture ||
+                        "/default-avatar.png"
+                      }
+                      alt={conversation.other_user?.full_name || "Usuario"}
+                    />
+                    {conversation.unread_count > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {conversation.unread_count}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 truncate">
                       {conversation.other_user?.full_name ||
@@ -296,18 +437,57 @@ const Messages = () => {
                   </p>
                   <p className="text-sm text-gray-500">
                     @{selectedChat.other_user?.username || "usuario"}
+                    {isReconnecting && (
+                      <span className="ml-2 text-xs text-amber-600">
+                        • Reconectando...
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+            >
+              {isLoadingMore && (
+                <div className="text-center py-2">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                </div>
+              )}
               {messages.map((msg, index) => {
-                const isOwnMessage = msg.sender === user.id;
+                // Asegurar que msg tenga la estructura correcta
+                const messageObj = msg.message || msg;
+
+                // Extraer el contenido del mensaje de forma segura
+                // Si content es string, usarlo directamente
+                // Si content es objeto con propiedad content, usar esa
+                // Si no, intentar buscar en el mensaje completo
+                let messageContent;
+                if (typeof messageObj.content === "string") {
+                  messageContent = messageObj.content;
+                } else if (
+                  typeof messageObj.content === "object" &&
+                  messageObj.content?.content
+                ) {
+                  messageContent = messageObj.content.content;
+                } else if (messageObj.text) {
+                  messageContent = messageObj.text;
+                } else {
+                  // Último recurso: buscar cualquier campo que parezca contenido
+                  messageContent =
+                    messageObj.body || messageObj.message || "Sin contenido";
+                }
+
+                const isOwnMessage =
+                  messageObj.sender_id === user.id ||
+                  messageObj.sender === user.id;
                 return (
                   <div
-                    key={index}
+                    key={messageObj.id || index}
                     className={`flex ${
                       isOwnMessage ? "justify-end" : "justify-start"
                     }`}
@@ -319,14 +499,19 @@ const Messages = () => {
                           : "bg-gray-200 text-gray-900"
                       }`}
                     >
-                      <p className="text-sm">{msg.content}</p>
+                      <p className="text-sm">{messageContent}</p>
                       <div
                         className={`flex items-center justify-between mt-1 ${
                           isOwnMessage ? "text-primary-100" : "text-gray-500"
                         }`}
                       >
                         <p className="text-xs">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
+                          {new Date(
+                            messageObj.timestamp || messageObj.created_at
+                          ).toLocaleTimeString("es-ES", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                         {isOwnMessage && (
                           <div className="flex items-center space-x-1">

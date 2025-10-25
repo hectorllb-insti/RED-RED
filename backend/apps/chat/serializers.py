@@ -1,17 +1,32 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db import models
-from .models import ChatRoom, Message, MessageRead
+from .models import ChatRoom, Message
 
 User = get_user_model()
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = serializers.StringRelatedField()
+    sender_id = serializers.IntegerField(source='sender.id', read_only=True)
+    sender_username = serializers.CharField(
+        source='sender.username',
+        read_only=True
+    )
+    timestamp = serializers.DateTimeField(source='created_at', read_only=True)
     
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'content', 'image', 'is_read', 'created_at']
+        fields = [
+            'id',
+            'sender',
+            'sender_id',
+            'sender_username',
+            'content',
+            'image',
+            'is_read',
+            'timestamp',
+            'created_at'
+        ]
         read_only_fields = ['id', 'sender', 'created_at']
 
 
@@ -23,7 +38,15 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'participants', 'last_message', 'unread_count', 'other_user', 'created_at', 'updated_at']
+        fields = [
+            'id',
+            'participants',
+            'last_message',
+            'unread_count',
+            'other_user',
+            'created_at',
+            'updated_at'
+        ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_last_message(self, obj):
@@ -48,13 +71,21 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             if participants.count() == 2:
                 other_user = participants.exclude(id=request.user.id).first()
                 if other_user:
+                    full_name = (
+                        f"{other_user.first_name} {other_user.last_name}"
+                    )
+                    profile_pic = (
+                        other_user.profile_picture.url
+                        if other_user.profile_picture
+                        else None
+                    )
                     return {
                         'id': other_user.id,
                         'username': other_user.username,
                         'first_name': other_user.first_name,
                         'last_name': other_user.last_name,
-                        'full_name': f"{other_user.first_name} {other_user.last_name}",
-                        'profile_picture': other_user.profile_picture.url if other_user.profile_picture else None
+                        'full_name': full_name,
+                        'profile_picture': profile_pic
                     }
         return None
 

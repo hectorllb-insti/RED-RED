@@ -1,8 +1,12 @@
+"use client";
+
 import { Camera, Settings, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ProfileEdit from "../components/ProfileEdit";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
@@ -11,6 +15,7 @@ const Profile = () => {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("posts");
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   // Si no hay userId, mostrar perfil del usuario actual
   const isOwnProfile =
@@ -96,9 +101,7 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-      </div>
+      <LoadingSpinner variant="spinner" text="Cargando perfil..." fullScreen />
     );
   }
 
@@ -113,18 +116,18 @@ const Profile = () => {
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
         {/* Cover Photo */}
-        <div className="h-48 bg-gradient-to-r from-primary-400 to-primary-600 relative">
+        <div className="h-52 bg-gradient-to-br from-primary-500 via-primary-600 to-accent-600 relative">
           {profileUser.cover_picture && (
             <img
-              src={profileUser.cover_picture}
+              src={profileUser.cover_picture || "/placeholder.svg"}
               alt="Cover"
               className="w-full h-full object-cover"
             />
           )}
           {isOwnProfile && (
-            <button className="absolute top-4 right-4 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-70">
+            <button className="absolute top-4 right-4 p-2.5 bg-gray-900/60 backdrop-blur-sm rounded-xl text-white hover:bg-gray-900/80 transition-all">
               <Camera className="h-5 w-5" />
             </button>
           )}
@@ -132,16 +135,16 @@ const Profile = () => {
 
         {/* Profile Info */}
         <div className="p-6">
-          <div className="flex items-start justify-between -mt-16">
-            <div className="flex items-end space-x-4">
+          <div className="flex items-start justify-between -mt-20">
+            <div className="flex items-end gap-4">
               <div className="relative">
                 <img
-                  className="h-32 w-32 rounded-full border-4 border-white shadow-lg"
+                  className="h-36 w-36 rounded-2xl border-4 border-white shadow-xl ring-2 ring-gray-100"
                   src={profileUser.profile_picture || "/default-avatar.png"}
                   alt={profileUser.full_name}
                 />
                 {isOwnProfile && (
-                  <button className="absolute bottom-2 right-2 p-2 bg-primary-500 rounded-full text-white shadow-lg hover:bg-primary-600">
+                  <button className="absolute bottom-2 right-2 p-2 bg-primary-600 rounded-xl text-white shadow-lg hover:bg-primary-700 transition-all">
                     <Camera className="h-4 w-4" />
                   </button>
                 )}
@@ -150,13 +153,18 @@ const Profile = () => {
                 <h1 className="text-2xl font-bold text-gray-900">
                   {profileUser.full_name}
                 </h1>
-                <p className="text-gray-600">@{profileUser.username}</p>
+                <p className="text-gray-600 font-medium">
+                  @{profileUser.username}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3 mt-16">
+            <div className="flex items-center gap-3 mt-20">
               {isOwnProfile ? (
-                <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                <button
+                  onClick={() => setShowEditProfile(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-semibold"
+                >
                   <Settings className="h-4 w-4" />
                   <span>Editar perfil</span>
                 </button>
@@ -164,10 +172,10 @@ const Profile = () => {
                 <button
                   onClick={handleFollow}
                   disabled={followMutation.isLoading}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium ${
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all ${
                     profileUser.is_following
                       ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-primary-600 text-white hover:bg-primary-700"
+                      : "bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/30"
                   } disabled:opacity-50`}
                 >
                   {profileUser.is_following ? (
@@ -188,44 +196,50 @@ const Profile = () => {
 
           {/* Bio */}
           {profileUser.bio && (
-            <p className="mt-4 text-gray-700">{profileUser.bio}</p>
+            <p className="mt-5 text-gray-700 leading-relaxed">
+              {profileUser.bio}
+            </p>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center space-x-6 mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-8 mt-6 pt-6 border-t border-gray-100">
             <div className="text-center">
-              <p className="text-xl font-semibold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900">
                 {userPosts?.count || 0}
               </p>
-              <p className="text-sm text-gray-600">Publicaciones</p>
+              <p className="text-sm text-gray-600 font-medium mt-1">
+                Publicaciones
+              </p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-semibold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900">
                 {profileUser.followers_count || 0}
               </p>
-              <p className="text-sm text-gray-600">Seguidores</p>
+              <p className="text-sm text-gray-600 font-medium mt-1">
+                Seguidores
+              </p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-semibold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900">
                 {profileUser.following_count || 0}
               </p>
-              <p className="text-sm text-gray-600">Siguiendo</p>
+              <p className="text-sm text-gray-600 font-medium mt-1">
+                Siguiendo
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Profile Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
         <div className="border-b border-gray-200">
           <nav className="flex">
             {["posts", "about"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-medium border-b-2 ${
+                className={`px-6 py-4 text-sm font-semibold border-b-2 transition-all ${
                   activeTab === tab
-                    ? "border-primary-500 text-primary-600"
+                    ? "border-primary-600 text-primary-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
@@ -237,35 +251,35 @@ const Profile = () => {
 
         <div className="p-6">
           {activeTab === "posts" && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {userPosts?.results?.map((post) => (
                 <div
                   key={post.id}
-                  className="border-b border-gray-100 pb-4 last:border-b-0"
+                  className="border-b border-gray-100 pb-5 last:border-b-0"
                 >
-                  <p className="text-gray-800 whitespace-pre-wrap">
+                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
                     {post.content}
                   </p>
                   {post.image && (
                     <img
-                      src={post.image}
+                      src={post.image || "/placeholder.svg"}
                       alt="Post"
-                      className="mt-2 rounded-lg max-w-full h-auto"
+                      className="mt-3 rounded-xl max-w-full h-auto"
                     />
                   )}
-                  <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 font-medium">
                       <span>{post.likes_count} likes</span>
                       <span>{post.comments_count} comentarios</span>
                     </div>
-                    <span>
+                    <span className="font-medium">
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
               ))}
               {(!userPosts?.results || userPosts.results.length === 0) && (
-                <p className="text-gray-500 text-center py-8">
+                <p className="text-gray-500 text-center py-12 font-medium">
                   {isOwnProfile
                     ? "Aún no has publicado nada"
                     : "Este usuario no ha publicado nada"}
@@ -308,6 +322,11 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* Profile Edit Modal */}
+      {showEditProfile && (
+        <ProfileEdit onClose={() => setShowEditProfile(false)} />
+      )}
     </div>
   );
 };

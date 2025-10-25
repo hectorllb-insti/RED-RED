@@ -2,11 +2,17 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.listeners = new Map();
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000; // Empezar con 1 segundo
+    this.maxReconnectDelay = 30000; // Máximo 30 segundos
+    this.reconnectTimer = null;
+    this.isReconnecting = false;
   }
 
   connect(token) {
     if (!this.socket && token) {
-      // Conexión WebSocket segura - token enviado en query string para autenticación
+      // Conexión WebSocket segura - token enviado en query string
       const wsUrl = `ws://localhost:8000/ws/chat/?token=${encodeURIComponent(
         token
       )}`;
@@ -14,25 +20,31 @@ class SocketService {
       this.token = token;
 
       this.socket.onopen = () => {
-        // Enviar token de autenticación de forma segura después de conectar
+        // Enviar token de autenticación
         this.socket.send(
           JSON.stringify({
             type: "authenticate",
             token: this.token,
           })
         );
-        // Conexión WebSocket establecida
+        // Resetear contadores de reconexión
+        this.reconnectAttempts = 0;
+        this.reconnectDelay = 1000;
+        this.isReconnecting = false;
         this.triggerListener("connect");
       };
 
       this.socket.onclose = (event) => {
-        // WebSocket desconectado
         this.socket = null;
         this.triggerListener("disconnect");
+
+        // Intentar reconectar si no fue cierre manual
+        if (!event.wasClean && this.token) {
+          this.attemptReconnect();
+        }
       };
 
       this.socket.onerror = (error) => {
-        // Error de conexión WebSocket manejado
         this.triggerListener("connect_error", error);
       };
 
@@ -41,11 +53,46 @@ class SocketService {
           const data = JSON.parse(event.data);
           this.handleMessage(data);
         } catch (error) {
-          // Error al parsear mensaje WebSocket
+          console.error("Error parsing WebSocket message:", error);
         }
       };
     }
     return this.socket;
+  }
+
+  attemptReconnect() {
+    if (
+      this.isReconnecting ||
+      this.reconnectAttempts >= this.maxReconnectAttempts
+    ) {
+      return;
+    }
+
+    this.isReconnecting = true;
+    this.triggerListener("reconnecting", {
+      attempt: this.reconnectAttempts + 1,
+      maxAttempts: this.maxReconnectAttempts,
+    });
+
+    // Calcular delay exponencial: 1s, 2s, 4s, 8s, 16s, 30s (max)
+    const delay = Math.min(
+      this.reconnectDelay * Math.pow(2, this.reconnectAttempts),
+      this.maxReconnectDelay
+    );
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectAttempts++;
+      this.isReconnecting = false;
+      this.connect(this.token);
+    }, delay);
+  }
+
+  cancelReconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.isReconnecting = false;
   }
 
   // Agregar listener personalizado
@@ -83,11 +130,14 @@ class SocketService {
   }
 
   disconnect() {
+    this.cancelReconnect();
     if (this.socket) {
       this.socket.close();
       this.socket = null;
       this.listeners.clear();
     }
+    this.reconnectAttempts = 0;
+    this.token = null;
   }
 
   // Enviar mensaje al WebSocket
