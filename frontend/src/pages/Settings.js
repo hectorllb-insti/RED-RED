@@ -2,9 +2,9 @@ import { Bell, Lock, Save, Shield, User } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import DeleteAccountButtonSimple from "../components/DeleteAccountButtonSimple";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import DeleteAccountButtonSimple from "../components/DeleteAccountButtonSimple";
 
 const Settings = () => {
   const { user } = useAuth();

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useMutation } from 'react-query';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './DeleteAccountButton.css';
