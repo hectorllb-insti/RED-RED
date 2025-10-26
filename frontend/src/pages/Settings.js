@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import DeleteAccountButtonSimple from "../components/DeleteAccountButtonSimple";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -850,6 +851,11 @@ const Settings = () => {
                       Próximamente
                     </button>
                   </div>
+                </div>
+
+                {/* Zona de Peligro - Eliminar Cuenta */}
+                <div className="mt-8">
+                  <DeleteAccountButtonSimple />
                 </div>
               </div>
             </div>

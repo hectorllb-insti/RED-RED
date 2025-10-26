@@ -39,8 +39,9 @@ const Home = () => {
       return response.data;
     },
     {
-      staleTime: 3 * 60 * 1000, // 3 minutos
-      refetchOnMount: false,
+      staleTime: 1 * 60 * 1000, // 1 minuto
+      refetchOnMount: true, // Recargar cuando vuelvas a la página
+      refetchOnWindowFocus: false, // No recargar al cambiar de pestaña
     }
   );
 

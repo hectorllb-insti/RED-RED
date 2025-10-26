@@ -49,6 +49,7 @@ const Search = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["users", debouncedSearchTerm]);
+        queryClient.invalidateQueries(["posts"]); // Recargar feed de posts
         toast.success("Usuario seguido exitosamente");
       },
       onError: (error) => {
@@ -65,6 +66,7 @@ const Search = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["users", debouncedSearchTerm]);
+        queryClient.invalidateQueries(["posts"]); // Recargar feed de posts
         toast.success("Has dejado de seguir al usuario");
       },
       onError: (error) => {

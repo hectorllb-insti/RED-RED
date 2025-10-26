@@ -8,7 +8,9 @@ import { useParams } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProfileEdit from "../components/ProfileEdit";
 import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
+import { tokenManager } from "../services/tokenManager";
+
+const API_BASE_URL = "http://localhost:8000/api";
 
 const Profile = () => {
   const { userId } = useParams();
@@ -28,19 +30,42 @@ const Profile = () => {
   const { data: profileUser, isLoading } = useQuery(
     ["profile", profileIdentifier],
     async () => {
+      const token = tokenManager.getToken();
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
       if (isOwnProfile) {
-        const response = await api.get("/users/profile/");
-        return response.data;
+        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+          headers,
+        });
+        if (!response.ok) {
+          throw new Error("Error al obtener el perfil");
+        }
+        return await response.json();
       } else {
         // Intentar por ID primero, si falla por username
         try {
-          const response = await api.get(`/users/${profileIdentifier}/`);
-          return response.data;
+          const response = await fetch(
+            `${API_BASE_URL}/users/${profileIdentifier}/`,
+            { headers }
+          );
+          if (!response.ok) {
+            throw new Error("Error al obtener el perfil");
+          }
+          return await response.json();
         } catch (error) {
           if (error.response?.status === 404 && isNaN(profileIdentifier)) {
             // Si el identificador no es numérico, podría ser un username
-            const response = await api.get(`/users/${profileIdentifier}/`);
-            return response.data;
+            const response = await fetch(
+              `${API_BASE_URL}/users/${profileIdentifier}/`,
+              { headers }
+            );
+            if (!response.ok) {
+              throw new Error("Error al obtener el perfil");
+            }
+            return await response.json();
           }
           throw error;
         }
@@ -53,8 +78,20 @@ const Profile = () => {
     ["userPosts", profileUser?.username],
     async () => {
       if (profileUser?.username) {
-        const response = await api.get(`/posts/user/${profileUser.username}/`);
-        return response.data;
+        const token = tokenManager.getToken();
+        const response = await fetch(
+          `${API_BASE_URL}/posts/user/${profileUser.username}/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Error al obtener las publicaciones");
+        }
+        return await response.json();
       }
       return [];
     },
@@ -66,21 +103,30 @@ const Profile = () => {
   // Mutation para seguir/dejar de seguir
   const followMutation = useMutation(
     async () => {
-      if (profileUser.is_following) {
-        const response = await api.post(
-          `/users/unfollow/${profileUser.username}/`
-        );
-        return response.data;
-      } else {
-        const response = await api.post(
-          `/users/follow/${profileUser.username}/`
-        );
-        return response.data;
+      const token = tokenManager.getToken();
+      const endpoint = profileUser.is_following
+        ? `${API_BASE_URL}/users/unfollow/${profileUser.username}/`
+        : `${API_BASE_URL}/users/follow/${profileUser.username}/`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al actualizar el seguimiento");
       }
+
+      return await response.json();
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["profile", profileIdentifier]);
+        queryClient.invalidateQueries(["posts"]); // Recargar feed de posts
         toast.success(
           profileUser?.is_following
             ? "Dejaste de seguir a este usuario"
@@ -88,9 +134,7 @@ const Profile = () => {
         );
       },
       onError: (error) => {
-        toast.error(
-          error.response?.data?.error || "Error al actualizar el seguimiento"
-        );
+        toast.error(error.message || "Error al actualizar el seguimiento");
       },
     }
   );

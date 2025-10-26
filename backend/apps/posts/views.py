@@ -28,15 +28,19 @@ class PostListCreateView(generics.ListCreateAPIView):
         if author_id:
             try:
                 author_id = int(author_id)
-                return Post.objects.filter(author_id=author_id)
+                return Post.objects.filter(author_id=author_id).order_by('-created_at')
             except (ValueError, TypeError):
                 return Post.objects.none()
         
-        # Mostrar posts del usuario y de usuarios que sigue
-        following_users = Follow.objects.filter(follower=self.request.user).values_list('following', flat=True)
+        # Obtener usuarios que sigue el usuario actual
+        following_ids = Follow.objects.filter(
+            follower=self.request.user
+        ).values_list('following_id', flat=True)
+        
+        # Mostrar solo posts de usuarios que sigue (SIN incluir sus propias publicaciones)
         return Post.objects.filter(
-            author__in=list(following_users) + [self.request.user.id]
-        )
+            author_id__in=following_ids
+        ).select_related('author').order_by('-created_at')
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):

@@ -21,7 +21,6 @@ if %errorlevel% neq 0 (
 
 REM Instalar dependencias del backend
 echo Instalando dependencias del backend...
-cd backend
 pip install -r requirements.txt
 
 REM Copiar archivo de configuración
