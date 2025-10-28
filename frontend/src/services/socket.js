@@ -113,6 +113,8 @@ class SocketService {
   // Manejar mensajes entrantes
   handleMessage(data) {
     const { type, message, room } = data;
+    
+    console.log("🔗 WebSocket mensaje recibido:", data);
 
     switch (type) {
       case "chat_message":
@@ -138,6 +140,17 @@ class SocketService {
         
         this.triggerListener("message", { message: processedMessage, room });
         break;
+      case "profile_updated":
+        // Manejar actualización de perfil de usuario
+        console.log("📸 WebSocket profile_updated recibido:", data);
+        console.log("👤 Usuario ID:", data.user_id);
+        console.log("📊 User data:", data.user_data);
+        
+        this.triggerListener("profile_updated", { 
+          user_id: data.user_id, 
+          user_data: data.user_data 
+        });
+        break;
       case "user_joined":
         this.triggerListener("user_joined", { room, user: data.user });
         break;
@@ -145,7 +158,7 @@ class SocketService {
         this.triggerListener("user_left", { room, user: data.user });
         break;
       default:
-      // Mensaje WebSocket no reconocido
+        console.log("❓ Mensaje WebSocket no reconocido:", type, data);
     }
   }
 
@@ -191,10 +204,22 @@ class SocketService {
     this.on("message", callback);
   }
 
+  // Escuchar actualizaciones de perfil
+  onProfileUpdate(callback) {
+    this.on("profile_updated", callback);
+  }
+
   // Remover listener de mensajes
   offMessage() {
     if (this.listeners.has("message")) {
       this.listeners.delete("message");
+    }
+  }
+
+  // Remover listener de actualizaciones de perfil
+  offProfileUpdate() {
+    if (this.listeners.has("profile_updated")) {
+      this.listeners.delete("profile_updated");
     }
   }
 

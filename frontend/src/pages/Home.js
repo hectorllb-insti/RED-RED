@@ -301,7 +301,7 @@ const Home = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-10">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
         <div className="flex items-center gap-3">
           <img

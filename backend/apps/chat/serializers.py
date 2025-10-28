@@ -78,11 +78,15 @@ class ChatRoomSerializer(serializers.ModelSerializer):
                     full_name = (
                         f"{other_user.first_name} {other_user.last_name}"
                     )
-                    profile_pic = (
-                        other_user.profile_picture.url
-                        if other_user.profile_picture
-                        else None
-                    )
+                    
+                    # Construir URL absoluta para profile_picture igual que en UserSerializer
+                    profile_pic = None
+                    if other_user.profile_picture:
+                        if request:
+                            profile_pic = request.build_absolute_uri(other_user.profile_picture.url)
+                        else:
+                            profile_pic = other_user.profile_picture.url
+                    
                     return {
                         'id': other_user.id,
                         'username': other_user.username,

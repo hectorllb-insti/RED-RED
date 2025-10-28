@@ -158,7 +158,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-10">
       {/* Profile Header */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
         {/* Cover Photo */}

@@ -73,7 +73,7 @@ const Layout = ({ children }) => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
-        className="sticky top-0 z-50 backdrop-blur-2xl bg-white/70 border-b-2 border-gray-300/60 shadow-sm"
+        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl bg-white/70 border-b-2 border-gray-300/60 shadow-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5">
           <div className="flex justify-between items-center h-12 lg:h-14">
@@ -269,7 +269,7 @@ const Layout = ({ children }) => {
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-          className="hidden lg:block fixed left-0 top-[3.75rem] h-[calc(100vh-3.75rem)] w-64 xl:w-72 bg-gradient-to-b from-white/90 to-white/70 backdrop-blur-2xl border-r-2 border-gray-300/60 shadow-sm"
+          className="hidden lg:block fixed left-0 top-[4.25rem] h-[calc(100vh-4.25rem)] w-64 xl:w-72 bg-gradient-to-b from-white/90 to-white/70 backdrop-blur-2xl border-r-2 border-gray-300/60 shadow-sm"
         >
           <div className="p-4 pt-8 space-y-3 overflow-y-auto h-full scrollbar-hide">
             {navigation.map((item, index) => {

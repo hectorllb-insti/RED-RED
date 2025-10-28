@@ -110,6 +110,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'room': room_id
                         }
                     )
+            
+            elif message_type == 'profile_updated':
+                # Manejar actualización de perfil del usuario
+                await self.broadcast_profile_update()
                     
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({
@@ -133,6 +137,67 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'user': event['user'],
                 'is_typing': event['is_typing'],
             }))
+
+    async def profile_update(self, event):
+        # Enviar actualización de perfil a todos los clientes conectados
+        print(f"🔄 Consumer recibió profile_update para usuario {event['user_id']}")
+        print(f"📊 Enviando a cliente: {event['user_data']}")
+        
+        await self.send(text_data=json.dumps({
+            'type': 'profile_updated',
+            'user_id': event['user_id'],
+            'user_data': event['user_data']
+        }))
+        
+        print(f"✅ Profile update enviado al cliente para usuario {event['user_id']}")
+
+    async def broadcast_profile_update(self):
+        # Obtener datos actualizados del usuario
+        user_data = await self.get_user_data()
+        
+        # Obtener todas las salas donde participa el usuario
+        user_rooms = await self.get_user_chat_rooms()
+        
+        # Enviar la actualización a todas las salas donde participa
+        for room_id in user_rooms:
+            await self.channel_layer.group_send(
+                f'chat_{room_id}',
+                {
+                    'type': 'profile_update',
+                    'user_id': self.user.id,
+                    'user_data': user_data
+                }
+            )
+
+    @database_sync_to_async
+    def get_user_data(self):
+        """Obtener datos actualizados del usuario para enviar via WebSocket"""
+        try:
+            user = User.objects.get(id=self.user.id)
+            profile_pic_url = None
+            if user.profile_picture:
+                # Construir URL absoluta para la imagen de perfil
+                profile_pic_url = user.profile_picture.url
+            
+            return {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'full_name': f"{user.first_name} {user.last_name}",
+                'profile_picture': profile_pic_url
+            }
+        except User.DoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def get_user_chat_rooms(self):
+        """Obtener IDs de todas las salas donde participa el usuario"""
+        return list(
+            ChatRoom.objects.filter(
+                participants=self.user
+            ).values_list('id', flat=True)
+        )
 
     @database_sync_to_async
     def save_message(self, message_content, room_id=None):

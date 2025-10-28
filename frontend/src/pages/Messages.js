@@ -3,9 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import EmptyState from "../components/EmptyState";
+import ChatAvatar from "../components/ui/ChatAvatar";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import socketService from "../services/socket";
+import { getImageUrl, clearUserImageCache } from "../utils/imageUtils";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -140,6 +142,32 @@ const Messages = () => {
       onSuccess: (data) => {
         console.log("✅ Query de conversaciones exitosa. Datos finales:", data);
         console.log("✅ Cantidad de conversaciones para mostrar:", data?.length || 0);
+        
+        // ACTUALIZAR HEADER: Sincronizar el selectedChat cuando se actualicen las conversaciones
+        setSelectedChat(prevChat => {
+          if (prevChat && data) {
+            // Buscar la conversación actualizada que corresponde al chat seleccionado
+            const updatedConversation = data.find(conv => conv.id === prevChat.id);
+            if (updatedConversation && updatedConversation.other_user) {
+              console.log("🔄 Sincronizando header con conversación actualizada");
+              console.log("📸 Header anterior:", prevChat.other_user);
+              console.log("📸 Header nuevo:", updatedConversation.other_user);
+              
+              // Si la imagen cambió, actualizar el selectedChat
+              if (prevChat.other_user?.profile_picture !== updatedConversation.other_user?.profile_picture) {
+                console.log("🖼️ Imagen de perfil cambió en header - actualizando");
+                return {
+                  ...prevChat,
+                  other_user: {
+                    ...updatedConversation.other_user,
+                    _profileUpdated: Date.now() // Forzar re-render
+                  }
+                };
+              }
+            }
+          }
+          return prevChat;
+        });
       }
     }
   );
@@ -276,6 +304,67 @@ const Messages = () => {
       toast.error("Desconectado del chat", { duration: 3000 });
     });
 
+    // Escuchar actualizaciones de perfil de usuarios
+    socketService.onProfileUpdate((data) => {
+      console.log("📸 Actualización de perfil recibida en Messages.js:", data);
+      const { user_id, user_data } = data;
+      const updateTimestamp = Date.now();
+      
+      console.log("🆔 User ID del evento:", user_id);
+      console.log("📊 User data del evento:", user_data);
+      console.log("⏰ Timestamp generado:", updateTimestamp);
+      
+      // Limpiar cache de imágenes para forzar recarga con nueva imagen
+      clearUserImageCache(user_id);
+      
+      // FALLBACK: También invalidar las conversaciones para forzar refetch
+      queryClient.invalidateQueries("conversations");
+      
+      // Actualizar la lista de conversaciones si el usuario actualizado está en alguna
+      queryClient.setQueryData("conversations", (oldConversations) => {
+        if (!oldConversations) return oldConversations;
+        
+        return oldConversations.map(conversation => {
+          if (conversation.other_user?.id === user_id) {
+            console.log(`📸 Actualizando perfil de ${conversation.other_user.username} en conversaciones`);
+            return {
+              ...conversation,
+              other_user: {
+                ...conversation.other_user,
+                ...user_data,
+                _profileUpdated: updateTimestamp
+              }
+            };
+          }
+          return conversation;
+        });
+      });
+
+      // Actualizar el chat seleccionado si corresponde al usuario actualizado
+      setSelectedChat(prevChat => {
+        if (prevChat && prevChat.other_user?.id === user_id) {
+          console.log(`📸 Actualizando perfil de ${prevChat.other_user.username} en chat seleccionado`);
+          console.log('📸 Datos anteriores:', prevChat.other_user);
+          console.log('📸 Nuevos datos:', user_data);
+          console.log('📸 Timestamp de actualización:', updateTimestamp);
+          
+          // Crear un objeto completamente nuevo para forzar re-render
+          const updatedChat = {
+            ...prevChat,
+            other_user: {
+              ...prevChat.other_user,
+              ...user_data,
+              _profileUpdated: updateTimestamp
+            }
+          };
+          
+          console.log('📸 Chat actualizado:', updatedChat);
+          return updatedChat;
+        }
+        return prevChat;
+      });
+    });
+
     // NO usar listener global aquí - ya se maneja en el useEffect del chat específico
     // Solo manejar eventos de conexión/desconexión
 
@@ -283,6 +372,7 @@ const Messages = () => {
       socketService.listeners.delete("reconnecting");
       socketService.listeners.delete("connect");
       socketService.listeners.delete("disconnect");
+      socketService.offProfileUpdate();
     };
   }, [user, selectedChat, queryClient]);
 
@@ -493,7 +583,7 @@ const Messages = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-96 flex">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] flex mt-10">
       {/* Sidebar - Lista de conversaciones */}
       <div className="w-1/3 border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
@@ -654,13 +744,11 @@ const Messages = () => {
               >
                 <div className="flex items-center space-x-3">
                   <div className="relative">
-                    <img
-                      className="h-10 w-10 rounded-full"
-                      src={
-                        conversation.other_user?.profile_picture ||
-                        "/default-avatar.png"
-                      }
+                    <ChatAvatar
+                      src={conversation.other_user?.profile_picture}
                       alt={conversation.other_user?.full_name || "Usuario"}
+                      size="sm"
+                      updateKey={conversation.other_user?._profileUpdated}
                     />
                     {conversation.unread_count > 0 && selectedChat?.id !== conversation.id && (
                       <div className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
@@ -687,17 +775,15 @@ const Messages = () => {
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
         {selectedChat ? (
-          <>
+          <div className="flex-1 overflow-y-auto">
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
               <div className="flex items-center space-x-3">
-                <img
-                  className="h-10 w-10 rounded-full"
-                  src={
-                    selectedChat.other_user?.profile_picture ||
-                    "/default-avatar.png"
-                  }
+                <ChatAvatar
+                  src={selectedChat.other_user?.profile_picture}
                   alt={selectedChat.other_user?.full_name || "Usuario"}
+                  size="sm"
+                  updateKey={selectedChat.other_user?._profileUpdated}
                 />
                 <div>
                   <p className="font-medium text-gray-900">
@@ -720,7 +806,14 @@ const Messages = () => {
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
+              className="px-4 pt-8 pb-4 space-y-4"
+              style={{
+                minHeight: 0,
+                flexShrink: 1,
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
             >
               {isLoadingMore && (
                 <div className="text-center py-2">
@@ -877,7 +970,7 @@ const Messages = () => {
                 </button>
               </div>
             </form>
-          </>
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

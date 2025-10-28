@@ -140,6 +140,14 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     dispatch({ type: "UPDATE_USER", payload: userData });
+    
+    // Notificar al WebSocket sobre la actualización del perfil
+    if (socketService.isConnected()) {
+      socketService.send({
+        type: "profile_updated",
+        user_data: userData
+      });
+    }
   };
 
   const value = {
