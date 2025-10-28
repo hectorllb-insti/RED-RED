@@ -88,7 +88,7 @@ def like_post(request, post_id):
 def comment_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     
-    serializer = CommentSerializer(data=request.data)
+    serializer = CommentSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         serializer.save(author=request.user, post=post)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -101,7 +101,7 @@ def comment_post(request, post_id):
 def post_comments(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     comments = Comment.objects.filter(post=post)
-    serializer = CommentSerializer(comments, many=True)
+    serializer = CommentSerializer(comments, many=True, context={'request': request})
     return Response(serializer.data)
 
 

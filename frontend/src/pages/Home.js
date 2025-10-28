@@ -18,6 +18,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { securityUtils } from "../utils/security";
+import { getImageUrl } from "../utils/imageUtils";
 
 const Home = () => {
   const { user } = useAuth();
@@ -420,8 +421,8 @@ const Home = () => {
               <div className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
-                    className="h-11 w-11 rounded-full ring-2 ring-gray-100"
-                    src={post.author_profile_picture || "/default-avatar.png"}
+                    className="h-11 w-11 rounded-full ring-2 ring-gray-100 object-cover"
+                    src={getImageUrl(post.author_profile_picture) || "/default-avatar.png"}
                     alt={`${post.author_first_name} ${post.author_last_name}`}
                   />
                   <div>
@@ -605,9 +606,12 @@ const CommentsSection = ({
       <div className="p-4 border-b border-gray-50">
         <div className="flex space-x-3">
           <img
-            className="h-8 w-8 rounded-full"
-            src={user?.profile_picture || "/default-avatar.png"}
-            alt={user?.full_name}
+            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+            src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
+            alt={user?.full_name || "Tu perfil"}
+            onError={(e) => {
+              e.target.src = "/default-avatar.png";
+            }}
           />
           <div className="flex-1">
             <textarea
@@ -640,11 +644,12 @@ const CommentsSection = ({
               comments.map((comment) => (
                 <div key={comment.id} className="flex space-x-3">
                   <img
-                    className="h-8 w-8 rounded-full"
-                    src={
-                      comment.author_profile_picture || "/default-avatar.png"
-                    }
-                    alt={comment.author_username}
+                    className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+                    src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
+                    alt={comment.author_username || "Usuario"}
+                    onError={(e) => {
+                      e.target.src = "/default-avatar.png";
+                    }}
                   />
                   <div className="flex-1">
                     <div className="bg-gray-50 rounded-lg p-3">
