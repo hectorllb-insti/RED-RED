@@ -3,9 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import EmptyState from "../components/EmptyState";
+import ChatAvatar from "../components/ui/ChatAvatar";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import socketService from "../services/socket";
+import { getImageUrl, clearUserImageCache } from "../utils/imageUtils";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -27,15 +29,146 @@ const Messages = () => {
   const messagesContainerRef = useRef(null);
 
   // Obtener lista de conversaciones
-  const { data: conversations = [] } = useQuery(
+  const { data: conversations = [], isLoading: isLoadingConversations, error: conversationsError, refetch: refetchConversations } = useQuery(
     ["conversations"],
     async () => {
-      const response = await api.get("/chat/chats/");
-      return response.data;
+      try {
+        console.log("🔍 Iniciando query de conversaciones...");
+        console.log("👤 Usuario actual:", user);
+        console.log("🔐 Autenticado:", !!user);
+        
+        console.log("📡 Realizando petición a /chat/chats/");
+        const response = await api.get("/chat/chats/");
+        
+        console.log("📋 Respuesta completa de conversaciones:", response);
+        console.log("📋 response.data:", response.data);
+        console.log("📋 Tipo de response.data:", typeof response.data);
+        console.log("📋 Es array response.data:", Array.isArray(response.data));
+        
+        if (!response.data) {
+          console.warn("⚠️ response.data es null o undefined");
+          return [];
+        }
+        
+        // Extraer las conversaciones del objeto paginado
+        let conversationsArray;
+        if (Array.isArray(response.data)) {
+          // Si es un array directo (sin paginación)
+          conversationsArray = response.data;
+          console.log("📦 Respuesta directa como array");
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          // Si es un objeto paginado con results
+          conversationsArray = response.data.results;
+          console.log("📦 Respuesta paginada, extrayendo results");
+          console.log("📊 Total de conversaciones:", response.data.count);
+        } else {
+          console.warn("⚠️ Estructura de respuesta no reconocida:", response.data);
+          return [];
+        }
+        
+        console.log(`✅ Conversaciones recibidas: ${conversationsArray.length} elementos`);
+        
+        // Verificar duplicados por ID
+        const ids = conversationsArray.map(conv => conv.id);
+        const uniqueIds = [...new Set(ids)];
+        if (ids.length !== uniqueIds.length) {
+          console.warn("⚠️ Detectados duplicados por ID:", {
+            total: ids.length,
+            unicos: uniqueIds.length,
+            duplicados: ids.filter((id, index) => ids.indexOf(id) !== index)
+          });
+        }
+        
+        // Verificar duplicados por other_user
+        const otherUserIds = conversationsArray
+          .map(conv => conv.other_user?.id)
+          .filter(id => id !== undefined);
+        const uniqueOtherUserIds = [...new Set(otherUserIds)];
+        if (otherUserIds.length !== uniqueOtherUserIds.length) {
+          console.warn("⚠️ Detectados duplicados por other_user:", {
+            total: otherUserIds.length,
+            unicos: uniqueOtherUserIds.length,
+            duplicados: otherUserIds.filter((id, index) => otherUserIds.indexOf(id) !== index)
+          });
+        }
+        
+        conversationsArray.forEach((conv, index) => {
+          console.log(`  📝 Conversación ${index + 1}:`, {
+            id: conv.id,
+            name: conv.name || 'Sin nombre',
+            other_user: conv.other_user,
+            participants: conv.participants,
+            last_message: conv.last_message,
+            updated_at: conv.updated_at,
+            raw: conv
+          });
+        });
+        
+        // Eliminar duplicados en el frontend como medida de seguridad
+        const uniqueConversations = conversationsArray.filter((conv, index, self) => 
+          index === self.findIndex(c => c.id === conv.id)
+        );
+        
+        if (uniqueConversations.length !== conversationsArray.length) {
+          console.warn(`⚠️ Eliminados ${conversationsArray.length - uniqueConversations.length} duplicados en el frontend`);
+        }
+        
+        // Ordenar conversaciones por updated_at descendente (más recientes primero)
+        const sortedConversations = uniqueConversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        console.log("🔄 Conversaciones ordenadas:", sortedConversations);
+        console.log(`✅ Retornando ${sortedConversations.length} conversaciones únicas`);
+        return sortedConversations;
+      } catch (error) {
+        console.error("❌ Error detallado obteniendo conversaciones:", error);
+        console.error("❌ Error response:", error.response);
+        console.error("❌ Error status:", error.response?.status);
+        console.error("❌ Error data:", error.response?.data);
+        throw error;
+      }
     },
     {
-      staleTime: 2 * 60 * 1000, // 2 minutos para conversaciones
-      refetchInterval: 30000, // Refetch cada 30 segundos
+      enabled: !!user, // Solo ejecutar si hay usuario autenticado
+      staleTime: 15 * 1000, // Reducido de 30s a 15s - datos frescos más rápido
+      refetchInterval: 5000, // Reducido de 10s a 5s - actualizaciones más frecuentes
+      retry: 3,
+      onError: (error) => {
+        console.error("❌ Error en query de conversaciones:", error);
+        if (error.response?.status === 401) {
+          toast.error("Sesión expirada. Por favor, inicia sesión nuevamente.");
+        } else {
+          toast.error("Error al cargar conversaciones");
+        }
+      },
+      onSuccess: (data) => {
+        console.log("✅ Query de conversaciones exitosa. Datos finales:", data);
+        console.log("✅ Cantidad de conversaciones para mostrar:", data?.length || 0);
+        
+        // ACTUALIZAR HEADER: Sincronizar el selectedChat cuando se actualicen las conversaciones
+        setSelectedChat(prevChat => {
+          if (prevChat && data) {
+            // Buscar la conversación actualizada que corresponde al chat seleccionado
+            const updatedConversation = data.find(conv => conv.id === prevChat.id);
+            if (updatedConversation && updatedConversation.other_user) {
+              console.log("🔄 Sincronizando header con conversación actualizada");
+              console.log("📸 Header anterior:", prevChat.other_user);
+              console.log("📸 Header nuevo:", updatedConversation.other_user);
+              
+              // Si la imagen cambió, actualizar el selectedChat
+              if (prevChat.other_user?.profile_picture !== updatedConversation.other_user?.profile_picture) {
+                console.log("🖼️ Imagen de perfil cambió en header - actualizando");
+                return {
+                  ...prevChat,
+                  other_user: {
+                    ...updatedConversation.other_user,
+                    _profileUpdated: Date.now() // Forzar re-render
+                  }
+                };
+              }
+            }
+          }
+          return prevChat;
+        });
+      }
     }
   );
 
@@ -59,15 +192,38 @@ const Messages = () => {
     }
   );
 
-  // Función estable para marcar mensajes como leídos
+  // Función estable para marcar mensajes como leídos (optimizada para velocidad)
   const markAsRead = useCallback(
     async (chatId) => {
       try {
-        await api.post(`/chat/chats/${chatId}/read/`);
-        // Invalidar solo las conversaciones sin refetch automático
-        queryClient.setQueryData("conversations", (oldData) => oldData);
+        console.log(`📖 Marcando mensajes como leídos para chat ${chatId}`);
+        
+        // ⚡ ACTUALIZACIÓN OPTIMISTA: Actualizar el estado local INMEDIATAMENTE
+        queryClient.setQueryData("conversations", (oldConversations) => {
+          if (!oldConversations) return oldConversations;
+          
+          return oldConversations.map(conversation => {
+            if (conversation.id === chatId) {
+              console.log(`🔄 Actualizando unread_count para chat ${chatId}: ${conversation.unread_count} -> 0 (optimista)`);
+              return {
+                ...conversation,
+                unread_count: 0
+              };
+            }
+            return conversation;
+          });
+        });
+        
+        // Luego hacer la llamada al servidor (sin bloquear la UI)
+        api.post(`/chat/chats/${chatId}/read/`).then(() => {
+          console.log(`✅ Mensajes marcados como leídos en servidor para chat ${chatId}`);
+        }).catch((error) => {
+          console.error("❌ Error en servidor, revirtiendo estado:", error);
+          // En caso de error, podríamos revertir el estado optimista aquí
+        });
+        
       } catch (error) {
-        console.error("Error marking messages as read:", error);
+        console.error("❌ Error marking messages as read:", error);
       }
     },
     [queryClient]
@@ -122,6 +278,15 @@ const Messages = () => {
   }, [messages]);
 
   useEffect(() => {
+    // Asegurar que el WebSocket esté conectado al cargar la página de mensajes
+    if (user && !socketService.isConnected()) {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        console.log("Reconectando WebSocket para mensajes...");
+        socketService.connect(token);
+      }
+    }
+
     socketService.on("reconnecting", (data) => {
       setIsReconnecting(true);
       toast.loading(`Reconectando... (${data.attempt}/${data.maxAttempts})`, {
@@ -139,12 +304,77 @@ const Messages = () => {
       toast.error("Desconectado del chat", { duration: 3000 });
     });
 
+    // Escuchar actualizaciones de perfil de usuarios
+    socketService.onProfileUpdate((data) => {
+      console.log("📸 Actualización de perfil recibida en Messages.js:", data);
+      const { user_id, user_data } = data;
+      const updateTimestamp = Date.now();
+      
+      console.log("🆔 User ID del evento:", user_id);
+      console.log("📊 User data del evento:", user_data);
+      console.log("⏰ Timestamp generado:", updateTimestamp);
+      
+      // Limpiar cache de imágenes para forzar recarga con nueva imagen
+      clearUserImageCache(user_id);
+      
+      // FALLBACK: También invalidar las conversaciones para forzar refetch
+      queryClient.invalidateQueries("conversations");
+      
+      // Actualizar la lista de conversaciones si el usuario actualizado está en alguna
+      queryClient.setQueryData("conversations", (oldConversations) => {
+        if (!oldConversations) return oldConversations;
+        
+        return oldConversations.map(conversation => {
+          if (conversation.other_user?.id === user_id) {
+            console.log(`📸 Actualizando perfil de ${conversation.other_user.username} en conversaciones`);
+            return {
+              ...conversation,
+              other_user: {
+                ...conversation.other_user,
+                ...user_data,
+                _profileUpdated: updateTimestamp
+              }
+            };
+          }
+          return conversation;
+        });
+      });
+
+      // Actualizar el chat seleccionado si corresponde al usuario actualizado
+      setSelectedChat(prevChat => {
+        if (prevChat && prevChat.other_user?.id === user_id) {
+          console.log(`📸 Actualizando perfil de ${prevChat.other_user.username} en chat seleccionado`);
+          console.log('📸 Datos anteriores:', prevChat.other_user);
+          console.log('📸 Nuevos datos:', user_data);
+          console.log('📸 Timestamp de actualización:', updateTimestamp);
+          
+          // Crear un objeto completamente nuevo para forzar re-render
+          const updatedChat = {
+            ...prevChat,
+            other_user: {
+              ...prevChat.other_user,
+              ...user_data,
+              _profileUpdated: updateTimestamp
+            }
+          };
+          
+          console.log('📸 Chat actualizado:', updatedChat);
+          return updatedChat;
+        }
+        return prevChat;
+      });
+    });
+
+    // NO usar listener global aquí - ya se maneja en el useEffect del chat específico
+    // Solo manejar eventos de conexión/desconexión
+
     return () => {
       socketService.listeners.delete("reconnecting");
       socketService.listeners.delete("connect");
       socketService.listeners.delete("disconnect");
+      socketService.offProfileUpdate();
     };
-  }, []);
+  }, [user, selectedChat, queryClient]);
 
   useEffect(() => {
     if (selectedChat) {
@@ -154,17 +384,85 @@ const Messages = () => {
       // Unirse a la sala del chat
       socketService.joinRoom(selectedChat.id);
 
+      // Limpiar listeners previos para evitar duplicación
+      socketService.offMessage();
+
       // Escuchar nuevos mensajes
       socketService.onMessage((data) => {
         console.log("Mensaje recibido por WebSocket:", data);
         // Asegurar que el mensaje tenga la estructura correcta
         const newMessage = data.message || data;
         console.log("Mensaje procesado:", newMessage);
-        setMessages((prev) => [...prev, newMessage]);
-        // Marcar mensajes como leídos cuando se reciben
-        if (newMessage.sender_id !== user.id && newMessage.sender !== user.id) {
-          markAsRead(selectedChat.id);
+        
+        // Si el mensaje es para el chat activo, agregarlo a la lista
+        if (data.room === selectedChat.id) {
+          console.log("Mensaje para chat activo - agregando a la lista");
+          
+          // Evitar duplicados comprobando si el mensaje ya existe
+          setMessages((prev) => {
+            const messageExists = prev.some(msg => {
+              const existingMsg = msg.message || msg;
+              return existingMsg.id === newMessage.id || 
+                     (existingMsg.content === newMessage.content && 
+                      existingMsg.sender_id === newMessage.sender_id &&
+                      Math.abs(new Date(existingMsg.timestamp) - new Date(newMessage.timestamp)) < 1000);
+            });
+            
+            if (messageExists) {
+              console.log("Mensaje duplicado detectado, no agregando");
+              return prev; // No agregar si ya existe
+            }
+            
+            console.log("Agregando nuevo mensaje al chat activo");
+            return [...prev, newMessage];
+          });
+          
+          // Marcar mensajes como leídos inmediatamente cuando se reciben en chat activo
+          if (newMessage.sender_id !== user.id && newMessage.sender !== user.id) {
+            // Marcado inmediato sin delay
+            markAsRead(selectedChat.id);
+          }
         }
+        
+        // Siempre actualizar la lista de conversaciones con el último mensaje
+        // (tanto para chat activo como inactivo)
+        queryClient.setQueryData("conversations", (oldConversations) => {
+          if (!oldConversations) return oldConversations;
+          
+          return oldConversations.map(conversation => {
+            if (conversation.id === data.room) {
+              // Si es el chat activo y el mensaje no es del usuario actual, mantener unread_count en 0
+              // Si es un chat inactivo y el mensaje no es del usuario actual, incrementar unread_count
+              const isActiveChat = selectedChat.id === data.room;
+              const isMyMessage = newMessage.sender_id === user.id || newMessage.sender === user.id;
+              
+              let newUnreadCount = conversation.unread_count || 0;
+              if (!isMyMessage) {
+                if (isActiveChat) {
+                  // Chat activo: marcar como leído automáticamente
+                  newUnreadCount = 0;
+                } else {
+                  // Chat inactivo: incrementar contador
+                  newUnreadCount = newUnreadCount + 1;
+                }
+              }
+              
+              console.log(`📊 Actualizando unread_count para chat ${data.room}: ${conversation.unread_count} -> ${newUnreadCount} (activo: ${isActiveChat}, mi mensaje: ${isMyMessage})`);
+              
+              return {
+                ...conversation,
+                last_message: {
+                  content: newMessage.content,
+                  created_at: newMessage.timestamp || newMessage.created_at,
+                  sender_id: newMessage.sender_id || newMessage.sender
+                },
+                updated_at: newMessage.timestamp || newMessage.created_at || new Date().toISOString(),
+                unread_count: newUnreadCount
+              };
+            }
+            return conversation;
+          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)); // Ordenar por más reciente
+        });
       });
 
       // Escuchar typing indicators
@@ -183,10 +481,10 @@ const Messages = () => {
         }
       });
 
-      // Marcar mensajes como leídos al abrir el chat (con delay para evitar bucles)
+      // Marcar mensajes como leídos al abrir el chat (delay mínimo para evitar bucles)
       const markReadTimer = setTimeout(() => {
         markAsRead(selectedChat.id);
-      }, 100);
+      }, 50); // Reducido de 100ms a 50ms
 
       return () => {
         clearTimeout(markReadTimer);
@@ -255,19 +553,37 @@ const Messages = () => {
   const sendMessage = (e) => {
     e.preventDefault();
     if (message.trim() && selectedChat) {
-      const messageData = {
-        content: message,
-        sender: user.id,
-        timestamp: new Date().toISOString(),
-      };
-
-      socketService.sendMessage(selectedChat.id, messageData);
+      const messageText = message.trim();
+      const timestamp = new Date().toISOString();
+      
+      // Actualizar inmediatamente la lista de conversaciones
+      queryClient.setQueryData("conversations", (oldConversations) => {
+        if (!oldConversations) return oldConversations;
+        
+        return oldConversations.map(conversation => {
+          if (conversation.id === selectedChat.id) {
+            return {
+              ...conversation,
+              last_message: {
+                content: messageText,
+                created_at: timestamp,
+                sender_id: user.id
+              },
+              updated_at: timestamp
+            };
+          }
+          return conversation;
+        }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)); // Ordenar por más reciente
+      });
+      
+      // Enviar solo el texto del mensaje, no un objeto
+      socketService.sendMessage(selectedChat.id, messageText);
       setMessage("");
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-96 flex">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] flex mt-10">
       {/* Sidebar - Lista de conversaciones */}
       <div className="w-1/3 border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
@@ -323,11 +639,41 @@ const Messages = () => {
 
         <div className="overflow-y-auto h-full">
           {(() => {
-            const convList = Array.isArray(conversations?.results)
-              ? conversations.results
-              : Array.isArray(conversations)
-              ? conversations
-              : [];
+            // Mostrar estado de carga
+            if (isLoadingConversations) {
+              return (
+                <div className="flex items-center justify-center h-full p-4">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    <p className="mt-2 text-gray-600">Cargando conversaciones...</p>
+                  </div>
+                </div>
+              );
+            }
+
+            // Mostrar error si ocurre
+            if (conversationsError) {
+              return (
+                <div className="flex items-center justify-center h-full p-4">
+                  <div className="text-center">
+                    <p className="text-red-600">Error al cargar conversaciones</p>
+                    <button 
+                      onClick={() => queryClient.invalidateQueries("conversations")}
+                      className="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            // Asegurar que conversations es un array válido
+            const convList = Array.isArray(conversations) ? conversations : [];
+            console.log("🗂️ Lista de conversaciones para renderizar:", convList);
+            console.log("🗂️ Cantidad de conversaciones:", convList.length);
+            console.log("🗂️ Tipo de conversations:", typeof conversations);
+            console.log("🗂️ Es array conversations:", Array.isArray(conversations));
 
             // Filtrar conversaciones por búsqueda
             const filteredConvs = searchConversation.trim()
@@ -347,53 +693,64 @@ const Messages = () => {
                 })
               : convList;
 
+            console.log("🔍 Conversaciones filtradas:", filteredConvs);
+            console.log("🔍 Cantidad de conversaciones filtradas:", filteredConvs.length);
+            console.log("🔍 Término de búsqueda:", searchConversation);
+            console.log("🔍 Mostrar crear chat:", showCreateChat);
+
             if (filteredConvs.length === 0 && !showCreateChat) {
+              console.log("⚠️ Mostrando mensaje de 'No tienes conversaciones'");
               return (
                 <div className="flex items-center justify-center h-full p-4">
-                  <EmptyState
-                    Icon={MessageSquare}
-                    title={
-                      searchConversation
+                  <div className="text-center">
+                    <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      {searchConversation
                         ? "No se encontraron conversaciones"
-                        : "No tienes conversaciones"
-                    }
-                    description={
-                      searchConversation
+                        : "No tienes conversaciones"}
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchConversation
                         ? "Intenta con otro término de búsqueda"
-                        : "Inicia una nueva conversación haciendo clic en el botón +"
-                    }
-                    actionLabel={
-                      !searchConversation ? "Nueva conversación" : undefined
-                    }
-                    onAction={
-                      !searchConversation
-                        ? () => setShowCreateChat(true)
-                        : undefined
-                    }
-                  />
+                        : "Inicia una nueva conversación haciendo clic en el botón +"}
+                    </p>
+                    {!searchConversation && (
+                      <button
+                        onClick={() => setShowCreateChat(true)}
+                        className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+                      >
+                        Nueva conversación
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             }
 
+            console.log("✅ Renderizando conversaciones:", filteredConvs.length);
             return filteredConvs.map((conversation) => (
               <button
                 key={conversation.id}
-                onClick={() => setSelectedChat(conversation)}
+                onClick={() => {
+                  setSelectedChat(conversation);
+                  // Marcar mensajes como leídos inmediatamente al seleccionar el chat
+                  if (conversation.unread_count > 0) {
+                    markAsRead(conversation.id);
+                  }
+                }}
                 className={`w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 ${
                   selectedChat?.id === conversation.id ? "bg-primary-50" : ""
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   <div className="relative">
-                    <img
-                      className="h-10 w-10 rounded-full"
-                      src={
-                        conversation.other_user?.profile_picture ||
-                        "/default-avatar.png"
-                      }
+                    <ChatAvatar
+                      src={conversation.other_user?.profile_picture}
                       alt={conversation.other_user?.full_name || "Usuario"}
+                      size="sm"
+                      updateKey={conversation.other_user?._profileUpdated}
                     />
-                    {conversation.unread_count > 0 && (
+                    {conversation.unread_count > 0 && selectedChat?.id !== conversation.id && (
                       <div className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {conversation.unread_count}
                       </div>
@@ -418,17 +775,15 @@ const Messages = () => {
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
         {selectedChat ? (
-          <>
+          <div className="flex-1 overflow-y-auto">
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
               <div className="flex items-center space-x-3">
-                <img
-                  className="h-10 w-10 rounded-full"
-                  src={
-                    selectedChat.other_user?.profile_picture ||
-                    "/default-avatar.png"
-                  }
+                <ChatAvatar
+                  src={selectedChat.other_user?.profile_picture}
                   alt={selectedChat.other_user?.full_name || "Usuario"}
+                  size="sm"
+                  updateKey={selectedChat.other_user?._profileUpdated}
                 />
                 <div>
                   <p className="font-medium text-gray-900">
@@ -451,7 +806,14 @@ const Messages = () => {
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
+              className="px-4 pt-8 pb-4 space-y-4"
+              style={{
+                minHeight: 0,
+                flexShrink: 1,
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
             >
               {isLoadingMore && (
                 <div className="text-center py-2">
@@ -463,23 +825,29 @@ const Messages = () => {
                 const messageObj = msg.message || msg;
 
                 // Extraer el contenido del mensaje de forma segura
-                // Si content es string, usarlo directamente
-                // Si content es objeto con propiedad content, usar esa
-                // Si no, intentar buscar en el mensaje completo
                 let messageContent;
+                
+                // Si el contenido es un string que parece JSON, parsearlo
                 if (typeof messageObj.content === "string") {
-                  messageContent = messageObj.content;
-                } else if (
-                  typeof messageObj.content === "object" &&
-                  messageObj.content?.content
-                ) {
+                  try {
+                    // Intentar parsear si parece ser JSON
+                    if (messageObj.content.startsWith('{') || messageObj.content.startsWith('[')) {
+                      const parsed = JSON.parse(messageObj.content);
+                      messageContent = parsed.content || parsed.message || parsed.text || messageObj.content;
+                    } else {
+                      messageContent = messageObj.content;
+                    }
+                  } catch (e) {
+                    // Si no es JSON válido, usar como string
+                    messageContent = messageObj.content;
+                  }
+                } else if (typeof messageObj.content === "object" && messageObj.content?.content) {
                   messageContent = messageObj.content.content;
                 } else if (messageObj.text) {
                   messageContent = messageObj.text;
                 } else {
                   // Último recurso: buscar cualquier campo que parezca contenido
-                  messageContent =
-                    messageObj.body || messageObj.message || "Sin contenido";
+                  messageContent = messageObj.body || messageObj.message || "Sin contenido";
                 }
 
                 const isOwnMessage =
@@ -490,41 +858,57 @@ const Messages = () => {
                     key={messageObj.id || index}
                     className={`flex ${
                       isOwnMessage ? "justify-end" : "justify-start"
-                    }`}
+                    } mb-4`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        isOwnMessage
-                          ? "bg-primary-500 text-white"
-                          : "bg-gray-200 text-gray-900"
+                      className={`max-w-xs lg:max-w-md ${
+                        isOwnMessage ? "text-right" : "text-left"
                       }`}
                     >
-                      <p className="text-sm">{messageContent}</p>
+                      {/* Nombre del usuario (solo para mensajes de otros) */}
+                      {!isOwnMessage && (
+                        <p className="text-xs text-gray-600 mb-1 px-2">
+                          {messageObj.sender_username || selectedChat.other_user?.username || "Usuario"}
+                        </p>
+                      )}
+                      
+                      {/* Burbuja del mensaje */}
                       <div
-                        className={`flex items-center justify-between mt-1 ${
-                          isOwnMessage ? "text-primary-100" : "text-gray-500"
+                        className={`inline-block px-4 py-2 rounded-lg ${
+                          isOwnMessage
+                            ? "bg-primary-500 text-white"
+                            : "bg-gray-200 text-gray-900"
                         }`}
                       >
-                        <p className="text-xs">
-                          {new Date(
-                            messageObj.timestamp || messageObj.created_at
-                          ).toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                        {isOwnMessage && (
-                          <div className="flex items-center space-x-1">
-                            {msg.is_read ? (
-                              <div className="flex">
-                                <div className="w-3 h-3 rounded-full bg-white opacity-70"></div>
-                                <div className="w-3 h-3 rounded-full bg-white opacity-90 -ml-1"></div>
-                              </div>
-                            ) : (
-                              <div className="w-3 h-3 rounded-full bg-white opacity-50"></div>
-                            )}
-                          </div>
-                        )}
+                        <p className="text-sm whitespace-pre-wrap break-words">{messageContent}</p>
+                        
+                        {/* Timestamp */}
+                        <div className={`flex items-center justify-end mt-1 ${
+                          isOwnMessage ? "text-primary-100" : "text-gray-500"
+                        }`}>
+                          <p className="text-xs">
+                            {new Date(
+                              messageObj.timestamp || messageObj.created_at
+                            ).toLocaleTimeString("es-ES", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                          
+                          {/* Indicador de leído para mensajes propios */}
+                          {isOwnMessage && (
+                            <div className="ml-2 flex items-center">
+                              {messageObj.is_read ? (
+                                <div className="flex">
+                                  <div className="w-3 h-3 rounded-full bg-white opacity-70"></div>
+                                  <div className="w-3 h-3 rounded-full bg-white opacity-90 -ml-1"></div>
+                                </div>
+                              ) : (
+                                <div className="w-3 h-3 rounded-full bg-white opacity-50"></div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -586,7 +970,7 @@ const Messages = () => {
                 </button>
               </div>
             </form>
-          </>
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

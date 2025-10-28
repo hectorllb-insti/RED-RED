@@ -34,6 +34,7 @@ class UserDetailByIdView(generics.RetrieveAPIView):
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         # Excluir el usuario actual de los resultados
@@ -47,6 +48,28 @@ class UserListView(generics.ListAPIView):
                 Q(last_name__icontains=search) |
                 Q(email__icontains=search)
             )
+        return queryset
+
+
+class SuggestedUsersView(generics.ListAPIView):
+    """
+    Muestra usuarios sugeridos para seguir.
+    Excluye al usuario actual y a los usuarios que ya sigue.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        # Obtener IDs de usuarios que ya sigue el usuario actual
+        following_ids = Follow.objects.filter(
+            follower=self.request.user
+        ).values_list('following_id', flat=True)
+        
+        # Excluir el usuario actual y los que ya sigue
+        queryset = User.objects.exclude(
+            id__in=list(following_ids) + [self.request.user.id]
+        ).order_by('-created_at')[:20]  # Limitar a 20 sugerencias
+        
         return queryset
 
 
@@ -116,3 +139,43 @@ def user_following(request, username):
     following = Follow.objects.filter(follower=user)
     serializer = FollowSerializer(following, many=True)
     return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """
+    Elimina la cuenta del usuario autenticado y todos sus datos relacionados.
+    Esta acción es irreversible.
+    """
+    user = request.user
+    
+    # Confirmar que el usuario proporcionó su contraseña para mayor seguridad
+    password = request.data.get('password')
+    
+    if not password:
+        return Response(
+            {'error': 'Debes proporcionar tu contraseña para confirmar la eliminación de la cuenta'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verificar que la contraseña sea correcta
+    if not user.check_password(password):
+        return Response(
+            {'error': 'Contraseña incorrecta'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Guardar el username para el mensaje de respuesta
+    username = user.username
+    
+    # Eliminar el usuario (cascade eliminará todos los datos relacionados)
+    user.delete()
+    
+    return Response(
+        {
+            'message': f'La cuenta de {username} ha sido eliminada exitosamente',
+            'deleted': True
+        },
+        status=status.HTTP_200_OK
+    )

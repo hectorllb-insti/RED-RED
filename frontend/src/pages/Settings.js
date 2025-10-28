@@ -2,6 +2,7 @@ import { Bell, Lock, Save, Shield, User } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import DeleteAccountButtonSimple from "../components/DeleteAccountButtonSimple";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
@@ -850,6 +851,11 @@ const Settings = () => {
                       Próximamente
                     </button>
                   </div>
+                </div>
+
+                {/* Zona de Peligro - Eliminar Cuenta */}
+                <div className="mt-8">
+                  <DeleteAccountButtonSimple />
                 </div>
               </div>
             </div>

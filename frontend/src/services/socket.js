@@ -4,8 +4,8 @@ class SocketService {
     this.listeners = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // Empezar con 1 segundo
-    this.maxReconnectDelay = 30000; // Máximo 30 segundos
+    this.reconnectDelay = 500; // Reducido de 1000ms a 500ms - reconexión más rápida
+    this.maxReconnectDelay = 15000; // Reducido de 30s a 15s - menos tiempo de espera máximo
     this.reconnectTimer = null;
     this.isReconnecting = false;
   }
@@ -29,7 +29,7 @@ class SocketService {
         );
         // Resetear contadores de reconexión
         this.reconnectAttempts = 0;
-        this.reconnectDelay = 1000;
+        this.reconnectDelay = 500; // Consistente con el valor inicial optimizado
         this.isReconnecting = false;
         this.triggerListener("connect");
       };
@@ -113,10 +113,43 @@ class SocketService {
   // Manejar mensajes entrantes
   handleMessage(data) {
     const { type, message, room } = data;
+    
+    console.log("🔗 WebSocket mensaje recibido:", data);
 
     switch (type) {
       case "chat_message":
-        this.triggerListener("message", { message, room });
+        // Asegurar que el mensaje tenga formato consistente
+        let processedMessage = message;
+        
+        // Si el mensaje tiene contenido anidado, normalizarlo
+        if (message && typeof message.content === 'string') {
+          try {
+            // Si el contenido parece ser JSON serializado, parsearlo
+            if (message.content.startsWith('{') || message.content.startsWith('[')) {
+              const parsed = JSON.parse(message.content);
+              processedMessage = {
+                ...message,
+                content: parsed.content || parsed.message || parsed.text || message.content
+              };
+            }
+          } catch (e) {
+            // Si no es JSON válido, mantener el contenido original
+            processedMessage = message;
+          }
+        }
+        
+        this.triggerListener("message", { message: processedMessage, room });
+        break;
+      case "profile_updated":
+        // Manejar actualización de perfil de usuario
+        console.log("📸 WebSocket profile_updated recibido:", data);
+        console.log("👤 Usuario ID:", data.user_id);
+        console.log("📊 User data:", data.user_data);
+        
+        this.triggerListener("profile_updated", { 
+          user_id: data.user_id, 
+          user_data: data.user_data 
+        });
         break;
       case "user_joined":
         this.triggerListener("user_joined", { room, user: data.user });
@@ -125,7 +158,7 @@ class SocketService {
         this.triggerListener("user_left", { room, user: data.user });
         break;
       default:
-      // Mensaje WebSocket no reconocido
+        console.log("❓ Mensaje WebSocket no reconocido:", type, data);
     }
   }
 
@@ -171,10 +204,22 @@ class SocketService {
     this.on("message", callback);
   }
 
+  // Escuchar actualizaciones de perfil
+  onProfileUpdate(callback) {
+    this.on("profile_updated", callback);
+  }
+
   // Remover listener de mensajes
   offMessage() {
     if (this.listeners.has("message")) {
       this.listeners.delete("message");
+    }
+  }
+
+  // Remover listener de actualizaciones de perfil
+  offProfileUpdate() {
+    if (this.listeners.has("profile_updated")) {
+      this.listeners.delete("profile_updated");
     }
   }
 

@@ -9,6 +9,8 @@ class UserSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
+    cover_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -19,6 +21,22 @@ class UserSerializer(serializers.ModelSerializer):
             'is_following', 'created_at'
         ]
         read_only_fields = ['id', 'created_at', 'followers_count', 'following_count', 'is_following']
+
+    def get_profile_picture(self, obj):
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        return None
+
+    def get_cover_picture(self, obj):
+        if obj.cover_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.cover_picture.url)
+            return obj.cover_picture.url
+        return None
 
     def get_followers_count(self, obj):
         return obj.get_followers_count()

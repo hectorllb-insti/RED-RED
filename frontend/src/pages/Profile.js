@@ -1,14 +1,18 @@
 "use client";
 
-import { Camera, Settings, UserMinus, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { Camera, ChevronDown, ChevronUp, Settings, UserMinus, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProfileEdit from "../components/ProfileEdit";
 import { useAuth } from "../context/AuthContext";
+import { tokenManager } from "../services/tokenManager";
+import { getImageUrl } from "../utils/imageUtils";
 import api from "../services/api";
+
+const API_BASE_URL = "http://localhost:8000/api";
 
 const Profile = () => {
   const { userId } = useParams();
@@ -16,6 +20,7 @@ const Profile = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showComments, setShowComments] = useState({});
 
   // Si no hay userId, mostrar perfil del usuario actual
   const isOwnProfile =
@@ -25,62 +30,176 @@ const Profile = () => {
   const profileIdentifier = userId || currentUser?.id;
 
   // Obtener datos del perfil
-  const { data: profileUser, isLoading } = useQuery(
+  const { data: profileUser, isLoading, refetch: refetchProfile } = useQuery(
     ["profile", profileIdentifier],
     async () => {
+      const token = tokenManager.getToken();
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
       if (isOwnProfile) {
-        const response = await api.get("/users/profile/");
-        return response.data;
+        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+          headers,
+        });
+        if (!response.ok) {
+          throw new Error("Error al obtener el perfil");
+        }
+        return await response.json();
       } else {
         // Intentar por ID primero, si falla por username
         try {
-          const response = await api.get(`/users/${profileIdentifier}/`);
-          return response.data;
+          const response = await fetch(
+            `${API_BASE_URL}/users/${profileIdentifier}/`,
+            { headers }
+          );
+          if (!response.ok) {
+            throw new Error("Error al obtener el perfil");
+          }
+          return await response.json();
         } catch (error) {
           if (error.response?.status === 404 && isNaN(profileIdentifier)) {
             // Si el identificador no es numérico, podría ser un username
-            const response = await api.get(`/users/${profileIdentifier}/`);
-            return response.data;
+            const response = await fetch(
+              `${API_BASE_URL}/users/${profileIdentifier}/`,
+              { headers }
+            );
+            if (!response.ok) {
+              throw new Error("Error al obtener el perfil");
+            }
+            return await response.json();
           }
           throw error;
         }
       }
+    },
+    {
+      staleTime: 0, // Considerar datos como obsoletos inmediatamente
+      refetchOnMount: true, // Recargar cuando el componente se monta
+      refetchOnWindowFocus: true, // Recargar cuando se enfoca la ventana
+      retry: 1
     }
   );
 
   // Obtener publicaciones del usuario
-  const { data: userPosts } = useQuery(
+  const { data: userPosts, refetch: refetchPosts } = useQuery(
     ["userPosts", profileUser?.username],
     async () => {
       if (profileUser?.username) {
-        const response = await api.get(`/posts/user/${profileUser.username}/`);
-        return response.data;
+        const token = tokenManager.getToken();
+        const response = await fetch(
+          `${API_BASE_URL}/posts/user/${profileUser.username}/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Error al obtener las publicaciones");
+        }
+        return await response.json();
       }
       return [];
     },
     {
       enabled: !!profileUser?.username,
+      staleTime: 0, // Considerar datos como obsoletos inmediatamente
+      refetchOnMount: true, // Recargar cuando el componente se monta
+      refetchOnWindowFocus: false, // No recargar automáticamente al enfocar
+      retry: 1
     }
   );
 
-  // Mutation para seguir/dejar de seguir
+  // Función para alternar la visibilidad de comentarios
+  const toggleComments = (postId) => {
+    setShowComments(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+  };
+
+  // Query para obtener comentarios de un post específico
+  const usePostComments = (postId) => {
+    return useQuery(
+      ["comments", postId],
+      async () => {
+        const response = await api.get(`/posts/${postId}/comments/`);
+        return response.data;
+      },
+      {
+        enabled: showComments[postId], // Solo cargar cuando el dropdown esté abierto
+        staleTime: 0, // Considerar datos como obsoletos inmediatamente
+        refetchOnMount: true, // Recargar cuando el componente se monta
+        refetchOnWindowFocus: false, // No recargar automáticamente al enfocar
+        retry: 1
+      }
+    );
+  };
+
+  // Efecto para recargar datos cuando se entra a la página
+  useEffect(() => {
+    const reloadProfileData = async () => {
+      try {
+        // Recargar perfil
+        await refetchProfile();
+        
+        // Recargar posts si ya hay datos del perfil
+        if (profileUser?.username) {
+          await refetchPosts();
+        }
+        
+        // Invalidar todas las queries de comentarios para forzar recarga
+        queryClient.invalidateQueries(["comments"]);
+        
+      } catch (error) {
+        console.error("Error recargando datos del perfil:", error);
+      }
+    };
+
+    // Ejecutar la recarga cuando el componente se monta o cambia el profileIdentifier
+    reloadProfileData();
+  }, [profileIdentifier, refetchProfile, refetchPosts, profileUser?.username, queryClient]);
+
+  // Función para recargar comentarios específicos
+  const refreshComments = async (postId) => {
+    try {
+      await queryClient.invalidateQueries(["comments", postId]);
+      await queryClient.refetchQueries(["comments", postId]);
+    } catch (error) {
+      console.error("Error recargando comentarios:", error);
+    }
+  };
+
+  // Mutation para seguir/dejar de seguir usuario
   const followMutation = useMutation(
     async () => {
-      if (profileUser.is_following) {
-        const response = await api.post(
-          `/users/unfollow/${profileUser.username}/`
-        );
-        return response.data;
-      } else {
-        const response = await api.post(
-          `/users/follow/${profileUser.username}/`
-        );
-        return response.data;
+      const token = tokenManager.getToken();
+      const endpoint = profileUser.is_following
+        ? `${API_BASE_URL}/users/unfollow/${profileUser.username}/`
+        : `${API_BASE_URL}/users/follow/${profileUser.username}/`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al actualizar el seguimiento");
       }
+
+      return await response.json();
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["profile", profileIdentifier]);
+        queryClient.invalidateQueries(["posts"]); // Recargar feed de posts
         toast.success(
           profileUser?.is_following
             ? "Dejaste de seguir a este usuario"
@@ -88,9 +207,7 @@ const Profile = () => {
         );
       },
       onError: (error) => {
-        toast.error(
-          error.response?.data?.error || "Error al actualizar el seguimiento"
-        );
+        toast.error(error.message || "Error al actualizar el seguimiento");
       },
     }
   );
@@ -114,7 +231,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-10">
       {/* Profile Header */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
         {/* Cover Photo */}
@@ -270,12 +387,31 @@ const Profile = () => {
                   <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
                     <div className="flex items-center gap-4 font-medium">
                       <span>{post.likes_count} likes</span>
-                      <span>{post.comments_count} comentarios</span>
+                      <button
+                        onClick={() => toggleComments(post.id)}
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <span>{post.comments_count} comentarios</span>
+                        {showComments[post.id] ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
                     <span className="font-medium">
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                   </div>
+                  
+                  {/* Dropdown de comentarios */}
+                  {showComments[post.id] && (
+                    <CommentsDropdown 
+                      postId={post.id} 
+                      usePostComments={usePostComments} 
+                      refreshComments={refreshComments}
+                    />
+                  )}
                 </div>
               ))}
               {(!userPosts?.results || userPosts.results.length === 0) && (
@@ -327,6 +463,102 @@ const Profile = () => {
       {showEditProfile && (
         <ProfileEdit onClose={() => setShowEditProfile(false)} />
       )}
+    </div>
+  );
+};
+
+// Componente para mostrar los comentarios en dropdown
+const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
+  const { data: comments, isLoading, refetch } = usePostComments(postId);
+
+  // Función para recargar comentarios
+  const handleRefresh = async () => {
+    try {
+      await refetch();
+      if (refreshComments) {
+        await refreshComments(postId);
+      }
+    } catch (error) {
+      console.error("Error recargando comentarios:", error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-center">
+          <LoadingSpinner variant="pulse" size="sm" />
+          <span className="ml-2 text-sm text-gray-600">Cargando comentarios...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!comments || comments.length === 0) {
+    return (
+      <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between">
+          <p className="text-gray-500 text-sm">
+            No hay comentarios en esta publicación
+          </p>
+          <button
+            onClick={handleRefresh}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            Recargar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 bg-gray-50 rounded-lg">
+      {/* Header con botón de recarga */}
+      <div className="p-3 border-b border-gray-200 flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">
+          {comments.length} comentario{comments.length !== 1 ? 's' : ''}
+        </span>
+        <button
+          onClick={handleRefresh}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+        >
+          Recargar
+        </button>
+      </div>
+      
+      {/* Lista de comentarios */}
+      <div className="divide-y divide-gray-200">
+      {comments.map((comment) => (
+        <div key={comment.id} className="p-4 flex space-x-3">
+          <img
+            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+            src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
+            alt={comment.author_username || "Usuario"}
+            onError={(e) => {
+              e.target.src = "/default-avatar.png";
+            }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <p className="font-medium text-sm text-gray-900">
+                {comment.author_username}
+              </p>
+              <p className="text-sm text-gray-800 mt-1">
+                {comment.content}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {new Date(comment.created_at).toLocaleDateString()} a las{" "}
+              {new Date(comment.created_at).toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        </div>
+      ))}
+      </div>
     </div>
   );
 };
