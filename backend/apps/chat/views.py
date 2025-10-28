@@ -31,9 +31,16 @@ class ChatRoomListCreateView(generics.ListCreateAPIView):
         return ChatRoomSerializer
     
     def get_queryset(self):
-        return ChatRoom.objects.filter(
+        queryset = ChatRoom.objects.filter(
             participants=self.request.user
-        ).order_by('-updated_at')
+        ).distinct().order_by('-updated_at')
+        
+        print(f"Consulta de conversaciones para usuario {self.request.user.username}: {queryset.count()} encontradas")
+        for chat in queryset:
+            participants = [p.username for p in chat.participants.all()]
+            print(f"  Chat {chat.id}: {participants} - {chat.updated_at}")
+        
+        return queryset
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
@@ -78,6 +85,8 @@ def mark_messages_read(request, chat_room_id):
         read_by__user=request.user
     )
     
+    print(f"Marcando {unread_messages.count()} mensajes como leídos en chat {chat_room_id} para usuario {request.user.username}")
+    
     for message in unread_messages:
         MessageRead.objects.get_or_create(
             message=message,
@@ -100,7 +109,7 @@ def create_private_chat(request, username):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Buscar chat existente entre estos dos usuarios
+    # Buscar chat existente entre estos dos usuarios de manera más robusta
     existing_chat = ChatRoom.objects.filter(
         participants=request.user
     ).filter(
@@ -112,12 +121,14 @@ def create_private_chat(request, username):
     ).first()
     
     if existing_chat:
+        print(f"Chat existente encontrado: {existing_chat.id} entre {request.user.username} y {other_user.username}")
         serializer = ChatRoomSerializer(
             existing_chat,
             context={'request': request}
         )
         return Response(serializer.data)
     
+    print(f"Creando nuevo chat entre {request.user.username} y {other_user.username}")
     # Crear nuevo chat
     chat_room = ChatRoom.objects.create()
     chat_room.participants.set([request.user, other_user])

@@ -1,6 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from datetime import timedelta
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from apps.posts.models import Like, Comment, SharedPost
@@ -68,6 +70,19 @@ def create_comment_notification(sender, instance, created, **kwargs):
 def create_follow_notification(sender, instance, created, **kwargs):
     """Crear notificación cuando alguien te sigue"""
     if created:
+        # Verificar que no exista ya una notificación similar reciente (prevención de duplicados)
+        existing_notification = Notification.objects.filter(
+            recipient=instance.following,
+            sender=instance.follower,
+            notification_type='follow',
+            created_at__gte=timezone.now() - timedelta(seconds=10)  # En los últimos 10 segundos
+        ).first()
+        
+        if existing_notification:
+            print(f"⚠️ Evitando notificación duplicada de follow: {instance.follower.username} -> {instance.following.username}")
+            return
+            
+        print(f"✅ Creando notificación de follow: {instance.follower.username} -> {instance.following.username}")
         notification = Notification.objects.create(
             recipient=instance.following,
             sender=instance.follower,

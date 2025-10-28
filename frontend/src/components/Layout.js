@@ -120,9 +120,14 @@ const Layout = ({ children }) => {
               </Link>
             </div>
 
+            {/* NotificationCenter único - visible en escritorio y móvil */}
+            <div className="flex items-center">
+              <NotificationCenter />
+            </div>
+
             {/* Acciones mejoradas - Escritorio */}
             <div className="hidden lg:flex items-center gap-3">
-              <NotificationCenter />
+              {/* NotificationCenter movido fuera para evitar duplicación */}
 
               <Link to="/settings">
                 <motion.button
@@ -168,7 +173,7 @@ const Layout = ({ children }) => {
 
             {/* Menú móvil toggle */}
             <div className="lg:hidden flex items-center gap-2">
-              <NotificationCenter />
+              {/* NotificationCenter movido fuera para evitar duplicación */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

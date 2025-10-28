@@ -4,8 +4,8 @@ class SocketService {
     this.listeners = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // Empezar con 1 segundo
-    this.maxReconnectDelay = 30000; // Máximo 30 segundos
+    this.reconnectDelay = 500; // Reducido de 1000ms a 500ms - reconexión más rápida
+    this.maxReconnectDelay = 15000; // Reducido de 30s a 15s - menos tiempo de espera máximo
     this.reconnectTimer = null;
     this.isReconnecting = false;
   }
@@ -29,7 +29,7 @@ class SocketService {
         );
         // Resetear contadores de reconexión
         this.reconnectAttempts = 0;
-        this.reconnectDelay = 1000;
+        this.reconnectDelay = 500; // Consistente con el valor inicial optimizado
         this.isReconnecting = false;
         this.triggerListener("connect");
       };
@@ -116,7 +116,27 @@ class SocketService {
 
     switch (type) {
       case "chat_message":
-        this.triggerListener("message", { message, room });
+        // Asegurar que el mensaje tenga formato consistente
+        let processedMessage = message;
+        
+        // Si el mensaje tiene contenido anidado, normalizarlo
+        if (message && typeof message.content === 'string') {
+          try {
+            // Si el contenido parece ser JSON serializado, parsearlo
+            if (message.content.startsWith('{') || message.content.startsWith('[')) {
+              const parsed = JSON.parse(message.content);
+              processedMessage = {
+                ...message,
+                content: parsed.content || parsed.message || parsed.text || message.content
+              };
+            }
+          } catch (e) {
+            // Si no es JSON válido, mantener el contenido original
+            processedMessage = message;
+          }
+        }
+        
+        this.triggerListener("message", { message: processedMessage, room });
         break;
       case "user_joined":
         this.triggerListener("user_joined", { room, user: data.user });

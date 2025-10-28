@@ -58,8 +58,12 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     def get_unread_count(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
+            # Excluir mensajes que ya fueron leídos por el usuario 
+            # Y TAMBIÉN excluir mensajes que escribió el propio usuario
             return obj.messages.exclude(
                 read_by__user=request.user
+            ).exclude(
+                sender=request.user  # ✅ No contar mis propios mensajes como no leídos
             ).count()
         return 0
     
