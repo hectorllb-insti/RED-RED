@@ -209,6 +209,44 @@ const Messages = () => {
       toast.error("Desconectado del chat", { duration: 3000 });
     });
 
+    // Escuchar actualizaciones de conversaciones (nuevos mensajes)
+    socketService.on("conversation_update", (data) => {
+      if (data.action === "new_message") {
+        // Actualizar contador de mensajes no leídos
+        queryClient.setQueryData("conversations", (oldConversations) => {
+          if (!oldConversations) return oldConversations;
+          
+          return oldConversations.map(conversation => {
+            if (conversation.id === data.chat_room_id) {
+              const isMyMessage = data.sender_id === user?.id;
+              
+              // Si no es mi mensaje, incrementar el contador
+              // Solo NO incrementar si es mi mensaje o si estoy activamente en ese chat
+              let newUnreadCount = conversation.unread_count || 0;
+              if (!isMyMessage) {
+                // Si selectedChat es null (fuera de la página o sin chat abierto) 
+                // o si no es el chat activo, incrementar
+                const isCurrentlyInThisChat = selectedChat && selectedChat.id === data.chat_room_id;
+                if (!isCurrentlyInThisChat) {
+                  newUnreadCount = newUnreadCount + 1;
+                }
+              }
+              
+              return {
+                ...conversation,
+                unread_count: newUnreadCount,
+                updated_at: new Date().toISOString()
+              };
+            }
+            return conversation;
+          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        });
+        
+        // Luego invalidar para obtener datos frescos del servidor
+        queryClient.invalidateQueries("conversations");
+      }
+    });
+
     // Escuchar actualizaciones de perfil de usuarios
     socketService.onProfileUpdate((data) => {
       const { user_id, user_data } = data;

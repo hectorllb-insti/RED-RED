@@ -22,6 +22,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
         
+        # Suscribirse a actualizaciones de conversaciones del usuario
+        self.chat_updates_group = f'chat_updates_{self.user.id}'
+        await self.channel_layer.group_add(
+            self.chat_updates_group,
+            self.channel_name
+        )
+        
         # Enviar mensaje de bienvenida
         await self.send(text_data=json.dumps({
             'type': 'connection_established',
@@ -35,6 +42,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        
+        # Desuscribirse de actualizaciones de conversaciones
+        if hasattr(self, 'chat_updates_group'):
+            await self.channel_layer.group_discard(
+                self.chat_updates_group,
+                self.channel_name
+            )
 
     async def receive(self, text_data):
         try:
@@ -183,6 +197,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'username': event['username'],
                 'room': event['room']
             }))
+
+    async def conversation_update(self, event):
+        # Enviar actualización de conversación al cliente
+        await self.send(text_data=json.dumps({
+            'type': 'conversation_update',
+            'action': event.get('action'),
+            'chat_room_id': event.get('chat_room_id'),
+            'sender_id': event.get('sender_id'),
+            'sender_username': event.get('sender_username')
+        }))
 
     async def profile_update(self, event):
         await self.send(text_data=json.dumps({
