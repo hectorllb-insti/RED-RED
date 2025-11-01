@@ -14,14 +14,10 @@ def user_profile_updated(sender, instance, created, **kwargs):
     Señal que se ejecuta cuando se actualiza un usuario.
     Envía una notificación via WebSocket a todos los chats donde participa.
     """
-    if not created:  # Solo para actualizaciones, no para creación
-        print(f"🔔 Signal activado: Usuario {instance.username} (ID: {instance.id}) actualizado")
-        
-        # Obtener el channel layer
+    if not created:
         channel_layer = get_channel_layer()
         
         if channel_layer:
-            # Obtener datos del usuario para enviar
             profile_pic_url = None
             if instance.profile_picture:
                 profile_pic_url = instance.profile_picture.url
@@ -35,18 +31,11 @@ def user_profile_updated(sender, instance, created, **kwargs):
                 'profile_picture': profile_pic_url
             }
             
-            print(f"📸 Datos del usuario para WebSocket: {user_data}")
-            
-            # Obtener todas las salas donde participa el usuario
             user_rooms = ChatRoom.objects.filter(
                 participants=instance
             ).values_list('id', flat=True)
             
-            print(f"🏠 Salas del usuario: {list(user_rooms)}")
-            
-            # Enviar la actualización a todas las salas
             for room_id in user_rooms:
-                print(f"📡 Enviando actualización a sala {room_id}")
                 async_to_sync(channel_layer.group_send)(
                     f'chat_{room_id}',
                     {
@@ -55,6 +44,3 @@ def user_profile_updated(sender, instance, created, **kwargs):
                         'user_data': user_data
                     }
                 )
-                print(f"✅ Actualización enviada a sala {room_id}")
-        else:
-            print("❌ Channel layer no disponible")

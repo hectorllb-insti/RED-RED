@@ -10,24 +10,17 @@ class NotificationService {
   }
 
   connect(token) {
-    if (
-      this.isConnecting ||
-      (this.ws && this.ws.readyState === WebSocket.OPEN)
-    ) {
-      console.log("WebSocket ya está conectado o conectándose");
+    if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
       return;
     }
 
     this.isConnecting = true;
-    const wsUrl = `${
-      process.env.REACT_APP_WS_URL || "ws://localhost:8000"
-    }/ws/notifications/?token=${token}`;
+    const wsUrl = `${process.env.REACT_APP_WS_URL || "ws://localhost:8000"}/ws/notifications/?token=${token}`;
 
     try {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log("✅ Conectado al sistema de notificaciones");
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.notifyListeners({ type: "connected" });
@@ -36,27 +29,23 @@ class NotificationService {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("📬 Notificación recibida:", data);
           this.notifyListeners(data);
         } catch (error) {
-          console.error("Error al parsear mensaje:", error);
+          // Error de parsing silencioso
         }
       };
 
       this.ws.onerror = (error) => {
-        console.error("❌ Error en WebSocket:", error);
         this.isConnecting = false;
         this.notifyListeners({ type: "error", error });
       };
 
       this.ws.onclose = () => {
-        console.log("🔌 Desconectado del sistema de notificaciones");
         this.isConnecting = false;
         this.notifyListeners({ type: "disconnected" });
         this.handleReconnect(token);
       };
     } catch (error) {
-      console.error("Error al crear WebSocket:", error);
       this.isConnecting = false;
     }
   }
@@ -64,12 +53,7 @@ class NotificationService {
   handleReconnect(token) {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(
-        `🔄 Reintentando conexión (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
-      );
       setTimeout(() => this.connect(token), this.reconnectDelay);
-    } else {
-      console.error("❌ Máximo de reintentos alcanzado");
     }
   }
 

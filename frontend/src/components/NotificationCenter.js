@@ -105,8 +105,6 @@ const NotificationCenter = () => {
 
     // Listener para mensajes del WebSocket
     const removeListener = notificationService.addListener((data) => {
-      console.log("Notificación recibida:", data);
-
       switch (data.type) {
         case "connected":
           setIsConnected(true);

@@ -79,10 +79,8 @@ def create_follow_notification(sender, instance, created, **kwargs):
         ).first()
         
         if existing_notification:
-            print(f"⚠️ Evitando notificación duplicada de follow: {instance.follower.username} -> {instance.following.username}")
             return
             
-        print(f"✅ Creando notificación de follow: {instance.follower.username} -> {instance.following.username}")
         notification = Notification.objects.create(
             recipient=instance.following,
             sender=instance.follower,

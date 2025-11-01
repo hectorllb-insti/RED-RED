@@ -33,106 +33,37 @@ const Messages = () => {
     ["conversations"],
     async () => {
       try {
-        console.log("🔍 Iniciando query de conversaciones...");
-        console.log("👤 Usuario actual:", user);
-        console.log("🔐 Autenticado:", !!user);
-        
-        console.log("📡 Realizando petición a /chat/chats/");
         const response = await api.get("/chat/chats/");
         
-        console.log("📋 Respuesta completa de conversaciones:", response);
-        console.log("📋 response.data:", response.data);
-        console.log("📋 Tipo de response.data:", typeof response.data);
-        console.log("📋 Es array response.data:", Array.isArray(response.data));
-        
-        if (!response.data) {
-          console.warn("⚠️ response.data es null o undefined");
-          return [];
-        }
+        if (!response.data) return [];
         
         // Extraer las conversaciones del objeto paginado
         let conversationsArray;
         if (Array.isArray(response.data)) {
-          // Si es un array directo (sin paginación)
           conversationsArray = response.data;
-          console.log("📦 Respuesta directa como array");
         } else if (response.data.results && Array.isArray(response.data.results)) {
-          // Si es un objeto paginado con results
           conversationsArray = response.data.results;
-          console.log("📦 Respuesta paginada, extrayendo results");
-          console.log("📊 Total de conversaciones:", response.data.count);
         } else {
-          console.warn("⚠️ Estructura de respuesta no reconocida:", response.data);
           return [];
         }
         
-        console.log(`✅ Conversaciones recibidas: ${conversationsArray.length} elementos`);
-        
-        // Verificar duplicados por ID
-        const ids = conversationsArray.map(conv => conv.id);
-        const uniqueIds = [...new Set(ids)];
-        if (ids.length !== uniqueIds.length) {
-          console.warn("⚠️ Detectados duplicados por ID:", {
-            total: ids.length,
-            unicos: uniqueIds.length,
-            duplicados: ids.filter((id, index) => ids.indexOf(id) !== index)
-          });
-        }
-        
-        // Verificar duplicados por other_user
-        const otherUserIds = conversationsArray
-          .map(conv => conv.other_user?.id)
-          .filter(id => id !== undefined);
-        const uniqueOtherUserIds = [...new Set(otherUserIds)];
-        if (otherUserIds.length !== uniqueOtherUserIds.length) {
-          console.warn("⚠️ Detectados duplicados por other_user:", {
-            total: otherUserIds.length,
-            unicos: uniqueOtherUserIds.length,
-            duplicados: otherUserIds.filter((id, index) => otherUserIds.indexOf(id) !== index)
-          });
-        }
-        
-        conversationsArray.forEach((conv, index) => {
-          console.log(`  📝 Conversación ${index + 1}:`, {
-            id: conv.id,
-            name: conv.name || 'Sin nombre',
-            other_user: conv.other_user,
-            participants: conv.participants,
-            last_message: conv.last_message,
-            updated_at: conv.updated_at,
-            raw: conv
-          });
-        });
-        
-        // Eliminar duplicados en el frontend como medida de seguridad
+        // Eliminar duplicados
         const uniqueConversations = conversationsArray.filter((conv, index, self) => 
           index === self.findIndex(c => c.id === conv.id)
         );
         
-        if (uniqueConversations.length !== conversationsArray.length) {
-          console.warn(`⚠️ Eliminados ${conversationsArray.length - uniqueConversations.length} duplicados en el frontend`);
-        }
-        
-        // Ordenar conversaciones por updated_at descendente (más recientes primero)
-        const sortedConversations = uniqueConversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-        console.log("🔄 Conversaciones ordenadas:", sortedConversations);
-        console.log(`✅ Retornando ${sortedConversations.length} conversaciones únicas`);
-        return sortedConversations;
+        // Ordenar por fecha de actualización (más recientes primero)
+        return uniqueConversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
       } catch (error) {
-        console.error("❌ Error detallado obteniendo conversaciones:", error);
-        console.error("❌ Error response:", error.response);
-        console.error("❌ Error status:", error.response?.status);
-        console.error("❌ Error data:", error.response?.data);
         throw error;
       }
     },
     {
-      enabled: !!user, // Solo ejecutar si hay usuario autenticado
-      staleTime: 15 * 1000, // Reducido de 30s a 15s - datos frescos más rápido
-      refetchInterval: 5000, // Reducido de 10s a 5s - actualizaciones más frecuentes
+      enabled: !!user,
+      staleTime: 15 * 1000,
+      refetchInterval: 5000,
       retry: 3,
       onError: (error) => {
-        console.error("❌ Error en query de conversaciones:", error);
         if (error.response?.status === 401) {
           toast.error("Sesión expirada. Por favor, inicia sesión nuevamente.");
         } else {
@@ -140,27 +71,17 @@ const Messages = () => {
         }
       },
       onSuccess: (data) => {
-        console.log("✅ Query de conversaciones exitosa. Datos finales:", data);
-        console.log("✅ Cantidad de conversaciones para mostrar:", data?.length || 0);
-        
-        // ACTUALIZAR HEADER: Sincronizar el selectedChat cuando se actualicen las conversaciones
+        // Sincronizar el selectedChat cuando se actualicen las conversaciones
         setSelectedChat(prevChat => {
           if (prevChat && data) {
-            // Buscar la conversación actualizada que corresponde al chat seleccionado
             const updatedConversation = data.find(conv => conv.id === prevChat.id);
             if (updatedConversation && updatedConversation.other_user) {
-              console.log("🔄 Sincronizando header con conversación actualizada");
-              console.log("📸 Header anterior:", prevChat.other_user);
-              console.log("📸 Header nuevo:", updatedConversation.other_user);
-              
-              // Si la imagen cambió, actualizar el selectedChat
               if (prevChat.other_user?.profile_picture !== updatedConversation.other_user?.profile_picture) {
-                console.log("🖼️ Imagen de perfil cambió en header - actualizando");
                 return {
                   ...prevChat,
                   other_user: {
                     ...updatedConversation.other_user,
-                    _profileUpdated: Date.now() // Forzar re-render
+                    _profileUpdated: Date.now()
                   }
                 };
               }
@@ -192,38 +113,26 @@ const Messages = () => {
     }
   );
 
-  // Función estable para marcar mensajes como leídos (optimizada para velocidad)
+  // Marcar mensajes como leídos
   const markAsRead = useCallback(
     async (chatId) => {
       try {
-        console.log(`📖 Marcando mensajes como leídos para chat ${chatId}`);
-        
-        // ⚡ ACTUALIZACIÓN OPTIMISTA: Actualizar el estado local INMEDIATAMENTE
+        // Actualización optimista
         queryClient.setQueryData("conversations", (oldConversations) => {
           if (!oldConversations) return oldConversations;
           
           return oldConversations.map(conversation => {
             if (conversation.id === chatId) {
-              console.log(`🔄 Actualizando unread_count para chat ${chatId}: ${conversation.unread_count} -> 0 (optimista)`);
-              return {
-                ...conversation,
-                unread_count: 0
-              };
+              return { ...conversation, unread_count: 0 };
             }
             return conversation;
           });
         });
         
-        // Luego hacer la llamada al servidor (sin bloquear la UI)
-        api.post(`/chat/chats/${chatId}/read/`).then(() => {
-          console.log(`✅ Mensajes marcados como leídos en servidor para chat ${chatId}`);
-        }).catch((error) => {
-          console.error("❌ Error en servidor, revirtiendo estado:", error);
-          // En caso de error, podríamos revertir el estado optimista aquí
-        });
-        
+        // Llamada al servidor
+        await api.post(`/chat/chats/${chatId}/read/`);
       } catch (error) {
-        console.error("❌ Error marking messages as read:", error);
+        // Error silencioso, no afecta la UX
       }
     },
     [queryClient]
@@ -236,15 +145,9 @@ const Messages = () => {
     }
   };
 
-  // Función para manejar typing indicators
+  // Manejar indicadores de escritura
   const handleTypingStart = () => {
     if (selectedChat && !isTyping) {
-      console.log("📤 ENVIANDO typing_start:", {
-        type: "typing_start",
-        room: selectedChat.id,
-        user: user.id,
-        username: user.username
-      });
       setIsTyping(true);
       socketService.send({
         type: "typing_start",
@@ -253,12 +156,10 @@ const Messages = () => {
       });
     }
 
-    // Limpiar timeout anterior
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Establecer nuevo timeout para parar typing después de 3 segundos
     typingTimeoutRef.current = setTimeout(() => {
       handleTypingStop();
     }, 3000);
@@ -266,12 +167,6 @@ const Messages = () => {
 
   const handleTypingStop = () => {
     if (selectedChat && isTyping) {
-      console.log("📤 ENVIANDO typing_stop:", {
-        type: "typing_stop",
-        room: selectedChat.id,
-        user: user.id,
-        username: user.username
-      });
       setIsTyping(false);
       socketService.send({
         type: "typing_stop",
@@ -290,11 +185,9 @@ const Messages = () => {
   }, [messages]);
 
   useEffect(() => {
-    // Asegurar que el WebSocket esté conectado al cargar la página de mensajes
     if (user && !socketService.isConnected()) {
       const token = localStorage.getItem("access_token");
       if (token) {
-        console.log("Reconectando WebSocket para mensajes...");
         socketService.connect(token);
       }
     }
@@ -318,27 +211,17 @@ const Messages = () => {
 
     // Escuchar actualizaciones de perfil de usuarios
     socketService.onProfileUpdate((data) => {
-      console.log("📸 Actualización de perfil recibida en Messages.js:", data);
       const { user_id, user_data } = data;
       const updateTimestamp = Date.now();
       
-      console.log("🆔 User ID del evento:", user_id);
-      console.log("📊 User data del evento:", user_data);
-      console.log("⏰ Timestamp generado:", updateTimestamp);
-      
-      // Limpiar cache de imágenes para forzar recarga con nueva imagen
       clearUserImageCache(user_id);
-      
-      // FALLBACK: También invalidar las conversaciones para forzar refetch
       queryClient.invalidateQueries("conversations");
       
-      // Actualizar la lista de conversaciones si el usuario actualizado está en alguna
       queryClient.setQueryData("conversations", (oldConversations) => {
         if (!oldConversations) return oldConversations;
         
         return oldConversations.map(conversation => {
           if (conversation.other_user?.id === user_id) {
-            console.log(`📸 Actualizando perfil de ${conversation.other_user.username} en conversaciones`);
             return {
               ...conversation,
               other_user: {
@@ -352,16 +235,9 @@ const Messages = () => {
         });
       });
 
-      // Actualizar el chat seleccionado si corresponde al usuario actualizado
       setSelectedChat(prevChat => {
         if (prevChat && prevChat.other_user?.id === user_id) {
-          console.log(`📸 Actualizando perfil de ${prevChat.other_user.username} en chat seleccionado`);
-          console.log('📸 Datos anteriores:', prevChat.other_user);
-          console.log('📸 Nuevos datos:', user_data);
-          console.log('📸 Timestamp de actualización:', updateTimestamp);
-          
-          // Crear un objeto completamente nuevo para forzar re-render
-          const updatedChat = {
+          return {
             ...prevChat,
             other_user: {
               ...prevChat.other_user,
@@ -369,16 +245,10 @@ const Messages = () => {
               _profileUpdated: updateTimestamp
             }
           };
-          
-          console.log('📸 Chat actualizado:', updatedChat);
-          return updatedChat;
         }
         return prevChat;
       });
     });
-
-    // NO usar listener global aquí - ya se maneja en el useEffect del chat específico
-    // Solo manejar eventos de conexión/desconexión
 
     return () => {
       socketService.listeners.delete("reconnecting");
@@ -401,16 +271,9 @@ const Messages = () => {
 
       // Escuchar nuevos mensajes
       socketService.onMessage((data) => {
-        console.log("Mensaje recibido por WebSocket:", data);
-        // Asegurar que el mensaje tenga la estructura correcta
         const newMessage = data.message || data;
-        console.log("Mensaje procesado:", newMessage);
         
-        // Si el mensaje es para el chat activo, agregarlo a la lista
         if (data.room === selectedChat.id) {
-          console.log("Mensaje para chat activo - agregando a la lista");
-          
-          // Evitar duplicados comprobando si el mensaje ya existe
           setMessages((prev) => {
             const messageExists = prev.some(msg => {
               const existingMsg = msg.message || msg;
@@ -420,46 +283,29 @@ const Messages = () => {
                       Math.abs(new Date(existingMsg.timestamp) - new Date(newMessage.timestamp)) < 1000);
             });
             
-            if (messageExists) {
-              console.log("Mensaje duplicado detectado, no agregando");
-              return prev; // No agregar si ya existe
-            }
+            if (messageExists) return prev;
             
-            console.log("Agregando nuevo mensaje al chat activo");
             return [...prev, newMessage];
           });
           
-          // Marcar mensajes como leídos inmediatamente cuando se reciben en chat activo
           if (newMessage.sender_id !== user.id && newMessage.sender !== user.id) {
-            // Marcado inmediato sin delay
             markAsRead(selectedChat.id);
           }
         }
         
-        // Siempre actualizar la lista de conversaciones con el último mensaje
-        // (tanto para chat activo como inactivo)
+        // Actualizar lista de conversaciones
         queryClient.setQueryData("conversations", (oldConversations) => {
           if (!oldConversations) return oldConversations;
           
           return oldConversations.map(conversation => {
             if (conversation.id === data.room) {
-              // Si es el chat activo y el mensaje no es del usuario actual, mantener unread_count en 0
-              // Si es un chat inactivo y el mensaje no es del usuario actual, incrementar unread_count
               const isActiveChat = selectedChat.id === data.room;
               const isMyMessage = newMessage.sender_id === user.id || newMessage.sender === user.id;
               
               let newUnreadCount = conversation.unread_count || 0;
               if (!isMyMessage) {
-                if (isActiveChat) {
-                  // Chat activo: marcar como leído automáticamente
-                  newUnreadCount = 0;
-                } else {
-                  // Chat inactivo: incrementar contador
-                  newUnreadCount = newUnreadCount + 1;
-                }
+                newUnreadCount = isActiveChat ? 0 : newUnreadCount + 1;
               }
-              
-              console.log(`📊 Actualizando unread_count para chat ${data.room}: ${conversation.unread_count} -> ${newUnreadCount} (activo: ${isActiveChat}, mi mensaje: ${isMyMessage})`);
               
               return {
                 ...conversation,
@@ -473,69 +319,29 @@ const Messages = () => {
               };
             }
             return conversation;
-          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)); // Ordenar por más reciente
+          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
         });
       });
 
-      // Escuchar typing indicators - Listeners optimizados
+      // Escuchar indicadores de escritura
       socketService.on("typing_start", (data) => {
-        console.log("📥 RECIBIDO typing_start:", data);
-        console.log("📊 Chat actual:", selectedChat.id, "| Usuario actual:", user.id);
-        
-        // Solo procesar si es del chat actual y no es el usuario actual
         if (data.room === selectedChat.id && data.user !== user.id) {
-          console.log("✅ Condiciones cumplidas - Mostrando indicador de escritura");
           setTypingUsers((prev) => {
-            // Evitar duplicados: si el usuario ya está en la lista, no agregarlo
-            if (prev.includes(data.user)) {
-              console.log("⚠️ Usuario ya en la lista de typing");
-              return prev;
-            }
-            console.log("➕ Agregando usuario a lista de typing:", [...prev, data.user]);
+            if (prev.includes(data.user)) return prev;
             return [...prev, data.user];
-          });
-          
-          console.log(`✍️ ${data.username || 'Usuario'} está escribiendo...`);
-        } else {
-          console.log("❌ Condiciones NO cumplidas:", {
-            roomMatch: data.room === selectedChat.id,
-            notCurrentUser: data.user !== user.id,
-            dataRoom: data.room,
-            selectedChatId: selectedChat.id,
-            dataUser: data.user,
-            currentUserId: user.id
           });
         }
       });
 
       socketService.on("typing_stop", (data) => {
-        console.log("📥 RECIBIDO typing_stop:", data);
-        
-        // Solo procesar si es del chat actual
         if (data.room === selectedChat.id) {
-          console.log("✅ Es el chat actual - Removiendo indicador");
-          setTypingUsers((prev) => {
-            // Filtrar el usuario que dejó de escribir
-            const updated = prev.filter((u) => u !== data.user);
-            if (updated.length !== prev.length) {
-              console.log(`⏹️ ${data.username || 'Usuario'} dejó de escribir`);
-              console.log("📋 Lista actualizada de typing:", updated);
-            }
-            return updated;
-          });
-        } else {
-          console.log("❌ No es el chat actual");
+          setTypingUsers((prev) => prev.filter((u) => u !== data.user));
         }
       });
 
-      // Marcar mensajes como leídos al abrir el chat (delay mínimo para evitar bucles)
-      const markReadTimer = setTimeout(() => {
-        markAsRead(selectedChat.id);
-      }, 50); // Reducido de 100ms a 50ms
+      const markReadTimer = setTimeout(() => markAsRead(selectedChat.id), 50);
 
-      return () => {
-        clearTimeout(markReadTimer);
-      };
+      return () => clearTimeout(markReadTimer);
     }
 
     return () => {
@@ -718,12 +524,7 @@ const Messages = () => {
               );
             }
 
-            // Asegurar que conversations es un array válido
             const convList = Array.isArray(conversations) ? conversations : [];
-            console.log("🗂️ Lista de conversaciones para renderizar:", convList);
-            console.log("🗂️ Cantidad de conversaciones:", convList.length);
-            console.log("🗂️ Tipo de conversations:", typeof conversations);
-            console.log("🗂️ Es array conversations:", Array.isArray(conversations));
 
             // Filtrar conversaciones por búsqueda
             const filteredConvs = searchConversation.trim()
@@ -743,13 +544,7 @@ const Messages = () => {
                 })
               : convList;
 
-            console.log("🔍 Conversaciones filtradas:", filteredConvs);
-            console.log("🔍 Cantidad de conversaciones filtradas:", filteredConvs.length);
-            console.log("🔍 Término de búsqueda:", searchConversation);
-            console.log("🔍 Mostrar crear chat:", showCreateChat);
-
             if (filteredConvs.length === 0 && !showCreateChat) {
-              console.log("⚠️ Mostrando mensaje de 'No tienes conversaciones'");
               return (
                 <div className="flex items-center justify-center h-full p-4">
                   <div className="text-center">
@@ -777,13 +572,11 @@ const Messages = () => {
               );
             }
 
-            console.log("✅ Renderizando conversaciones:", filteredConvs.length);
             return filteredConvs.map((conversation) => (
               <button
                 key={conversation.id}
                 onClick={() => {
                   setSelectedChat(conversation);
-                  // Marcar mensajes como leídos inmediatamente al seleccionar el chat
                   if (conversation.unread_count > 0) {
                     markAsRead(conversation.id);
                   }
@@ -864,16 +657,12 @@ const Messages = () => {
                 </div>
               )}
               {messages.map((msg, index) => {
-                // Asegurar que msg tenga la estructura correcta
                 const messageObj = msg.message || msg;
 
-                // Extraer el contenido del mensaje de forma segura
+                // Extraer contenido del mensaje
                 let messageContent;
-                
-                // Si el contenido es un string que parece JSON, parsearlo
                 if (typeof messageObj.content === "string") {
                   try {
-                    // Intentar parsear si parece ser JSON
                     if (messageObj.content.startsWith('{') || messageObj.content.startsWith('[')) {
                       const parsed = JSON.parse(messageObj.content);
                       messageContent = parsed.content || parsed.message || parsed.text || messageObj.content;
@@ -881,21 +670,15 @@ const Messages = () => {
                       messageContent = messageObj.content;
                     }
                   } catch (e) {
-                    // Si no es JSON válido, usar como string
                     messageContent = messageObj.content;
                   }
                 } else if (typeof messageObj.content === "object" && messageObj.content?.content) {
                   messageContent = messageObj.content.content;
-                } else if (messageObj.text) {
-                  messageContent = messageObj.text;
                 } else {
-                  // Último recurso: buscar cualquier campo que parezca contenido
-                  messageContent = messageObj.body || messageObj.message || "Sin contenido";
+                  messageContent = messageObj.text || messageObj.body || messageObj.message || "Sin contenido";
                 }
 
-                const isOwnMessage =
-                  messageObj.sender_id === user.id ||
-                  messageObj.sender === user.id;
+                const isOwnMessage = messageObj.sender_id === user.id || messageObj.sender === user.id;
                 return (
                   <div
                     key={messageObj.id || index}

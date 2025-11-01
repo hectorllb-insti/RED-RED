@@ -185,17 +185,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
 
     async def profile_update(self, event):
-        # Enviar actualización de perfil a todos los clientes conectados
-        print(f"🔄 Consumer recibió profile_update para usuario {event['user_id']}")
-        print(f"📊 Enviando a cliente: {event['user_data']}")
-        
         await self.send(text_data=json.dumps({
             'type': 'profile_updated',
             'user_id': event['user_id'],
             'user_data': event['user_data']
         }))
-        
-        print(f"✅ Profile update enviado al cliente para usuario {event['user_id']}")
 
     async def broadcast_profile_update(self):
         # Obtener datos actualizados del usuario

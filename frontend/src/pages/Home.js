@@ -298,15 +298,10 @@ const Home = () => {
   // Auto-refresh cada 45 segundos para obtener nuevas publicaciones
   useEffect(() => {
     const autoRefreshInterval = setInterval(() => {
-      console.log("🔄 Auto-refresh del feed - Actualizando publicaciones...");
       queryClient.invalidateQueries("posts");
-    }, 45000); // 45 segundos
+    }, 45000);
 
-    // Limpiar el intervalo cuando el componente se desmonte
-    return () => {
-      clearInterval(autoRefreshInterval);
-      console.log("🛑 Auto-refresh detenido");
-    };
+    return () => clearInterval(autoRefreshInterval);
   }, [queryClient]);
 
   if (isLoading) {

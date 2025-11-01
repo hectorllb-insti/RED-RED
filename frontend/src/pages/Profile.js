@@ -207,28 +207,18 @@ const Profile = () => {
 
           if (response.ok) {
             const comments = await response.json();
-            // Actualizar cache de comentarios
             queryClient.setQueryData(["comments", parseInt(postId)], comments);
           }
         }
-
-        console.log("✅ Datos actualizados automáticamente");
       } catch (error) {
-        console.error("❌ Error en auto-refresh:", error);
+        // Error silencioso en auto-refresh
       }
     };
 
-    // Ejecutar inmediatamente al montar
     autoRefreshData();
-
-    // Configurar intervalo de 30 segundos
     const intervalId = setInterval(autoRefreshData, 30000);
 
-    // Limpiar intervalo al desmontar el componente
-    return () => {
-      clearInterval(intervalId);
-      console.log("🛑 Auto-refresh detenido");
-    };
+    return () => clearInterval(intervalId);
   }, [profileUser?.username, showComments, queryClient]);
 
   // Función para recargar comentarios específicos
