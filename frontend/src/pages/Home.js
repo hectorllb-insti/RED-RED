@@ -388,7 +388,7 @@ const Home = () => {
                   (!newPost.trim() && !selectedImage) ||
                   createPostMutation.isLoading
                 }
-                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-lg shadow-primary-500/30 transition-all"
+                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-lg shadow-primary-500/30 transition-all hover-lift active:scale-95"
               >
                 {createPostMutation.isLoading ? "Publicando..." : "Publicar"}
               </button>
@@ -421,10 +421,11 @@ const Home = () => {
             );
           }
 
-          return postList.map((post) => (
+          return postList.map((post, index) => (
             <div
               key={post.id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow stagger-item"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* Post Header */}
               <div className="p-5 flex items-center justify-between">
@@ -518,14 +519,14 @@ const Home = () => {
                 <div className="flex items-center gap-6">
                   <button
                     onClick={() => handleLike(post.id)}
-                    className={`flex items-center gap-2 transition-all ${
+                    className={`like-button flex items-center gap-2 transition-all hover-scale ${
                       post.is_liked
-                        ? "text-red-500"
+                        ? "text-red-500 liked"
                         : "text-gray-500 hover:text-red-500"
                     }`}
                   >
                     <Heart
-                      className={`h-5 w-5 ${
+                      className={`h-5 w-5 transition-all ${
                         post.is_liked ? "fill-current" : ""
                       }`}
                     />
@@ -535,7 +536,7 @@ const Home = () => {
                   </button>
                   <button
                     onClick={() => toggleComments(post.id)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition-all"
+                    className="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition-all hover-scale"
                   >
                     <MessageCircle className="h-5 w-5" />
                     <span className="text-sm font-medium">
@@ -668,8 +669,8 @@ const CommentsSection = ({
         ) : (
           <div className="space-y-4">
             {comments && comments.length > 0 ? (
-              comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-3 group">
+              comments.map((comment, index) => (
+                <div key={comment.id} className="flex space-x-3 group comment-appear" style={{ animationDelay: `${index * 0.05}s` }}>
                   <img
                     className="h-9 w-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
                     src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}

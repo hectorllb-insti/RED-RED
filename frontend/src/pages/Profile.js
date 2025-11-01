@@ -479,52 +479,53 @@ const Profile = () => {
 
         <div className="p-6">
           {activeTab === "posts" && (
-            <div className="space-y-5">
-              {userPosts?.results?.map((post) => (
+            <div className="space-y-4">
+              {userPosts?.results?.map((post, index) => (
                 <div
                   key={post.id}
-                  className="border-b border-gray-100 pb-5 last:border-b-0"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all stagger-item"
+                  style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-[15px]">
                     {post.content}
                   </p>
                   {post.image && (
                     <img
                       src={post.image || "/placeholder.svg"}
                       alt="Post"
-                      className="mt-3 rounded-xl max-w-full h-auto"
+                      className="mt-4 rounded-xl max-w-full h-auto border border-gray-100"
                     />
                   )}
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => !isOwnProfile && handleLike(post.id)}
                         disabled={isOwnProfile}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
+                        className={`like-button flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
                           post.is_liked
-                            ? "bg-red-50 text-red-600"
+                            ? "bg-red-50 text-red-600 liked"
                             : "bg-gray-100 text-gray-700"
                         } ${
-                          !isOwnProfile ? "hover:bg-red-50 hover:text-red-600 cursor-pointer" : "cursor-default opacity-75"
+                          !isOwnProfile ? "hover:bg-red-50 hover:text-red-600 hover-scale cursor-pointer" : "cursor-default opacity-75"
                         }`}
                       >
-                        <Heart className={`h-4 w-4 ${post.is_liked ? "fill-current" : ""}`} />
+                        <Heart className={`h-4 w-4 transition-all ${post.is_liked ? "fill-current" : ""}`} />
                         <span>{post.likes_count}</span>
                       </button>
                       <button
                         onClick={() => toggleComments(post.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all hover-scale ${
                           showComments[post.id]
                             ? "bg-primary-100 text-primary-700"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        <MessageCircle className="h-4 w-4" />
+                        <MessageCircle className="h-4 w-4 transition-transform" />
                         <span>{post.comments_count}</span>
                         {showComments[post.id] ? (
-                          <ChevronUp className="h-3.5 w-3.5" />
+                          <ChevronUp className="h-3.5 w-3.5 transition-transform" />
                         ) : (
-                          <ChevronDown className="h-3.5 w-3.5" />
+                          <ChevronDown className="h-3.5 w-3.5 transition-transform" />
                         )}
                       </button>
                     </div>
@@ -647,9 +648,9 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
   };
 
   return (
-    <div className="mt-3 border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white rounded-b-lg">
+    <div className="mt-3 border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white rounded-b-lg animate-slideDown">
       {/* Formulario para nuevo comentario */}
-      <div className="p-5 border-b border-gray-200 bg-white">
+      <div className="p-5 border-b border-gray-200 bg-white animate-fadeIn">
         <div className="flex space-x-3">
           <img
             className="h-10 w-10 rounded-full object-cover flex-shrink-0 ring-2 ring-primary-100"
@@ -671,7 +672,7 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
               <button
                 onClick={handleCommentSubmit}
                 disabled={!newComment.trim() || commentMutation.isLoading}
-                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary-500/30 transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary-500/30 transition-all hover-lift active:scale-95"
               >
                 {commentMutation.isLoading ? "Enviando..." : "Comentar"}
               </button>
@@ -689,8 +690,8 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
         ) : (
           <div className="space-y-4">
             {comments && comments.length > 0 ? (
-              comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-3 group">
+              comments.map((comment, index) => (
+                <div key={comment.id} className="flex space-x-3 group comment-appear" style={{ animationDelay: `${index * 0.05}s` }}>
                   <img
                     className="h-9 w-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
                     src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
@@ -700,7 +701,7 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
                     }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 group-hover:shadow-md transition-all">
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 transition-all">
                       <p className="font-semibold text-sm text-gray-900">
                         {comment.author_username}
                       </p>
@@ -711,14 +712,14 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
                     <div className="flex items-center gap-4 mt-2 px-2">
                       <button
                         onClick={() => handleCommentLike(comment.id)}
-                        className={`flex items-center gap-1 text-xs font-medium transition-all ${
+                        className={`like-button flex items-center gap-1 text-xs font-medium transition-all hover-scale ${
                           comment.is_liked
-                            ? "text-red-500"
+                            ? "text-red-500 liked"
                             : "text-gray-500 hover:text-red-500"
                         }`}
                       >
                         <Heart
-                          className={`h-4 w-4 ${
+                          className={`h-4 w-4 transition-all ${
                             comment.is_liked ? "fill-current" : ""
                           }`}
                         />
