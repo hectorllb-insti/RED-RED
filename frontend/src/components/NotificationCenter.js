@@ -83,6 +83,8 @@ const NotificationCenter = () => {
           return <MessageCircle className="h-5 w-5 text-blue-500" />;
         case "follow":
           return <UserPlus className="h-5 w-5 text-green-500" />;
+        case "message":
+          return <MessageCircle className="h-5 w-5 text-indigo-500" />;
         case "post":
           return <MessageCircle className="h-5 w-5 text-purple-500" />;
         default:
