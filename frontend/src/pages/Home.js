@@ -10,7 +10,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import EmptyState from "../components/EmptyState";
@@ -294,6 +294,20 @@ const Home = () => {
     setSelectedImage(null);
     setImagePreview(null);
   };
+
+  // Auto-refresh cada 45 segundos para obtener nuevas publicaciones
+  useEffect(() => {
+    const autoRefreshInterval = setInterval(() => {
+      console.log("🔄 Auto-refresh del feed - Actualizando publicaciones...");
+      queryClient.invalidateQueries("posts");
+    }, 45000); // 45 segundos
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => {
+      clearInterval(autoRefreshInterval);
+      console.log("🛑 Auto-refresh detenido");
+    };
+  }, [queryClient]);
 
   if (isLoading) {
     return (
