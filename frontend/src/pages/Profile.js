@@ -274,6 +274,59 @@ const Profile = () => {
     followMutation.mutate();
   };
 
+  // Mutation para dar like/unlike a publicaciones
+  const likeMutation = useMutation(
+    async (postId) => {
+      const response = await api.post(`/posts/${postId}/like/`);
+      return response.data;
+    },
+    {
+      onMutate: async (postId) => {
+        // Cancelar queries pendientes
+        await queryClient.cancelQueries(["userPosts", profileUser?.username]);
+        
+        // Snapshot del valor anterior
+        const previousPosts = queryClient.getQueryData(["userPosts", profileUser?.username]);
+        
+        // Actualización optimista
+        queryClient.setQueryData(["userPosts", profileUser?.username], (old) => {
+          if (!old?.results) return old;
+          
+          return {
+            ...old,
+            results: old.results.map((post) => {
+              if (post.id === postId) {
+                const currentlyLiked = post.is_liked || false;
+                return {
+                  ...post,
+                  is_liked: !currentlyLiked,
+                  likes_count: currentlyLiked 
+                    ? Math.max(0, post.likes_count - 1)
+                    : post.likes_count + 1
+                };
+              }
+              return post;
+            })
+          };
+        });
+        
+        return { previousPosts };
+      },
+      onError: (err, postId, context) => {
+        // Revertir en caso de error
+        queryClient.setQueryData(["userPosts", profileUser?.username], context.previousPosts);
+      },
+      onSettled: () => {
+        // Refetch para sincronizar con el servidor
+        queryClient.invalidateQueries(["userPosts", profileUser?.username]);
+      },
+    }
+  );
+
+  const handleLike = (postId) => {
+    likeMutation.mutate(postId);
+  };
+
   if (isLoading) {
     return (
       <LoadingSpinner variant="spinner" text="Cargando perfil..." fullScreen />
@@ -444,10 +497,20 @@ const Profile = () => {
                   )}
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full">
-                        <Heart className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm font-semibold text-gray-700">{post.likes_count}</span>
-                      </div>
+                      <button
+                        onClick={() => !isOwnProfile && handleLike(post.id)}
+                        disabled={isOwnProfile}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
+                          post.is_liked
+                            ? "bg-red-50 text-red-600"
+                            : "bg-gray-100 text-gray-700"
+                        } ${
+                          !isOwnProfile ? "hover:bg-red-50 hover:text-red-600 cursor-pointer" : "cursor-default opacity-75"
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${post.is_liked ? "fill-current" : ""}`} />
+                        <span>{post.likes_count}</span>
+                      </button>
                       <button
                         onClick={() => toggleComments(post.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
