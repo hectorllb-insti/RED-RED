@@ -590,6 +590,7 @@ const CommentsSection = ({
   isSubmitting,
 }) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Query para obtener comentarios del post
   const { data: comments, isLoading } = useQuery(
@@ -600,13 +601,30 @@ const CommentsSection = ({
     }
   );
 
+  // Mutation para dar like/unlike a comentarios
+  const likeCommentMutation = useMutation(
+    async (commentId) => {
+      const response = await api.post(`/posts/comments/${commentId}/like/`);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["comments", postId]);
+      },
+    }
+  );
+
+  const handleCommentLike = (commentId) => {
+    likeCommentMutation.mutate(commentId);
+  };
+
   return (
-    <div className="border-t border-gray-100">
+    <div className="border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white">
       {/* Formulario para nuevo comentario */}
-      <div className="p-4 border-b border-gray-50">
+      <div className="p-5 border-b border-gray-200 bg-white">
         <div className="flex space-x-3">
           <img
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+            className="h-10 w-10 rounded-full object-cover flex-shrink-0 ring-2 ring-primary-100"
             src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
             alt={user?.full_name || "Tu perfil"}
             onError={(e) => {
@@ -618,14 +636,14 @@ const CommentsSection = ({
               value={newComment}
               onChange={(e) => onCommentChange(postId, e.target.value)}
               placeholder="Escribe un comentario..."
-              className="w-full p-2 border border-gray-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 placeholder-gray-400 transition-all"
               rows="2"
             />
             <div className="flex justify-end mt-2">
               <button
                 onClick={() => onCommentSubmit(postId)}
                 disabled={!newComment.trim() || isSubmitting}
-                className="px-3 py-1 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary-500/30 transition-all"
               >
                 {isSubmitting ? "Enviando..." : "Comentar"}
               </button>
@@ -635,42 +653,68 @@ const CommentsSection = ({
       </div>
 
       {/* Lista de comentarios */}
-      <div className="p-4">
+      <div className="p-5 space-y-4 max-h-96 overflow-y-auto">
         {isLoading ? (
           <LoadingSpinner variant="pulse" size="sm" />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {comments && comments.length > 0 ? (
               comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-3">
+                <div key={comment.id} className="flex space-x-3 group">
                   <img
-                    className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+                    className="h-9 w-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
                     src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
                     alt={comment.author_username || "Usuario"}
                     onError={(e) => {
                       e.target.src = "/default-avatar.png";
                     }}
                   />
-                  <div className="flex-1">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="font-medium text-sm text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 group-hover:shadow-md transition-all">
+                      <p className="font-semibold text-sm text-gray-900">
                         {comment.author_username}
                       </p>
-                      <p className="text-sm text-gray-800 mt-1">
+                      <p className="text-sm text-gray-700 mt-1 break-words">
                         {comment.content}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(comment.created_at).toLocaleDateString()} a las{" "}
-                      {new Date(comment.created_at).toLocaleTimeString()}
-                    </p>
+                    <div className="flex items-center gap-4 mt-2 px-2">
+                      <button
+                        onClick={() => handleCommentLike(comment.id)}
+                        className={`flex items-center gap-1 text-xs font-medium transition-all ${
+                          comment.is_liked
+                            ? "text-red-500"
+                            : "text-gray-500 hover:text-red-500"
+                        }`}
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${
+                            comment.is_liked ? "fill-current" : ""
+                          }`}
+                        />
+                        <span>{comment.likes_count || 0}</span>
+                      </button>
+                      <span className="text-xs text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString()} •{" "}
+                        {new Date(comment.created_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm text-center py-4">
-                No hay comentarios aún. ¡Sé el primero en comentar!
-              </p>
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">
+                  No hay comentarios aún
+                </p>
+                <p className="text-gray-400 text-xs mt-1">
+                  ¡Sé el primero en comentar!
+                </p>
+              </div>
             )}
           </div>
         )}

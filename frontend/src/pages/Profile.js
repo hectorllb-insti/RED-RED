@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronDown, ChevronUp, Settings, UserMinus, UserPlus } from "lucide-react";
+import { Camera, ChevronDown, ChevronUp, Heart, MessageCircle, Settings, UserMinus, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -162,6 +162,74 @@ const Profile = () => {
     // Ejecutar la recarga cuando el componente se monta o cambia el profileIdentifier
     reloadProfileData();
   }, [profileIdentifier, refetchProfile, refetchPosts, profileUser?.username, queryClient]);
+
+  // Efecto para polling automático cada 30 segundos
+  useEffect(() => {
+    const autoRefreshData = async () => {
+      try {
+        const token = tokenManager.getToken();
+        if (!token) return;
+
+        // Actualizar posts del usuario
+        if (profileUser?.username) {
+          const response = await fetch(
+            `${API_BASE_URL}/posts/user/${profileUser.username}/`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            // Actualizar cache de React Query con los nuevos datos
+            queryClient.setQueryData(["userPosts", profileUser.username], data);
+          }
+        }
+
+        // Actualizar comentarios de posts visibles
+        const visiblePostIds = Object.keys(showComments).filter(
+          (postId) => showComments[postId]
+        );
+
+        for (const postId of visiblePostIds) {
+          const response = await fetch(
+            `${API_BASE_URL}/posts/${postId}/comments/`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const comments = await response.json();
+            // Actualizar cache de comentarios
+            queryClient.setQueryData(["comments", parseInt(postId)], comments);
+          }
+        }
+
+        console.log("✅ Datos actualizados automáticamente");
+      } catch (error) {
+        console.error("❌ Error en auto-refresh:", error);
+      }
+    };
+
+    // Ejecutar inmediatamente al montar
+    autoRefreshData();
+
+    // Configurar intervalo de 30 segundos
+    const intervalId = setInterval(autoRefreshData, 30000);
+
+    // Limpiar intervalo al desmontar el componente
+    return () => {
+      clearInterval(intervalId);
+      console.log("🛑 Auto-refresh detenido");
+    };
+  }, [profileUser?.username, showComments, queryClient]);
 
   // Función para recargar comentarios específicos
   const refreshComments = async (postId) => {
@@ -384,22 +452,30 @@ const Profile = () => {
                       className="mt-3 rounded-xl max-w-full h-auto"
                     />
                   )}
-                  <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
-                    <div className="flex items-center gap-4 font-medium">
-                      <span>{post.likes_count} likes</span>
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full">
+                        <Heart className="h-4 w-4 text-gray-600" />
+                        <span className="text-sm font-semibold text-gray-700">{post.likes_count}</span>
+                      </div>
                       <button
                         onClick={() => toggleComments(post.id)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
+                          showComments[post.id]
+                            ? "bg-primary-100 text-primary-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                       >
-                        <span>{post.comments_count} comentarios</span>
+                        <MessageCircle className="h-4 w-4" />
+                        <span>{post.comments_count}</span>
                         {showComments[post.id] ? (
-                          <ChevronUp className="h-4 w-4" />
+                          <ChevronUp className="h-3.5 w-3.5" />
                         ) : (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-3.5 w-3.5" />
                         )}
                       </button>
                     </div>
-                    <span className="font-medium">
+                    <span className="text-xs text-gray-500 font-medium">
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -469,95 +545,156 @@ const Profile = () => {
 
 // Componente para mostrar los comentarios en dropdown
 const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [newComment, setNewComment] = useState("");
   const { data: comments, isLoading, refetch } = usePostComments(postId);
 
-  // Función para recargar comentarios
-  const handleRefresh = async () => {
-    try {
-      await refetch();
-      if (refreshComments) {
-        await refreshComments(postId);
-      }
-    } catch (error) {
-      console.error("Error recargando comentarios:", error);
+  // Mutation para crear comentario
+  const commentMutation = useMutation(
+    async (commentData) => {
+      const response = await api.post(`/posts/${postId}/comment/`, commentData);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["comments", postId]);
+        queryClient.invalidateQueries(["userPosts"]);
+        setNewComment("");
+        toast.success("Comentario publicado");
+        refetch();
+      },
+      onError: () => {
+        toast.error("Error al publicar el comentario");
+      },
     }
+  );
+
+  // Mutation para dar like/unlike a comentarios
+  const likeCommentMutation = useMutation(
+    async (commentId) => {
+      const response = await api.post(`/posts/comments/${commentId}/like/`);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["comments", postId]);
+        refetch();
+      },
+    }
+  );
+
+  const handleCommentSubmit = () => {
+    if (!newComment.trim()) return;
+    commentMutation.mutate({ content: newComment });
   };
 
-  if (isLoading) {
-    return (
-      <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-center">
-          <LoadingSpinner variant="pulse" size="sm" />
-          <span className="ml-2 text-sm text-gray-600">Cargando comentarios...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!comments || comments.length === 0) {
-    return (
-      <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-between">
-          <p className="text-gray-500 text-sm">
-            No hay comentarios en esta publicación
-          </p>
-          <button
-            onClick={handleRefresh}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            Recargar
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleCommentLike = (commentId) => {
+    likeCommentMutation.mutate(commentId);
+  };
 
   return (
-    <div className="mt-3 bg-gray-50 rounded-lg">
-      {/* Header con botón de recarga */}
-      <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">
-          {comments.length} comentario{comments.length !== 1 ? 's' : ''}
-        </span>
-        <button
-          onClick={handleRefresh}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-        >
-          Recargar
-        </button>
-      </div>
-      
-      {/* Lista de comentarios */}
-      <div className="divide-y divide-gray-200">
-      {comments.map((comment) => (
-        <div key={comment.id} className="p-4 flex space-x-3">
+    <div className="mt-3 border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white rounded-b-lg">
+      {/* Formulario para nuevo comentario */}
+      <div className="p-5 border-b border-gray-200 bg-white">
+        <div className="flex space-x-3">
           <img
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-            src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
-            alt={comment.author_username || "Usuario"}
+            className="h-10 w-10 rounded-full object-cover flex-shrink-0 ring-2 ring-primary-100"
+            src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
+            alt={user?.full_name || "Tu perfil"}
             onError={(e) => {
               e.target.src = "/default-avatar.png";
             }}
           />
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="font-medium text-sm text-gray-900">
-                {comment.author_username}
-              </p>
-              <p className="text-sm text-gray-800 mt-1">
-                {comment.content}
-              </p>
+          <div className="flex-1">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Escribe un comentario..."
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 placeholder-gray-400 transition-all"
+              rows="2"
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleCommentSubmit}
+                disabled={!newComment.trim() || commentMutation.isLoading}
+                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary-500/30 transition-all"
+              >
+                {commentMutation.isLoading ? "Enviando..." : "Comentar"}
+              </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(comment.created_at).toLocaleDateString()} a las{" "}
-              {new Date(comment.created_at).toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Lista de comentarios */}
+      <div className="p-5 space-y-4 max-h-96 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <LoadingSpinner variant="pulse" size="sm" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {comments && comments.length > 0 ? (
+              comments.map((comment) => (
+                <div key={comment.id} className="flex space-x-3 group">
+                  <img
+                    className="h-9 w-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
+                    src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
+                    alt={comment.author_username || "Usuario"}
+                    onError={(e) => {
+                      e.target.src = "/default-avatar.png";
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 group-hover:shadow-md transition-all">
+                      <p className="font-semibold text-sm text-gray-900">
+                        {comment.author_username}
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1 break-words">
+                        {comment.content}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4 mt-2 px-2">
+                      <button
+                        onClick={() => handleCommentLike(comment.id)}
+                        className={`flex items-center gap-1 text-xs font-medium transition-all ${
+                          comment.is_liked
+                            ? "text-red-500"
+                            : "text-gray-500 hover:text-red-500"
+                        }`}
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${
+                            comment.is_liked ? "fill-current" : ""
+                          }`}
+                        />
+                        <span>{comment.likes_count || 0}</span>
+                      </button>
+                      <span className="text-xs text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString()} •{" "}
+                        {new Date(comment.created_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">
+                  No hay comentarios aún
+                </p>
+                <p className="text-gray-400 text-xs mt-1">
+                  ¡Sé el primero en comentar!
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
