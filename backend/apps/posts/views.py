@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from .models import Post, Like, Comment, SharedPost
+from .models import Post, Like, Comment, CommentLike, SharedPost
 from .serializers import (
     PostSerializer, PostCreateSerializer, CommentSerializer,
     SharePostSerializer, SharedPostSerializer
@@ -153,3 +153,23 @@ def shared_posts_list(request):
     shared_posts = SharedPost.objects.filter(shared_with=request.user)
     serializer = SharedPostSerializer(shared_posts, many=True)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_comment(request, comment_id):
+    """Dar o quitar like a un comentario"""
+    comment = get_object_or_404(Comment, id=comment_id)
+    like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
+    
+    if created:
+        return Response(
+            {'message': 'Comment liked', 'liked': True}, 
+            status=status.HTTP_201_CREATED
+        )
+    else:
+        like.delete()
+        return Response(
+            {'message': 'Comment unliked', 'liked': False}, 
+            status=status.HTTP_200_OK
+        )
