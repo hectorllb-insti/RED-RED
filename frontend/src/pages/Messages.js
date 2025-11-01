@@ -239,6 +239,12 @@ const Messages = () => {
   // Función para manejar typing indicators
   const handleTypingStart = () => {
     if (selectedChat && !isTyping) {
+      console.log("📤 ENVIANDO typing_start:", {
+        type: "typing_start",
+        room: selectedChat.id,
+        user: user.id,
+        username: user.username
+      });
       setIsTyping(true);
       socketService.send({
         type: "typing_start",
@@ -252,14 +258,20 @@ const Messages = () => {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Establecer nuevo timeout para parar typing después de 2 segundos
+    // Establecer nuevo timeout para parar typing después de 3 segundos
     typingTimeoutRef.current = setTimeout(() => {
       handleTypingStop();
-    }, 2000);
+    }, 3000);
   };
 
   const handleTypingStop = () => {
     if (selectedChat && isTyping) {
+      console.log("📤 ENVIANDO typing_stop:", {
+        type: "typing_stop",
+        room: selectedChat.id,
+        user: user.id,
+        username: user.username
+      });
       setIsTyping(false);
       socketService.send({
         type: "typing_stop",
@@ -465,19 +477,54 @@ const Messages = () => {
         });
       });
 
-      // Escuchar typing indicators
+      // Escuchar typing indicators - Listeners optimizados
       socketService.on("typing_start", (data) => {
+        console.log("📥 RECIBIDO typing_start:", data);
+        console.log("📊 Chat actual:", selectedChat.id, "| Usuario actual:", user.id);
+        
+        // Solo procesar si es del chat actual y no es el usuario actual
         if (data.room === selectedChat.id && data.user !== user.id) {
-          setTypingUsers((prev) => [
-            ...prev.filter((u) => u !== data.user),
-            data.user,
-          ]);
+          console.log("✅ Condiciones cumplidas - Mostrando indicador de escritura");
+          setTypingUsers((prev) => {
+            // Evitar duplicados: si el usuario ya está en la lista, no agregarlo
+            if (prev.includes(data.user)) {
+              console.log("⚠️ Usuario ya en la lista de typing");
+              return prev;
+            }
+            console.log("➕ Agregando usuario a lista de typing:", [...prev, data.user]);
+            return [...prev, data.user];
+          });
+          
+          console.log(`✍️ ${data.username || 'Usuario'} está escribiendo...`);
+        } else {
+          console.log("❌ Condiciones NO cumplidas:", {
+            roomMatch: data.room === selectedChat.id,
+            notCurrentUser: data.user !== user.id,
+            dataRoom: data.room,
+            selectedChatId: selectedChat.id,
+            dataUser: data.user,
+            currentUserId: user.id
+          });
         }
       });
 
       socketService.on("typing_stop", (data) => {
+        console.log("📥 RECIBIDO typing_stop:", data);
+        
+        // Solo procesar si es del chat actual
         if (data.room === selectedChat.id) {
-          setTypingUsers((prev) => prev.filter((u) => u !== data.user));
+          console.log("✅ Es el chat actual - Removiendo indicador");
+          setTypingUsers((prev) => {
+            // Filtrar el usuario que dejó de escribir
+            const updated = prev.filter((u) => u !== data.user);
+            if (updated.length !== prev.length) {
+              console.log(`⏹️ ${data.username || 'Usuario'} dejó de escribir`);
+              console.log("📋 Lista actualizada de typing:", updated);
+            }
+            return updated;
+          });
+        } else {
+          console.log("❌ No es el chat actual");
         }
       });
 
@@ -555,6 +602,9 @@ const Messages = () => {
     if (message.trim() && selectedChat) {
       const messageText = message.trim();
       const timestamp = new Date().toISOString();
+      
+      // Detener el indicador de typing inmediatamente al enviar
+      handleTypingStop();
       
       // Actualizar inmediatamente la lista de conversaciones
       queryClient.setQueryData("conversations", (oldConversations) => {
@@ -775,9 +825,9 @@ const Messages = () => {
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
         {selectedChat ? (
-          <div className="flex-1 overflow-y-auto">
+          <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
+            <div className="p-4 border-b border-gray-200 bg-white z-10 shadow-sm">
               <div className="flex items-center space-x-3">
                 <ChatAvatar
                   src={selectedChat.other_user?.profile_picture}
@@ -806,14 +856,7 @@ const Messages = () => {
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="px-4 pt-8 pb-4 space-y-4"
-              style={{
-                minHeight: 0,
-                flexShrink: 1,
-                flexGrow: 1,
-                display: 'flex',
-                flexDirection: 'column'
-              }}
+              className="flex-1 overflow-y-auto px-4 pt-8 pb-16 space-y-4"
             >
               {isLoadingMore && (
                 <div className="text-center py-2">
@@ -915,26 +958,42 @@ const Messages = () => {
                 );
               })}
 
-              {/* Typing indicator */}
+              {/* Typing indicator - Indicador de escritura en tiempo real */}
               {typingUsers.length > 0 && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-sm">
-                        {typingUsers.length === 1
-                          ? "Escribiendo"
-                          : "Varios usuarios escribiendo"}
-                      </span>
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.1s" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        ></div>
+                <div className="flex justify-start mb-4 animate-fade-in">
+                  <div className="flex items-center space-x-3">
+                    {/* Avatar del usuario que está escribiendo */}
+                    <ChatAvatar
+                      src={selectedChat.other_user?.profile_picture}
+                      alt={selectedChat.other_user?.full_name || "Usuario"}
+                      size="xs"
+                      updateKey={selectedChat.other_user?._profileUpdated}
+                    />
+                    
+                    {/* Burbuja del indicador */}
+                    <div className="bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-3 rounded-2xl shadow-sm border border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm font-medium text-gray-700">
+                          {typingUsers.length === 1
+                            ? `${selectedChat.other_user?.full_name || "Usuario"} está escribiendo`
+                            : "Varios usuarios están escribiendo"}
+                        </span>
+                        
+                        {/* Animación de puntos */}
+                        <div className="flex space-x-1.5">
+                          <div 
+                            className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-bounce"
+                            style={{ animationDuration: "1s" }}
+                          ></div>
+                          <div 
+                            className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-bounce"
+                            style={{ animationDuration: "1s", animationDelay: "0.15s" }}
+                          ></div>
+                          <div 
+                            className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-bounce"
+                            style={{ animationDuration: "1s", animationDelay: "0.3s" }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -957,7 +1016,6 @@ const Messages = () => {
                     setMessage(e.target.value);
                     handleTypingStart();
                   }}
-                  onBlur={handleTypingStop}
                   placeholder="Escribe un mensaje..."
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 />
@@ -970,7 +1028,7 @@ const Messages = () => {
                 </button>
               </div>
             </form>
-          </div>
+          </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

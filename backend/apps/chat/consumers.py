@@ -111,6 +111,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         }
                     )
             
+            elif message_type == 'typing_start':
+                room_id = text_data_json.get('room', self.current_room)
+                if room_id:
+                    await self.channel_layer.group_send(
+                        f'chat_{room_id}',
+                        {
+                            'type': 'typing_start_handler',
+                            'user': self.user.id,
+                            'username': self.user.username,
+                            'room': room_id
+                        }
+                    )
+            
+            elif message_type == 'typing_stop':
+                room_id = text_data_json.get('room', self.current_room)
+                if room_id:
+                    await self.channel_layer.group_send(
+                        f'chat_{room_id}',
+                        {
+                            'type': 'typing_stop_handler',
+                            'user': self.user.id,
+                            'username': self.user.username,
+                            'room': room_id
+                        }
+                    )
+            
             elif message_type == 'profile_updated':
                 # Manejar actualización de perfil del usuario
                 await self.broadcast_profile_update()
@@ -136,6 +162,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'typing',
                 'user': event['user'],
                 'is_typing': event['is_typing'],
+            }))
+    
+    async def typing_start_handler(self, event):
+        # No enviar el indicador al usuario que está escribiendo
+        if event['user'] != self.user.id:
+            await self.send(text_data=json.dumps({
+                'type': 'typing_start',
+                'user': event['user'],
+                'username': event['username'],
+                'room': event['room']
+            }))
+    
+    async def typing_stop_handler(self, event):
+        # No enviar el indicador al usuario que dejó de escribir
+        if event['user'] != self.user.id:
+            await self.send(text_data=json.dumps({
+                'type': 'typing_stop',
+                'user': event['user'],
+                'username': event['username'],
+                'room': event['room']
             }))
 
     async def profile_update(self, event):

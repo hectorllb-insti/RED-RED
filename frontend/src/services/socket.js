@@ -151,6 +151,20 @@ class SocketService {
           user_data: data.user_data 
         });
         break;
+      case "typing_start":
+        this.triggerListener("typing_start", { 
+          room: data.room, 
+          user: data.user,
+          username: data.username 
+        });
+        break;
+      case "typing_stop":
+        this.triggerListener("typing_stop", { 
+          room: data.room, 
+          user: data.user,
+          username: data.username 
+        });
+        break;
       case "user_joined":
         this.triggerListener("user_joined", { room, user: data.user });
         break;
