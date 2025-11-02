@@ -31,50 +31,72 @@
 
 ## 🎯 Características Principales
 
-<table>
+</div>
+
+<table align="center">
 <tr>
-<td width="50%" align="center">
+<td width="50%" valign="top">
+<br>
+<div align="center">
 
 ### 👥 **Perfiles Personalizables**
-- 🖼️ Foto de perfil y portada
-- � Bio y información personal
-- 🔒 Control de privacidad
-- 📊 Estadísticas de seguidores
+
+</div>
+
+- 🖼️ Foto de perfil y portada personalizadas
+- 📝 Bio completa e información personal
+- 🔒 Control total de privacidad
+- 📊 Estadísticas detalladas de seguidores
 
 </td>
-<td width="50%" align="center">
+<td width="50%" valign="top">
+<br>
+<div align="center">
 
 ### 💬 **Chat en Tiempo Real**
-- ⚡ Mensajes instantáneos
-- � Estado de conexión
-- 💾 Historial persistente
-- 🔔 Notificaciones push
+
+</div>
+
+- ⚡ Mensajes instantáneos sin demoras
+- 🟢 Indicadores de estado en vivo
+- 💾 Historial completo y persistente
+- 🔔 Notificaciones push en tiempo real
 
 </td>
 </tr>
 <tr>
-<td width="50%" align="center">
+<td width="50%" valign="top">
+<br>
+<div align="center">
 
 ### 📝 **Publicaciones Sociales**
-- 📸 Subida de imágenes
-- ❤️ Sistema de likes
-- 💭 Comentarios anidados
-- 🔄 Feed personalizado
+
+</div>
+
+- 📸 Subida múltiple de imágenes
+- ❤️ Sistema avanzado de likes
+- 💭 Comentarios con respuestas anidadas
+- 🔄 Feed personalizado inteligente
 
 </td>
-<td width="50%" align="center">
+<td width="50%" valign="top">
+<br>
+<div align="center">
 
 ### 📖 **Historias 24h**
-- ⏰ Contenido temporal
-- 🎨 Personalización visual
-- �️ Contador de vistas
-- 🗑️ Auto-eliminación
+
+</div>
+
+- ⏰ Contenido temporal de 24 horas
+- 🎨 Personalización visual completa
+- 👁️ Contador detallado de vistas
+- 🗑️ Auto-eliminación automática
 
 </td>
 </tr>
 </table>
 
-</div>
+<div align="center">
 
 ---
 
@@ -151,65 +173,41 @@
 
 > *Diseñada para ofrecer la mejor experiencia de usuario*
 
-```ascii
-╔══════════════════════════════════════════════════════════════════╗
-║  🏠 Feed  |  💬 Mensajes  |  📖 Historias  |  👤 Perfil         ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  📸 [Nueva Publicación]           🔔 [Notificaciones: 5]        ║
-║                                                                  ║
-║  ┌────────────────────────────────────────────────────┐         ║
-║  │  👤 Usuario123  •  Hace 2 horas                    │         ║
-║  │  ──────────────────────────────────────────────    │         ║
-║  │  ¡Mira esta increíble foto! 📷                     │         ║
-║  │  [Imagen de publicación]                           │         ║
-║  │                                                     │         ║
-║  │  ❤️ 234 likes  💬 45 comentarios  🔄 12 shares     │         ║
-║  └────────────────────────────────────────────────────┘         ║
-║                                                                  ║
-║  ┌─────────── 💬 Chat en Vivo ────────────┐                     ║
-║  │  🟢 Amigo1: ¡Hola! ¿Qué tal?          │                     ║
-║  │  🟢 Tú: ¡Todo bien! ✨                 │                     ║
-║  └───────────────────────────────────────┘                     ║
-╚══════════════════════════════════════════════════════════════════╝
-```
+![](./main-screenshot.png)
 
 </div>
+
+---
+
+## 📂 Estructura del Proyecto
+
+```
+RED-RED/
+├── backend/              # 🔧 API Django + WebSockets
+│   ├── apps/
+│   │   ├── authentication/    # 🔐 JWT & Login
+│   │   ├── users/             # 👤 Perfiles & Seguimiento
+│   │   ├── posts/             # 📝 Publicaciones & Likes
+│   │   ├── stories/           # 📖 Historias 24h
+│   │   └── chat/              # 💬 Mensajería Real-time
+│   ├── config/                # ⚙️ Settings Django
+│   └── requirements.txt       # 📄 Dependencias Python
+│
+├── frontend/             # ⚛️ App React
+│   ├── src/
+│   │   ├── components/        # 🎨 Componentes UI
+│   │   ├── pages/             # 📄 Páginas/Rutas
+│   │   ├── services/          # 🔌 APIs & WebSocket
+│   │   └── context/           # 🎯 Estado Global
+│   └── package.json           # 📦 Dependencias Node
+│
+├── database/             # 🗄️ Scripts DB
+└── docs/                 # 📚 Documentación
+```
 
 ---
 
 <div align="center">
-
-## 📂 Estructura del Proyecto
-
-```bash
-📦 RED-RED/
-┣ 🔧 backend/                 # API Django + WebSockets
-┃ ┣ 📁 apps/
-┃ ┃ ┣ 🔐 authentication/     # JWT & Login
-┃ ┃ ┣ 👤 users/              # Perfiles & Seguimiento
-┃ ┃ ┣ 📝 posts/              # Publicaciones & Likes
-┃ ┃ ┣ 📖 stories/            # Historias 24h
-┃ ┃ ┗ 💬 chat/               # Mensajería Real-time
-┃ ┣ ⚙️ config/               # Settings Django
-┃ ┗ 📄 requirements.txt      # Dependencias Python
-┃
-┣ ⚛️ frontend/                # App React
-┃ ┣ 📁 src/
-┃ ┃ ┣ 🎨 components/         # Componentes UI
-┃ ┃ ┣ 📄 pages/              # Páginas/Rutas
-┃ ┃ ┣ 🔌 services/           # APIs & WebSocket
-┃ ┃ ┗ 🎯 context/            # Estado Global
-┃ ┗ 📦 package.json          # Dependencias Node
-┃
-┣ 🗄️ database/               # Scripts DB
-┗ 📚 docs/                   # Documentación
-
-```
-
-</div>
-
----
 
 ## 🚀 Inicio Rápido
 
