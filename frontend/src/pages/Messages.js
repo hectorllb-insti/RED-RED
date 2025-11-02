@@ -477,15 +477,18 @@ const Messages = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] flex mt-10">
+    <div className="bg-gradient-to-br from-white via-gray-50/30 to-white rounded-2xl shadow-md border border-gray-200 h-[600px] flex mt-10 overflow-hidden">
       {/* Sidebar - Lista de conversaciones */}
-      <div className="w-1/3 border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <div className="w-1/3 border-r border-gray-200 bg-white/50 flex flex-col">
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Mensajes</h2>
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary-600" />
+              Mensajes
+            </h2>
             <button
               onClick={() => setShowCreateChat(!showCreateChat)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-100 rounded-lg transition-all"
             >
               {showCreateChat ? (
                 <X className="h-5 w-5" />
@@ -499,10 +502,10 @@ const Messages = () => {
             <form onSubmit={handleCreateChat} className="mt-3">
               <input
                 type="text"
-                placeholder="Nombre de usuario..."
+                placeholder="Buscar usuario..."
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
                 autoFocus
               />
               <button
@@ -510,14 +513,14 @@ const Messages = () => {
                 disabled={
                   !searchUsername.trim() || createChatMutation.isLoading
                 }
-                className="mt-2 w-full bg-primary-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+                className="mt-2 w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 shadow-md transition-all"
               >
                 {createChatMutation.isLoading ? "Creando..." : "Crear Chat"}
               </button>
             </form>
           ) : (
-            <div className="mt-2 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="mt-3 relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
@@ -525,13 +528,13 @@ const Messages = () => {
                 placeholder="Buscar conversaciones..."
                 value={searchConversation}
                 onChange={(e) => setSearchConversation(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
               />
             </div>
           )}
         </div>
 
-        <div className="overflow-y-auto h-full">
+        <div className="overflow-y-auto flex-1">
           {(() => {
             // Mostrar estado de carga
             if (isLoadingConversations) {
@@ -619,8 +622,10 @@ const Messages = () => {
                     markAsRead(conversation.id);
                   }
                 }}
-                className={`w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 ${
-                  selectedChat?.id === conversation.id ? "bg-primary-50" : ""
+                className={`w-full p-3 text-left hover:bg-primary-50/50 border-b border-gray-100 transition-all ${
+                  selectedChat?.id === conversation.id 
+                    ? "bg-gradient-to-r from-primary-50 to-purple-50 border-l-4 border-l-primary-600" 
+                    : "border-l-4 border-l-transparent"
                 }`}
               >
                 <div className="flex items-center space-x-3">
@@ -632,17 +637,17 @@ const Messages = () => {
                       updateKey={conversation.other_user?._profileUpdated}
                     />
                     {conversation.unread_count > 0 && selectedChat?.id !== conversation.id && (
-                      <div className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-pink-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
                         {conversation.unread_count}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-semibold text-gray-900 truncate text-sm">
                       {conversation.other_user?.full_name ||
                         "Usuario desconocido"}
                     </p>
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-xs text-gray-500 truncate">
                       {conversation.last_message?.content || "Sin mensajes"}
                     </p>
                   </div>
@@ -654,11 +659,11 @@ const Messages = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50/50 to-white">
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-white z-10 shadow-sm">
+            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-white via-primary-50/20 to-white z-10 shadow-sm">
               <div className="flex items-center space-x-3">
                 <ChatAvatar
                   src={selectedChat.other_user?.profile_picture}
@@ -667,14 +672,14 @@ const Messages = () => {
                   updateKey={selectedChat.other_user?._profileUpdated}
                 />
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-semibold text-gray-900">
                     {selectedChat.other_user?.full_name ||
                       "Usuario desconocido"}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     @{selectedChat.other_user?.username || "usuario"}
                     {isReconnecting && (
-                      <span className="ml-2 text-xs text-amber-600">
+                      <span className="ml-2 text-xs text-amber-600 font-semibold">
                         • Reconectando...
                       </span>
                     )}
@@ -722,7 +727,7 @@ const Messages = () => {
                     key={messageObj.id || index}
                     className={`flex ${
                       isOwnMessage ? "justify-end" : "justify-start"
-                    } mb-4`}
+                    } mb-3`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md ${
@@ -731,17 +736,17 @@ const Messages = () => {
                     >
                       {/* Nombre del usuario (solo para mensajes de otros) */}
                       {!isOwnMessage && (
-                        <p className="text-xs text-gray-600 mb-1 px-2">
+                        <p className="text-xs text-gray-500 mb-1 px-2 font-medium">
                           {messageObj.sender_username || selectedChat.other_user?.username || "Usuario"}
                         </p>
                       )}
                       
                       {/* Burbuja del mensaje */}
                       <div
-                        className={`inline-block px-4 py-2 rounded-lg ${
+                        className={`inline-block px-4 py-2.5 rounded-2xl shadow-sm ${
                           isOwnMessage
-                            ? "bg-primary-500 text-white"
-                            : "bg-gray-200 text-gray-900"
+                            ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white"
+                            : "bg-white text-gray-900 border border-gray-200"
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">{messageContent}</p>
@@ -827,7 +832,7 @@ const Messages = () => {
             {/* Message Input */}
             <form
               onSubmit={sendMessage}
-              className="p-4 border-t border-gray-200"
+              className="p-4 border-t border-gray-200 bg-white"
             >
               <div className="flex items-center space-x-2">
                 <input
@@ -838,12 +843,12 @@ const Messages = () => {
                     handleTypingStart();
                   }}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-gray-50 focus:bg-white transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!message.trim()}
-                  className="p-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
                 >
                   <Send className="h-5 w-5" />
                 </button>
@@ -851,12 +856,13 @@ const Messages = () => {
             </form>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50">
             <div className="text-center">
-              <p className="text-gray-500 text-lg">
+              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg font-semibold mb-1">
                 Selecciona una conversación
               </p>
-              <p className="text-gray-400">para comenzar a chatear</p>
+              <p className="text-gray-400 text-sm">para comenzar a chatear</p>
             </div>
           </div>
         )}
