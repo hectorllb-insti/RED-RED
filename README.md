@@ -1,498 +1,473 @@
 <div align="center">
 
-# 🔴 RED-RED Social Network
+# 🔴 RED-RED Social Network 🔴
 
-### *La red social del futuro, construida hoy* 🚀
+### *La Red Social de Nueva Generación*
 
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)](https://djangoproject.com/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-4.2-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.2-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Redis](https://img.shields.io/badge/Redis-5.0-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![WebSocket](https://img.shields.io/badge/WebSocket-Channels-green?logo=socketdotio)](https://channels.readthedocs.io/)
+[![JWT](https://img.shields.io/badge/JWT-Auth-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
-[![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)](https://github.com/hectorllb-insti/RED-RED)
+![GitHub Stars](https://img.shields.io/github/stars/hectorllb-insti/RED-RED?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/hectorllb-insti/RED-RED?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/hectorllb-insti/RED-RED)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr/hectorllb-insti/RED-RED)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/hectorllb-insti/RED-RED)
 
----
-
-### 💡 **Conecta • Comparte • Comunica**
-
-*Una plataforma social moderna con chat en tiempo real, historias efímeras y una experiencia de usuario excepcional*
-
-[🚀 Inicio Rápido](#-inicio-rápido) • [📖 Documentación](#-documentación) • [🎯 Características](#-características-principales) • [🛠️ Tech Stack](#️-tech-stack)
-
----
-
-</div>
-
-<div align="center">
-
-## 🎯 Características Principales
-
-</div>
-
-<table align="center">
-<tr>
-<td width="50%" valign="top">
-<br>
-<div align="center">
-
-### 👥 **Perfiles Personalizables**
-
-</div>
-
-- 🖼️ Foto de perfil y portada personalizadas
-- 📝 Bio completa e información personal
-- 🔒 Control total de privacidad
-- 📊 Estadísticas detalladas de seguidores
-
-</td>
-<td width="50%" valign="top">
-<br>
-<div align="center">
-
-### 💬 **Chat en Tiempo Real**
-
-</div>
-
-- ⚡ Mensajes instantáneos sin demoras
-- 🟢 Indicadores de estado en vivo
-- 💾 Historial completo y persistente
-- 🔔 Notificaciones push en tiempo real
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<br>
-<div align="center">
-
-### 📝 **Publicaciones Sociales**
-
-</div>
-
-- 📸 Subida múltiple de imágenes
-- ❤️ Sistema avanzado de likes
-- 💭 Comentarios con respuestas anidadas
-- 🔄 Feed personalizado inteligente
-
-</td>
-<td width="50%" valign="top">
-<br>
-<div align="center">
-
-### 📖 **Historias 24h**
-
-</div>
-
-- ⏰ Contenido temporal de 24 horas
-- 🎨 Personalización visual completa
-- 👁️ Contador detallado de vistas
-- 🗑️ Auto-eliminación automática
-
-</td>
-</tr>
-</table>
-
-<div align="center">
+[✨ Características](#-características-principales) •
+[🚀 Instalación](#-instalación-rápida) •
+[🏗️ Arquitectura](#️-arquitectura-del-proyecto) •
+[🔄 Flujo](#-flujo-de-datos) •
+[📁 Estructura](#-estructura-del-proyecto) •
+[🤝 Contribuir](#-cómo-contribuir) •
+[📚 Glosario](#-glosario-técnico)
 
 ---
 
-## �️ Tech Stack
+</div>
+
+## 📖 Sobre el Proyecto
+
+**RED-RED** es una plataforma de red social moderna y completa, construida con las últimas tecnologías web. Ofrece una experiencia de usuario fluida y en tiempo real, con características similares a las principales redes sociales actuales.
+
+### ✨ Características Principales
+
+#### 🎯 Core Features
+- ✅ **Autenticación JWT** - Sistema seguro
+- 👤 **Perfiles Personalizados** - Avatar & Bio
+- 📝 **Publicaciones Completas** - Texto e imágenes
+- ❤️ **Sistema de Likes** - Interacciones sociales
+- 💬 **Comentarios** - Conversaciones anidadas
+- 🔄 **Sistema de Seguimiento** - Follow/Unfollow
+
+#### 🚀 Advanced Features
+- 📸 **Stories de 24h** - Contenido temporal
+- 💬 **Chat en Tiempo Real** - WebSockets
+- 🔔 **Notificaciones Push** - Instantáneas
+- 🔍 **Búsqueda de Usuarios** - Exploración
+- 🎨 **Interfaz Moderna** - UI/UX Premium
+- 📱 **Responsive Design** - Mobile First
+
+---
+
+## 🛠️ Stack Tecnológico
 
 <div align="center">
 
-### **Backend**
+### Backend
 ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
-![DRF](https://img.shields.io/badge/DRF-ff1709?style=for-the-badge&logo=django&logoColor=white)
-![Channels](https://img.shields.io/badge/Channels-092E20?style=for-the-badge&logo=django&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white)
+![DRF](https://img.shields.io/badge/Django_REST-ff1709?style=for-the-badge&logo=django&logoColor=white)
+![Channels](https://img.shields.io/badge/Channels-4.0-green?style=for-the-badge)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 
-### **Frontend**
+### Frontend
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+![React Router](https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router&logoColor=white)
 
-### **Database & Cache**
-![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-
-### **Real-time**
-![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
-![WebSocket](https://img.shields.io/badge/WebSocket-4E9BCD?style=for-the-badge)
-
-</div>
-
----
-
-## 💎 ¿Por qué RED-RED?
-
-<div align="center">
-
-<table>
-<tr>
-<td align="center" width="25%">
-<br>
-<h3>⚡</h3>
-<h4><b>Ultra Rápido</b></h4>
-<p><sub>Optimizado con React Query<br>y caching inteligente</sub></p>
-</td>
-<td align="center" width="25%">
-<br>
-<h3>🔐</h3>
-<h4><b>Seguro</b></h4>
-<p><sub>JWT authentication<br>y encriptación end-to-end</sub></p>
-</td>
-<td align="center" width="25%">
-<br>
-<h3>📱</h3>
-<h4><b>Responsive</b></h4>
-<p><sub>Diseño adaptable<br>a cualquier dispositivo</sub></p>
-</td>
-<td align="center" width="25%">
-<br>
-<h3>🚀</h3>
-<h4><b>Escalable</b></h4>
-<p><sub>Arquitectura modular<br>y microservicios ready</sub></p>
-</td>
-</tr>
-</table>
+### Herramientas & DevOps
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
+![NPM](https://img.shields.io/badge/NPM-CB3837?style=for-the-badge&logo=npm&logoColor=white)
+![Pip](https://img.shields.io/badge/Pip-3776AB?style=for-the-badge&logo=pypi&logoColor=white)
+![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white)
 
 </div>
 
 ---
 
-## 🎨 Vista Previa
+## 🖥️ Interfaz Gráfica
 
 <div align="center">
 
-### **Interfaz Moderna y Elegante**
+### Vista Previa de la Aplicación
 
-> *Diseñada para ofrecer la mejor experiencia de usuario*
-
-![](./main-screenshot.png)
+<!-- Aquí puedes agregar capturas de pantalla de tu proyecto -->
+![RED-RED Preview](./main-screenshot.png)
 
 </div>
 
 ---
 
-<div align="center">
+## 🚀 Instalación Rápida
 
-## 📂 Estructura del Proyecto
-
-</div>
-
-<table>
-<tr>
-<td width="33%">
-
-### 🔧 **Backend** (Django + WebSockets)
-```
-backend/
-├── apps/
-│   ├── 🔐 authentication/
-│   ├── � users/
-│   ├── 📝 posts/
-│   ├── 📖 stories/
-│   └── 💬 chat/
-├── ⚙️  config/
-└── 📄 requirements.txt
-
-```
-
-**Módulos principales:**
-- 🔐 **Auth**: JWT & Login
-- 👤 **Users**: Perfiles & Seguimiento  
-- 📝 **Posts**: Publicaciones & Likes
-- 📖 **Stories**: Historias 24h
-- 💬 **Chat**: Mensajería Real-time
-
-</td>
-<td width="33%">
-
-### ⚛️ **Frontend** (React)
-```
-frontend/
-├── src/
-│   ├── 🎨 components/
-│   ├── 📄 pages/
-│   ├── 🔌 services/
-│   └── 🎯 context/
-└──  package.json
-
-
-```
-
-**Capas de la app:**
-- 🎨 **Components**: UI reutilizables
-- 📄 **Pages**: Vistas principales
-- 🔌 **Services**: APIs & WebSocket
-- 🎯 **Context**: Estado global
-
-</td>
-<td width="33%">
-
-### 🗄️ **Database** (Scripts DB)
-
-```
-database/
-└── 📄 README.md
-
-
-
-
-
-
-
-```
-
-**Configuración:**
-- 🔷 **MongoDB**: Base de datos NoSQL
-- 🔴 **Redis**: Cache & Sesiones
-- 📊 **SQLite**: Dev local (Django)
-- 🔄 **Scripts**: Migraciones & Seed
-
-</td>
-</tr>
-<tr>
-</tr>
-</table>
-
----
-
-<div align="center">
-
-## 🚀 Inicio Rápido
-
-### ⚡ **Instalación en 3 Pasos**
+### 📋 Prerrequisitos
 
 ```bash
-# 1️⃣ Clonar el repositorio
-git clone https://github.com/hectorllb-insti/RED-RED.git
-cd RED-RED
-
-# 2️⃣ Ejecutar instalación automática
-# Windows
-install.bat
-
-# macOS/Linux
-chmod +x install.sh && ./install.sh
-
-# 3️⃣ Iniciar la aplicación
-# Windows
-start.bat
-
-# macOS/Linux
-./start.sh
+- Python 3.11+
+- Node.js 18.0+
+- npm 9.0+
+- Redis Server
 ```
 
-### 🎉 **¡Listo! Abre tu navegador en** `http://localhost:3000`
+### 🔧 Instalación Automática
 
-</div>
+#### Windows
+```bash
+# Ejecutar el script de instalación
+.\install.bat
+```
+
+#### Linux/MacOS
+```bash
+# Dar permisos y ejecutar
+chmod +x install.sh
+./install.sh
+```
+
+### ⚙️ Instalación Manual
+
+<details>
+<summary><b>📦 Backend Setup</b></summary>
+
+```bash
+# 1. Navegar al directorio backend
+cd backend
+
+# 2. Crear entorno virtual
+python -m venv venv
+
+# 3. Activar entorno virtual
+# Windows
+venv\Scripts\activate
+# Linux/MacOS
+source venv/bin/activate
+
+# 4. Instalar dependencias
+pip install -r requirements.txt
+
+# 5. Realizar migraciones
+python manage.py makemigrations
+python manage.py migrate
+
+# 6. Crear superusuario (opcional)
+python manage.py createsuperuser
+
+# 7. Iniciar servidor
+python manage.py runserver
+```
+
+</details>
+
+<details>
+<summary><b>🎨 Frontend Setup</b></summary>
+
+```bash
+# 1. Navegar al directorio frontend
+cd frontend
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar servidor de desarrollo
+npm start
+```
+
+</details>
+
+### 🚀 Iniciar Aplicación
+
+```bash
+# Opción 1: Desde la raíz (ambos servidores)
+npm run dev
+
+# Opción 2: Scripts individuales
+start.bat  # Windows
+```
+
+**Acceder a:**
+- 🌐 Frontend: `http://localhost:3000`
+- ⚙️ Backend API: `http://localhost:8000`
+- 🔧 Admin Panel: `http://localhost:8000/admin`
 
 ---
 
-<div align="center">
-
-## 📋 Requisitos del Sistema
-
-<table>
-<tr>
-<th>🛠️ Herramienta</th>
-<th>📦 Versión</th>
-<th>🔗 Descarga</th>
-</tr>
-<tr>
-<td><img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white" /></td>
-<td><code>3.11+</code></td>
-<td><a href="https://www.python.org/downloads/">python.org</a></td>
-</tr>
-<tr>
-<td><img src="https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white" /></td>
-<td><code>18.0+</code></td>
-<td><a href="https://nodejs.org/">nodejs.org</a></td>
-</tr>
-<tr>
-<td><img src="https://img.shields.io/badge/MongoDB-4EA94B?style=flat&logo=mongodb&logoColor=white" /></td>
-<td><code>7.0+</code></td>
-<td><a href="https://www.mongodb.com/try/download/community">mongodb.com</a></td>
-</tr>
-<tr>
-<td><img src="https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white" /></td>
-<td><code>7.0+</code></td>
-<td><a href="https://redis.io/download">redis.io</a></td>
-</tr>
-</table>
-
-</div>
-
----
-
-## 📊 Características Técnicas
+## 🏗️ Arquitectura del Proyecto
 
 <div align="center">
 
 ```mermaid
+graph TB
+    subgraph "🎨 Frontend - React"
+        A[React App] --> B[React Router]
+        B --> C[Pages]
+        C --> D[Components]
+        D --> E[UI Components]
+        A --> F[Context API]
+        F --> G[Auth Context]
+    end
+    
+    subgraph "⚙️ Backend - Django"
+        H[Django Server] --> I[REST Framework]
+        I --> J[JWT Auth]
+        H --> K[Channels/WebSocket]
+        K --> L[Redis]
+    end
+    
+    subgraph "🗄️ Base de Datos"
+        M[(SQLite/PostgreSQL)]
+        N[(Redis Cache)]
+    end
+    
+    A -->|HTTP/REST| I
+    A -->|WebSocket| K
+    I --> M
+    K --> N
+    
+    style A fill:#61DAFB,stroke:#333,stroke-width:2px,color:#000
+    style H fill:#092E20,stroke:#333,stroke-width:2px,color:#fff
+    style M fill:#003B57,stroke:#333,stroke-width:2px,color:#fff
+    style N fill:#DC382D,stroke:#333,stroke-width:2px,color:#fff
+```
+
+</div>
+
+---
+
+## 🔄 Flujo de Datos
+
+### 📡 Flujo HTTP (REST API)
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 Usuario
+    participant F as 🎨 Frontend
+    participant B as ⚙️ Backend
+    participant DB as 🗄️ Database
+    
+    U->>F: 1️⃣ Acción (Ej: Crear Post)
+    F->>F: 2️⃣ Validación Local
+    F->>B: 3️⃣ HTTP Request + JWT Token
+    B->>B: 4️⃣ Verificar Token
+    B->>B: 5️⃣ Procesar Lógica
+    B->>DB: 6️⃣ Guardar Datos
+    DB-->>B: 7️⃣ Confirmación
+    B-->>F: 8️⃣ JSON Response
+    F->>F: 9️⃣ Actualizar Estado
+    F-->>U: 🔟 Mostrar Resultado
+```
+
+### ⚡ Flujo WebSocket (Tiempo Real)
+
+```mermaid
+sequenceDiagram
+    participant U1 as 👤 Usuario 1
+    participant F1 as 🎨 Frontend 1
+    participant WS as 🔌 WebSocket Server
+    participant R as 🔴 Redis
+    participant F2 as 🎨 Frontend 2
+    participant U2 as 👤 Usuario 2
+    
+    U1->>F1: 1️⃣ Enviar Mensaje
+    F1->>WS: 2️⃣ WS: Send Message
+    WS->>R: 3️⃣ Publicar en Canal
+    R->>WS: 4️⃣ Distribuir a Suscriptores
+    WS->>F2: 5️⃣ WS: Receive Message
+    F2-->>U2: 6️⃣ Notificación Instantánea
+```
+
+### 🔐 Flujo de Autenticación
+
+```mermaid
 graph LR
-    A[👤 Usuario] -->|HTTP/REST| B[React Frontend]
-    B -->|WebSocket| C[Django Backend]
-    C -->|Queries| D[(MongoDB)]
-    C -->|Cache| E[(Redis)]
-    C -->|Real-time| F[Channels Layer]
-    F -->|Broadcasting| B
+    A[📝 Login Form] --> B{Validar}
+    B -->|✅ Válido| C[POST /api/auth/login/]
+    C --> D[Backend Verifica]
+    D -->|✅ OK| E[Generar JWT Tokens]
+    E --> F[Access Token + Refresh Token]
+    F --> G[Guardar en LocalStorage]
+    G --> H[Redirect a Dashboard]
+    D -->|❌ Error| I[Mostrar Error]
+    B -->|❌ Inválido| I
 ```
 
-### **Rendimiento**
-
-| Métrica | Valor | Estado |
-|:-------:|:-----:|:------:|
-| **Tiempo de Respuesta API** | < 100ms | 🟢 Excelente |
-| **Carga Inicial** | < 2s | 🟢 Rápido |
-| **Mensajes/Segundo** | 1000+ | 🟢 Alto |
-| **Usuarios Concurrentes** | 10,000+ | 🟢 Escalable |
-
-</div>
-
 ---
 
-## 🌐 URLs de Acceso
+## 📁 Estructura del Proyecto
 
-<div align="center">
-
-| 🎯 Servicio | 🔗 URL | 📝 Descripción |
-|:---:|:---:|:---:|
-| **Frontend** | [`localhost:3000`](http://localhost:3000) | Interfaz de usuario React |
-| **Backend API** | [`localhost:8000/api`](http://localhost:8000/api) | API REST Django |
-| **Admin Panel** | [`localhost:8000/admin`](http://localhost:8000/admin) | Panel de administración |
-| **WebSocket** | `ws://localhost:8000/ws` | Chat en tiempo real |
-
-</div>
-
----
-
-## 📚 Documentación
-
-<div align="center">
-
-### 📖 **Guías Completas**
-
-<table>
-<tr>
-<td align="center" width="33%">
-<img src="https://img.shields.io/badge/📘-API_Documentation-blue?style=for-the-badge" /><br/>
-<b><a href="API_DOCUMENTATION.md">API REST</a></b><br/>
-<sub>Endpoints, ejemplos y respuestas</sub>
-</td>
-<td align="center" width="33%">
-<img src="https://img.shields.io/badge/🔧-Setup_Guide-orange?style=for-the-badge" /><br/>
-<b><a href="SETUP.md">Instalación</a></b><br/>
-<sub>Guía paso a paso completa</sub>
-</td>
-<td align="center" width="33%">
-<img src="https://img.shields.io/badge/🧪-Testing_Guide-green?style=for-the-badge" /><br/>
-<b><a href="TESTING_GUIDE.md">Testing</a></b><br/>
-<sub>Unit tests e integración</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="33%">
-<img src="https://img.shields.io/badge/🔒-Security_Audit-red?style=for-the-badge" /><br/>
-<b><a href="SECURITY_AUDIT_REPORT.md">Seguridad</a></b><br/>
-<sub>Auditoría y mejores prácticas</sub>
-</td>
-<td align="center" width="33%">
-<img src="https://img.shields.io/badge/📦-Module_Structure-purple?style=for-the-badge" /><br/>
-<b><a href="MODULE_STRUCTURE.md">Arquitectura</a></b><br/>
-<sub>Estructura de módulos</sub>
-</td>
-<td align="center" width="33%">
-<img src="https://img.shields.io/badge/🐛-Bug_Fixes-yellow?style=for-the-badge" /><br/>
-<b><a href="BUGFIX_REPORT.md">Correcciones</a></b><br/>
-<sub>Historial de bugs resueltos</sub>
-</td>
-</tr>
-</table>
-
-</div>
-
----
-
-<div align="center">
-
-## 🤝 Contribuir
-
-### **¡Nos encantaría tu ayuda!** 💪
-
-```bash
-# 1. Fork el proyecto
-# 2. Crea tu rama
-git checkout -b feature/AmazingFeature
-
-# 3. Commit tus cambios
-git commit -m 'feat: Add some AmazingFeature'
-
-# 4. Push a la rama
-git push origin feature/AmazingFeature
-
-# 5. Abre un Pull Request
+```
+RED-RED/
+│
+├── 🐍 backend/                      # Django Backend
+│   ├── apps/                        # Aplicaciones Django
+│   │   ├── authentication/          # 🔐 Sistema de autenticación JWT
+│   │   ├── users/                   # 👤 Gestión de perfiles y seguidores
+│   │   ├── posts/                   # 📝 Publicaciones, likes y comentarios
+│   │   ├── stories/                 # 📸 Historias temporales (24h)
+│   │   └── chat/                    # 💬 Mensajería en tiempo real
+│   │
+│   ├── config/                      # ⚙️ Configuración Django
+│   │   ├── settings.py              # Configuración principal
+│   │   ├── urls.py                  # Rutas globales
+│   │   ├── asgi.py                  # Servidor WebSocket
+│   │   └── wsgi.py                  # Servidor HTTP
+│   │
+│   ├── notifications/               # 🔔 Sistema de notificaciones
+│   ├── media/                       # 📁 Archivos subidos (imágenes)
+│   ├── db.sqlite3                   # 🗄️ Base de datos
+│   └── manage.py                    # 🎯 CLI Django
+│
+├── ⚛️ frontend/                     # React Frontend
+│   ├── src/
+│   │   ├── components/              # 🧩 Componentes reutilizables
+│   │   │   ├── Layout.js            # Estructura principal
+│   │   │   ├── PostCard.js          # Tarjeta de publicación
+│   │   │   ├── Avatar.js            # Componente de avatar
+│   │   │   └── ui/                  # Componentes UI base
+│   │   │
+│   │   ├── pages/                   # 📄 Páginas con rutas
+│   │   │   ├── Home.js              # Feed principal
+│   │   │   ├── Profile.js           # Perfil de usuario
+│   │   │   ├── Messages.js          # Chat
+│   │   │   ├── Login.js             # Autenticación
+│   │   │   └── Settings.js          # Configuración
+│   │   │
+│   │   ├── services/                # 🌍 Servicios HTTP
+│   │   │   ├── api.js               # Cliente Axios
+│   │   │   └── tokenManager.js      # Gestión JWT
+│   │   │
+│   │   ├── context/                 # 🔄 Estado global
+│   │   │   └── AuthContext.js       # Contexto de autenticación
+│   │   │
+│   │   ├── hooks/                   # 🪝 Custom Hooks
+│   │   ├── utils/                   # 🛠️ Utilidades
+│   │   └── styles/                  # 🎨 Estilos globales
+│   │
+│   └── public/                      # 📦 Recursos estáticos
+│
+├── 🗂️ database/                     # Base de Datos
+│   └── README.md                    # Documentación de BD
+│
+├── �📚 Documentación
+│   ├── API_DOCUMENTATION.md         # Documentación API REST
+│   ├── STRUCTURE.md                 # Estructura detallada
+│   ├── MODULE_STRUCTURE.md          # Estructura de módulos
+│   ├── SECURITY_REPORT.md           # Reporte de seguridad
+│   └── SETUP.md                     # Guía de instalación
+│
+└── 🔧 Configuración
+    ├── package.json                 # Dependencias Node.js
+    ├── requirements.txt             # Dependencias Python
+    ├── install.bat / .sh            # Scripts de instalación
+    └── start.bat                    # Script de inicio
 ```
 
-### **Estándares de Código**
+---
 
-![Python](https://img.shields.io/badge/Code_Style-PEP8-blue?style=flat-square)
-![Black](https://img.shields.io/badge/Formatter-Black-black?style=flat-square)
-![ESLint](https://img.shields.io/badge/Linter-ESLint-4B32C3?style=flat-square)
-![Prettier](https://img.shields.io/badge/Formatter-Prettier-F7B93E?style=flat-square)
+## 🤝 Cómo Contribuir
 
-</div>
+¡Las contribuciones son bienvenidas y apreciadas! 🎉
+
+### 📝 Proceso de Contribución
+
+1. **Fork el proyecto** 🍴
+   ```bash
+   # Hacer fork desde GitHub
+   ```
+
+2. **Clonar tu fork** 📥
+   ```bash
+   git clone https://github.com/tu-usuario/RED-RED.git
+   cd RED-RED
+   ```
+
+3. **Crear una rama** 🌿
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+
+4. **Hacer cambios y commit** 💾
+   ```bash
+   git add .
+   git commit -m "Add: Amazing Feature"
+   ```
+
+5. **Push a tu fork** 🚀
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+
+6. **Abrir Pull Request** 🔃
+   - Ir a GitHub y crear un Pull Request
+   - Describir los cambios realizados
+   - Esperar revisión
+
+### 💡 Guías de Contribución
+
+- 📖 Seguir el estilo de código existente
+- ✅ Añadir tests para nuevas funcionalidades
+- 📝 Actualizar documentación si es necesario
+- 🔍 Asegurar que todos los tests pasen
+- 🎨 Mantener UI/UX consistente
 
 ---
 
-## 📞 Soporte & Comunidad
+## 📚 Glosario Técnico
 
-<div align="center">
+### 🔐 JWT (JSON Web Token)
+Sistema de autenticación basado en tokens que permite mantener sesiones seguras sin necesidad de cookies. El token contiene información encriptada del usuario.
 
-[![GitHub Issues](https://img.shields.io/github/issues/hectorllb-insti/RED-RED?style=for-the-badge&logo=github)](https://github.com/hectorllb-insti/RED-RED/issues)
-[![GitHub Discussions](https://img.shields.io/github/discussions/hectorllb-insti/RED-RED?style=for-the-badge&logo=github)](https://github.com/hectorllb-insti/RED-RED/discussions)
-[![GitHub Stars](https://img.shields.io/github/stars/hectorllb-insti/RED-RED?style=for-the-badge&logo=github)](https://github.com/hectorllb-insti/RED-RED/stargazers)
+### ⚡ WebSocket
+Protocolo de comunicación bidireccional en tiempo real entre cliente y servidor. Permite chat y notificaciones instantáneas sin necesidad de refrescar la página.
 
-### **¿Necesitas ayuda?**
+### 🔄 REST API
+Arquitectura de servicios web que utiliza HTTP para realizar operaciones CRUD (Create, Read, Update, Delete) sobre recursos mediante endpoints.
 
-🐛 [Reportar un Bug](https://github.com/hectorllb-insti/RED-RED/issues/new?template=bug_report.md) • 
-💡 [Sugerir una Función](https://github.com/hectorllb-insti/RED-RED/issues/new?template=feature_request.md) • 
-💬 [Únete a la Discusión](https://github.com/hectorllb-insti/RED-RED/discussions)
+### 🎨 React Context
+Sistema de gestión de estado global en React que permite compartir datos entre componentes sin necesidad de pasar props manualmente en cada nivel.
 
-</div>
+### 🔴 Redis
+Base de datos en memoria ultra-rápida utilizada para caché y como broker de mensajes para WebSockets. Almacena datos temporales y sesiones.
+
+### 📦 Serializer
+Componente de Django REST Framework que convierte modelos de Python a JSON y viceversa, validando y transformando datos para la API.
+
+### 🛡️ CORS (Cross-Origin Resource Sharing)
+Mecanismo de seguridad que permite o restringe peticiones HTTP entre diferentes dominios. Necesario para que Frontend y Backend se comuniquen.
 
 ---
 
-## 📜 Licencia
-
 <div align="center">
 
-Este proyecto está bajo la **Licencia MIT** - mira el archivo [LICENSE](LICENSE) para más detalles.
+## 💝 Creado con Amor
+
+Este proyecto ha sido desarrollado con **dedicación** y **pasión** por:
+
+### 👨‍💻 Grupo de 2º DAM - Frameworks
+**Ciclo Superior de Desarrollo de Aplicaciones Multiplataforma**
+
+---
+
+### 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ```
 MIT License - Copyright (c) 2025 RED-RED Team
 ```
 
-</div>
+---
+
+### 🌟 Agradecimientos
+
+Gracias a todos los que han contribuido a hacer de **RED-RED** una realidad.
+
+Si te gusta el proyecto, ¡dale una ⭐ en GitHub!
 
 ---
 
-<div align="center">
-
-### 🌟 **¡Gracias por usar RED-RED!** 🌟
-
-**Desarrollado con** ❤️ **por el equipo de DAM2 Frameworks**
-
-[![GitHub](https://img.shields.io/badge/GitHub-hectorllb--insti-181717?style=for-the-badge&logo=github)](https://github.com/hectorllb-insti/RED-RED)
+**[⬆️ Volver arriba](#red-red-social-network)**
 
 ---
 
-*Si te gusta este proyecto, ¡dale una ⭐ en GitHub!*
+<sub>Última actualización: Noviembre 2025 | Made with ❤️ by DAM2 Frameworks Team</sub>
 
 </div>
