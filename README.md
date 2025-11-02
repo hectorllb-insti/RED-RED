@@ -27,20 +27,22 @@
 
 </div>
 
+<div align="center">
+
 ## 🎯 Características Principales
 
 <table>
 <tr>
-<td width="50%">
+<td width="50%" align="center">
 
-### � **Perfiles Personalizables**
+### 👥 **Perfiles Personalizables**
 - 🖼️ Foto de perfil y portada
 - � Bio y información personal
 - 🔒 Control de privacidad
 - 📊 Estadísticas de seguidores
 
 </td>
-<td width="50%">
+<td width="50%" align="center">
 
 ### 💬 **Chat en Tiempo Real**
 - ⚡ Mensajes instantáneos
@@ -51,16 +53,16 @@
 </td>
 </tr>
 <tr>
-<td width="50%">
+<td width="50%" align="center">
 
-### � **Publicaciones Sociales**
+### 📝 **Publicaciones Sociales**
 - 📸 Subida de imágenes
 - ❤️ Sistema de likes
 - 💭 Comentarios anidados
 - 🔄 Feed personalizado
 
 </td>
-<td width="50%">
+<td width="50%" align="center">
 
 ### 📖 **Historias 24h**
 - ⏰ Contenido temporal
@@ -71,6 +73,8 @@
 </td>
 </tr>
 </table>
+
+</div>
 
 ---
 
@@ -174,6 +178,8 @@
 
 ---
 
+<div align="center">
+
 ## 📂 Estructura del Proyecto
 
 ```bash
@@ -201,9 +207,11 @@
 
 ```
 
+</div>
+
 ---
 
-## � Inicio Rápido
+## 🚀 Inicio Rápido
 
 <div align="center">
 
@@ -239,6 +247,8 @@ start.bat
 
 ---
 
+<div align="center">
+
 ## 📋 Requisitos del Sistema
 
 <table>
@@ -268,6 +278,8 @@ start.bat
 <td><a href="https://redis.io/download">redis.io</a></td>
 </tr>
 </table>
+
+</div>
 
 ---
 
