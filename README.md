@@ -179,31 +179,87 @@
 
 ---
 
+<div align="center">
+
 ## 📂 Estructura del Proyecto
 
+</div>
+
+<table>
+<tr>
+<td width="33%">
+
+### 🔧 **Backend** (Django + WebSockets)
 ```
-RED-RED/
-├── backend/              # 🔧 API Django + WebSockets
-│   ├── apps/
-│   │   ├── authentication/    # 🔐 JWT & Login
-│   │   ├── users/             # 👤 Perfiles & Seguimiento
-│   │   ├── posts/             # 📝 Publicaciones & Likes
-│   │   ├── stories/           # 📖 Historias 24h
-│   │   └── chat/              # 💬 Mensajería Real-time
-│   ├── config/                # ⚙️ Settings Django
-│   └── requirements.txt       # 📄 Dependencias Python
-│
-├── frontend/             # ⚛️ App React
-│   ├── src/
-│   │   ├── components/        # 🎨 Componentes UI
-│   │   ├── pages/             # 📄 Páginas/Rutas
-│   │   ├── services/          # 🔌 APIs & WebSocket
-│   │   └── context/           # 🎯 Estado Global
-│   └── package.json           # 📦 Dependencias Node
-│
-├── database/             # 🗄️ Scripts DB
-└── docs/                 # 📚 Documentación
+backend/
+├── apps/
+│   ├── 🔐 authentication/
+│   ├── � users/
+│   ├── 📝 posts/
+│   ├── 📖 stories/
+│   └── 💬 chat/
+├── ⚙️  config/
+└── 📄 requirements.txt
+
 ```
+
+**Módulos principales:**
+- 🔐 **Auth**: JWT & Login
+- 👤 **Users**: Perfiles & Seguimiento  
+- 📝 **Posts**: Publicaciones & Likes
+- 📖 **Stories**: Historias 24h
+- 💬 **Chat**: Mensajería Real-time
+
+</td>
+<td width="33%">
+
+### ⚛️ **Frontend** (React)
+```
+frontend/
+├── src/
+│   ├── 🎨 components/
+│   ├── 📄 pages/
+│   ├── 🔌 services/
+│   └── 🎯 context/
+└──  package.json
+
+
+```
+
+**Capas de la app:**
+- 🎨 **Components**: UI reutilizables
+- 📄 **Pages**: Vistas principales
+- 🔌 **Services**: APIs & WebSocket
+- 🎯 **Context**: Estado global
+
+</td>
+<td width="33%">
+
+### 🗄️ **Database** (Scripts DB)
+
+```
+database/
+└── 📄 README.md
+
+
+
+
+
+
+
+```
+
+**Configuración:**
+- 🔷 **MongoDB**: Base de datos NoSQL
+- 🔴 **Redis**: Cache & Sesiones
+- 📊 **SQLite**: Dev local (Django)
+- 🔄 **Scripts**: Migraciones & Seed
+
+</td>
+</tr>
+<tr>
+</tr>
+</table>
 
 ---
 
@@ -211,11 +267,7 @@ RED-RED/
 
 ## 🚀 Inicio Rápido
 
-<div align="center">
-
 ### ⚡ **Instalación en 3 Pasos**
-
-</div>
 
 ```bash
 # 1️⃣ Clonar el repositorio
@@ -236,8 +288,6 @@ start.bat
 # macOS/Linux
 ./start.sh
 ```
-
-<div align="center">
 
 ### 🎉 **¡Listo! Abre tu navegador en** `http://localhost:3000`
 
@@ -370,9 +420,9 @@ graph LR
 
 ---
 
-## 🤝 Contribuir
-
 <div align="center">
+
+## 🤝 Contribuir
 
 ### **¡Nos encantaría tu ayuda!** 💪
 
