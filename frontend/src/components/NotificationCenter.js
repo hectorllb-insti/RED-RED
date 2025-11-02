@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import notificationService from "../services/notificationService";
@@ -209,25 +210,42 @@ const NotificationCenter = () => {
     notificationService.markAllAsRead();
   }, [markAllReadMutation]);
 
+  const [isHovering, setIsHovering] = useState(false);
+
   return (
     <div className="relative">
-      {/* Bell Icon Button */}
-      <button
+      {/* Bell Icon Button con animación de campana */}
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2 transition-colors ${
+        onHoverStart={() => setIsHovering(true)}
+        className={`relative p-2 rounded-full transition-all duration-300 ${
           isConnected
-            ? "text-primary-500 hover:text-primary-600"
-            : "text-gray-400 hover:text-gray-500"
+            ? "text-primary-500 hover:text-red-500 hover:bg-red-50"
+            : "text-gray-400 hover:text-red-500 hover:bg-red-50"
         }`}
         title={isConnected ? "Notificaciones (Tiempo real)" : "Notificaciones"}
+        animate={isHovering ? {
+          rotate: [0, -15, 15, -15, 15, 0],
+        } : {}}
+        transition={{
+          duration: 0.5,
+          ease: "easeInOut",
+        }}
+        onAnimationComplete={() => setIsHovering(false)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse"
+          >
             {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
+          </motion.span>
         )}
-      </button>
+      </motion.button>
 
       {/* Notifications Dropdown */}
       {isOpen && (

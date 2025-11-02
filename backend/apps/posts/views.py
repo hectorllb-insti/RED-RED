@@ -159,16 +159,40 @@ def shared_posts_list(request):
 @permission_classes([IsAuthenticated])
 def like_comment(request, comment_id):
     """Dar o quitar like a un comentario"""
+    from notifications.models import Notification
+    
     comment = get_object_or_404(Comment, id=comment_id)
     like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
     
     if created:
+        # Crear notificación solo si el like es de otro usuario
+        if comment.author != request.user:
+            Notification.objects.create(
+                recipient=comment.author,
+                sender=request.user,
+                notification_type='like',
+                title=f'{request.user.get_full_name()} le dio me gusta a tu comentario',
+                message=f'En la publicación: "{comment.post.content[:50]}..."',
+                related_comment_id=comment.id,
+                related_post_id=comment.post.id
+            )
+        
         return Response(
             {'message': 'Comment liked', 'liked': True}, 
             status=status.HTTP_201_CREATED
         )
     else:
         like.delete()
+        
+        # Eliminar la notificación si existe
+        if comment.author != request.user:
+            Notification.objects.filter(
+                recipient=comment.author,
+                sender=request.user,
+                notification_type='like',
+                related_comment_id=comment.id
+            ).delete()
+        
         return Response(
             {'message': 'Comment unliked', 'liked': False}, 
             status=status.HTTP_200_OK

@@ -2,6 +2,19 @@
    ANIMACIONES GLOBALES - RED SOCIAL
    ============================================ */
 
+/* Gradientes animados para fondos */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* Animación de aparición suave */
 @keyframes fadeIn {
   from {
@@ -238,12 +251,12 @@
    ============================================ */
 
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .hover-scale {
@@ -287,6 +300,34 @@
 .btn-ripple:active::after {
   width: 300px;
   height: 300px;
+}
+
+/* Botón con gradiente animado */
+.btn-gradient-animated {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+/* Efecto de brillo en hover */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-shine:hover::before {
+  left: 100%;
 }
 
 /* ============================================
@@ -392,6 +433,43 @@
 .no-animation {
   animation: none !important;
   transition: none !important;
+}
+
+/* ============================================
+   EFECTOS DE TARJETAS PREMIUM
+   ============================================ */
+
+.card-premium {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease;
+}
+
+.card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Efecto neón */
+.neon-glow {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5),
+              0 0 20px rgba(239, 68, 68, 0.3),
+              0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+/* Gradiente de texto animado */
+.text-gradient-animated {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease infinite;
 }
 
 /* Reducir movimiento para usuarios con preferencias de accesibilidad */
