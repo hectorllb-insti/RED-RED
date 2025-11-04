@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, Like, Comment, SharedPost
+from .models import Post, Like, Comment, CommentLike, SharedPost
 
 User = get_user_model()
 
@@ -10,10 +10,12 @@ class CommentSerializer(serializers.ModelSerializer):
     author_id = serializers.IntegerField(source='author.id', read_only=True)
     author_username = serializers.CharField(source='author.username', read_only=True)
     author_profile_picture = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     
     class Meta:
         model = Comment
-        fields = ['id', 'author', 'author_id', 'author_username', 'author_profile_picture', 'content', 'created_at', 'updated_at']
+        fields = ['id', 'author', 'author_id', 'author_username', 'author_profile_picture', 'content', 'created_at', 'updated_at', 'likes_count', 'is_liked']
         read_only_fields = ['id', 'author', 'created_at', 'updated_at']
     
     def get_author_profile_picture(self, obj):
@@ -23,6 +25,15 @@ class CommentSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.author.profile_picture.url)
             return obj.author.profile_picture.url
         return None
+
+    def get_likes_count(self, obj):
+        return obj.get_likes_count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return CommentLike.objects.filter(user=request.user, comment=obj).exists()
+        return False
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -82,11 +93,11 @@ class PostCreateSerializer(serializers.ModelSerializer):
                     'El archivo es demasiado grande. Tamaño máximo: 10MB'
                 )
             
-            # Validar tipo de archivo
-            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+            # Validar tipo de archivo (ahora incluye GIF)
+            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']
             if value.content_type not in allowed_types:
                 raise serializers.ValidationError(
-                    'Tipo de archivo no permitido. Solo JPEG, PNG y WebP'
+                    'Tipo de archivo no permitido. Solo JPEG, PNG, WebP y GIF'
                 )
         
         return value

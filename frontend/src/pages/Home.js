@@ -10,7 +10,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import EmptyState from "../components/EmptyState";
@@ -295,6 +295,15 @@ const Home = () => {
     setImagePreview(null);
   };
 
+  // Auto-refresh cada 45 segundos para obtener nuevas publicaciones
+  useEffect(() => {
+    const autoRefreshInterval = setInterval(() => {
+      queryClient.invalidateQueries("posts");
+    }, 45000);
+
+    return () => clearInterval(autoRefreshInterval);
+  }, [queryClient]);
+
   if (isLoading) {
     return (
       <LoadingSpinner variant="skeleton" text="Cargando publicaciones..." />
@@ -302,19 +311,23 @@ const Home = () => {
   }
 
   return (
-    <div className="space-y-6 mt-10">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+    <div className="space-y-4 mt-10">
+      {/* Tarjeta de crear publicación */}
+      <div className="bg-gradient-to-r from-white via-primary-50/20 to-white rounded-xl shadow-md border border-gray-200 p-4 hover:shadow-lg hover:border-primary-300 transition-all duration-300 group">
         <div className="flex items-center gap-3">
-          <img
-            className="h-11 w-11 rounded-full ring-2 ring-gray-100"
-            src={user?.profile_picture || "/default-avatar.png"}
-            alt={user?.full_name}
-          />
+          <div className="relative">
+            <img
+              className="h-11 w-11 rounded-full ring-2 ring-primary-100 object-cover group-hover:ring-primary-300 transition-all"
+              src={user?.profile_picture || "/default-avatar.png"}
+              alt={user?.full_name}
+            />
+            <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+          </div>
           <button
             onClick={() => setShowCreatePost(true)}
-            className="flex-1 text-left px-5 py-3 bg-gray-50 rounded-full text-gray-500 hover:bg-gray-100 transition-all text-sm font-medium"
+            className="flex-1 text-left px-5 py-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full text-gray-600 hover:from-primary-50 hover:to-purple-50 hover:text-primary-700 transition-all text-sm font-medium group-hover:shadow-inner"
           >
-            ¿Qué estás pensando, {user?.first_name}?
+            💭 ¿Qué estás pensando, {user?.first_name}?
           </button>
         </div>
 
@@ -379,7 +392,7 @@ const Home = () => {
                   (!newPost.trim() && !selectedImage) ||
                   createPostMutation.isLoading
                 }
-                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-lg shadow-primary-500/30 transition-all"
+                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-lg shadow-primary-500/30 transition-all hover-lift active:scale-95"
               >
                 {createPostMutation.isLoading ? "Publicando..." : "Publicar"}
               </button>
@@ -412,40 +425,41 @@ const Home = () => {
             );
           }
 
-          return postList.map((post) => (
+          return postList.map((post, index) => (
             <div
               key={post.id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-gradient-to-br from-white via-gray-50/50 to-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg hover:border-primary-200 transition-all duration-300 stagger-item overflow-hidden"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
-              {/* Post Header */}
-              <div className="p-5 flex items-center justify-between">
+              {/* Post Header con gradiente sutil */}
+              <div className="p-4 bg-gradient-to-r from-transparent via-primary-50/20 to-transparent flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
-                    className="h-11 w-11 rounded-full ring-2 ring-gray-100 object-cover"
+                    className="h-10 w-10 rounded-full ring-2 ring-primary-100 object-cover"
                     src={getImageUrl(post.author_profile_picture) || "/default-avatar.png"}
                     alt={`${post.author_first_name} ${post.author_last_name}`}
                   />
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-bold text-gray-900 text-sm">
                       {post.author_first_name} {post.author_last_name}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs text-primary-600 font-medium">
                       @{post.author_username}
                     </p>
                   </div>
                 </div>
                 {post.author_id === user?.id && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleStartEdit(post)}
-                      className="text-gray-400 hover:text-primary-600 hover:bg-primary-50 p-2 rounded-lg transition-all"
+                      className="text-gray-500 hover:text-primary-600 hover:bg-primary-50 p-2 rounded-lg transition-all"
                       title="Editar publicación"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeletePost(post.id)}
-                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
+                      className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
                       title="Eliminar publicación"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -455,13 +469,13 @@ const Home = () => {
               </div>
 
               {/* Post Content */}
-              <div className="px-5 pb-4">
+              <div className="px-4 pb-4">
                 {editingPost === post.id ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
                     <textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-gray-50"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none bg-white text-gray-800 placeholder-gray-400 transition-all"
                       rows="3"
                       placeholder="¿Qué estás pensando?"
                     />
@@ -478,7 +492,7 @@ const Home = () => {
                         disabled={
                           !editContent.trim() || editPostMutation.isLoading
                         }
-                        className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 flex items-center gap-2 font-semibold shadow-lg shadow-primary-500/30 transition-all"
+                        className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 flex items-center gap-2 font-medium shadow-md transition-all"
                       >
                         <Save className="h-4 w-4" />
                         <span>
@@ -491,60 +505,79 @@ const Home = () => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-sm">
                       {post.content}
                     </p>
                     {post.image && (
-                      <img
-                        src={post.image || "/placeholder.svg"}
-                        alt="Contenido del post"
-                        className="mt-4 rounded-xl max-w-full h-auto"
-                      />
+                      <div className="mt-3 rounded-xl overflow-hidden border border-gray-200">
+                        <img
+                          src={post.image || "/placeholder.svg"}
+                          alt="Contenido del post"
+                          className="w-full h-auto object-cover"
+                        />
+                      </div>
                     )}
                   </>
                 )}
               </div>
 
-              <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-6">
+              {/* Sección de interacciones */}
+              <div className="px-4 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleLike(post.id)}
-                    className={`flex items-center gap-2 transition-all ${
+                    className={`like-button flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
                       post.is_liked
-                        ? "text-red-500"
-                        : "text-gray-500 hover:text-red-500"
+                        ? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md liked"
+                        : "bg-white text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-300 border border-gray-200"
                     }`}
                   >
-                    <Heart
-                      className={`h-5 w-5 ${
-                        post.is_liked ? "fill-current" : ""
-                      }`}
-                    />
-                    <span className="text-sm font-medium">
+                    <div style={{ width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Heart
+                        className={`transition-colors ${
+                          post.is_liked ? "fill-current" : ""
+                        }`}
+                        strokeWidth={post.is_liked ? 0 : 2}
+                        style={{ 
+                          width: '18px',
+                          height: '18px'
+                        }}
+                      />
+                    </div>
+                    <span className="font-medium">
                       {post.likes_count}
                     </span>
                   </button>
                   <button
                     onClick={() => toggleComments(post.id)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-primary-600 transition-all"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
+                      showComments[post.id]
+                        ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                        : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 border border-gray-200"
+                    }`}
                   >
-                    <MessageCircle className="h-5 w-5" />
-                    <span className="text-sm font-medium">
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="font-medium">
                       {post.comments_count}
                     </span>
                   </button>
                   <button
                     onClick={() => handleSharePost(post.id)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-green-600 transition-all"
+                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all bg-white text-gray-600 hover:bg-green-50 hover:text-green-600 hover:border-green-300 border border-gray-200 w-24"
                     title="Compartir publicación"
                   >
-                    <Share2 className="h-5 w-5" />
-                    <span className="text-sm font-medium">Compartir</span>
+                    <Share2 className="h-4 w-4" />
+                    <span className="font-medium">Compartir</span>
                   </button>
                 </div>
-                <span className="text-xs text-gray-400 font-medium">
-                  {new Date(post.created_at).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 shadow-sm">
+                  <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs text-gray-600 font-medium">
+                    {new Date(post.created_at).toLocaleDateString()} • {new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
               </div>
 
               {/* Comments Section */}
@@ -590,6 +623,7 @@ const CommentsSection = ({
   isSubmitting,
 }) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Query para obtener comentarios del post
   const { data: comments, isLoading } = useQuery(
@@ -597,16 +631,85 @@ const CommentsSection = ({
     async () => {
       const response = await api.get(`/posts/${postId}/comments/`);
       return response.data;
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      refetchOnWindowFocus: false,
     }
   );
 
+  // Mutation para dar like/unlike a comentarios con actualización optimista
+  const likeCommentMutation = useMutation(
+    async (commentId) => {
+      const response = await api.post(`/posts/comments/${commentId}/like/`);
+      return { commentId, liked: response.data.liked };
+    },
+    {
+      onMutate: async (commentId) => {
+        // Cancelar queries en curso
+        await queryClient.cancelQueries(["comments", postId]);
+
+        // Snapshot del estado anterior
+        const previousComments = queryClient.getQueryData(["comments", postId]);
+
+        // Actualización optimista
+        if (previousComments) {
+          queryClient.setQueryData(["comments", postId], (old) => {
+            return old.map((comment) => {
+              if (comment.id === commentId) {
+                const newIsLiked = !comment.is_liked;
+                const newLikesCount = newIsLiked 
+                  ? (comment.likes_count || 0) + 1 
+                  : Math.max(0, (comment.likes_count || 0) - 1);
+                
+                return {
+                  ...comment,
+                  is_liked: newIsLiked,
+                  likes_count: newLikesCount,
+                };
+              }
+              return comment;
+            });
+          });
+        }
+
+        return { previousComments };
+      },
+      onSuccess: (data, commentId) => {
+        // Confirmar el estado con el servidor (solo actualizar is_liked, mantener el contador)
+        queryClient.setQueryData(["comments", postId], (old) => {
+          if (!old) return old;
+          return old.map((comment) => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                is_liked: data.liked,
+              };
+            }
+            return comment;
+          });
+        });
+      },
+      onError: (err, commentId, context) => {
+        // Revertir en caso de error
+        if (context?.previousComments) {
+          queryClient.setQueryData(["comments", postId], context.previousComments);
+        }
+      },
+    }
+  );
+
+  const handleCommentLike = (commentId) => {
+    likeCommentMutation.mutate(commentId);
+  };
+
   return (
-    <div className="border-t border-gray-100">
+    <div className="border-t border-gray-100 bg-gray-50/30">
       {/* Formulario para nuevo comentario */}
-      <div className="p-4 border-b border-gray-50">
+      <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex space-x-3">
           <img
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+            className="h-9 w-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
             src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
             alt={user?.full_name || "Tu perfil"}
             onError={(e) => {
@@ -618,14 +721,14 @@ const CommentsSection = ({
               value={newComment}
               onChange={(e) => onCommentChange(postId, e.target.value)}
               placeholder="Escribe un comentario..."
-              className="w-full p-2 border border-gray-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white placeholder-gray-400 transition-all"
               rows="2"
             />
             <div className="flex justify-end mt-2">
               <button
                 onClick={() => onCommentSubmit(postId)}
                 disabled={!newComment.trim() || isSubmitting}
-                className="px-3 py-1 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-medium rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
               >
                 {isSubmitting ? "Enviando..." : "Comentar"}
               </button>
@@ -635,42 +738,64 @@ const CommentsSection = ({
       </div>
 
       {/* Lista de comentarios */}
-      <div className="p-4">
+      <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
         {isLoading ? (
           <LoadingSpinner variant="pulse" size="sm" />
         ) : (
           <div className="space-y-3">
             {comments && comments.length > 0 ? (
-              comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-3">
+              comments.map((comment, index) => (
+                <div key={comment.id} className="flex space-x-3 group" style={{ animationDelay: `${index * 0.05}s` }}>
                   <img
-                    className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+                    className="h-8 w-8 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
                     src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
                     alt={comment.author_username || "Usuario"}
                     onError={(e) => {
                       e.target.src = "/default-avatar.png";
                     }}
                   />
-                  <div className="flex-1">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="font-medium text-sm text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 group-hover:border-gray-300 transition-all">
+                      <p className="font-semibold text-sm text-gray-900">
                         {comment.author_username}
                       </p>
-                      <p className="text-sm text-gray-800 mt-1">
+                      <p className="text-sm text-gray-700 mt-1 break-words">
                         {comment.content}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(comment.created_at).toLocaleDateString()} a las{" "}
-                      {new Date(comment.created_at).toLocaleTimeString()}
-                    </p>
+                    <div className="flex items-center gap-3 mt-2 px-2">
+                      <button
+                        onClick={() => handleCommentLike(comment.id)}
+                        className={`like-button flex items-center gap-1 text-xs font-medium transition-all w-10 ${
+                          comment.is_liked
+                            ? "text-red-500"
+                            : "text-gray-500 hover:text-red-500"
+                        }`}
+                      >
+                        <Heart
+                          className={`h-3.5 w-3.5 ${
+                            comment.is_liked ? "fill-current" : ""
+                          }`}
+                        />
+                        <span>{comment.likes_count || 0}</span>
+                      </button>
+                      <span className="text-xs text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString()} • {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm text-center py-4">
-                No hay comentarios aún. ¡Sé el primero en comentar!
-              </p>
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">
+                  No hay comentarios aún
+                </p>
+                <p className="text-gray-400 text-xs mt-1">
+                  ¡Sé el primero en comentar!
+                </p>
+              </div>
             )}
           </div>
         )}

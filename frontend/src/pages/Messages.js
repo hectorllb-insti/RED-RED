@@ -33,106 +33,37 @@ const Messages = () => {
     ["conversations"],
     async () => {
       try {
-        console.log("🔍 Iniciando query de conversaciones...");
-        console.log("👤 Usuario actual:", user);
-        console.log("🔐 Autenticado:", !!user);
-        
-        console.log("📡 Realizando petición a /chat/chats/");
         const response = await api.get("/chat/chats/");
         
-        console.log("📋 Respuesta completa de conversaciones:", response);
-        console.log("📋 response.data:", response.data);
-        console.log("📋 Tipo de response.data:", typeof response.data);
-        console.log("📋 Es array response.data:", Array.isArray(response.data));
-        
-        if (!response.data) {
-          console.warn("⚠️ response.data es null o undefined");
-          return [];
-        }
+        if (!response.data) return [];
         
         // Extraer las conversaciones del objeto paginado
         let conversationsArray;
         if (Array.isArray(response.data)) {
-          // Si es un array directo (sin paginación)
           conversationsArray = response.data;
-          console.log("📦 Respuesta directa como array");
         } else if (response.data.results && Array.isArray(response.data.results)) {
-          // Si es un objeto paginado con results
           conversationsArray = response.data.results;
-          console.log("📦 Respuesta paginada, extrayendo results");
-          console.log("📊 Total de conversaciones:", response.data.count);
         } else {
-          console.warn("⚠️ Estructura de respuesta no reconocida:", response.data);
           return [];
         }
         
-        console.log(`✅ Conversaciones recibidas: ${conversationsArray.length} elementos`);
-        
-        // Verificar duplicados por ID
-        const ids = conversationsArray.map(conv => conv.id);
-        const uniqueIds = [...new Set(ids)];
-        if (ids.length !== uniqueIds.length) {
-          console.warn("⚠️ Detectados duplicados por ID:", {
-            total: ids.length,
-            unicos: uniqueIds.length,
-            duplicados: ids.filter((id, index) => ids.indexOf(id) !== index)
-          });
-        }
-        
-        // Verificar duplicados por other_user
-        const otherUserIds = conversationsArray
-          .map(conv => conv.other_user?.id)
-          .filter(id => id !== undefined);
-        const uniqueOtherUserIds = [...new Set(otherUserIds)];
-        if (otherUserIds.length !== uniqueOtherUserIds.length) {
-          console.warn("⚠️ Detectados duplicados por other_user:", {
-            total: otherUserIds.length,
-            unicos: uniqueOtherUserIds.length,
-            duplicados: otherUserIds.filter((id, index) => otherUserIds.indexOf(id) !== index)
-          });
-        }
-        
-        conversationsArray.forEach((conv, index) => {
-          console.log(`  📝 Conversación ${index + 1}:`, {
-            id: conv.id,
-            name: conv.name || 'Sin nombre',
-            other_user: conv.other_user,
-            participants: conv.participants,
-            last_message: conv.last_message,
-            updated_at: conv.updated_at,
-            raw: conv
-          });
-        });
-        
-        // Eliminar duplicados en el frontend como medida de seguridad
+        // Eliminar duplicados
         const uniqueConversations = conversationsArray.filter((conv, index, self) => 
           index === self.findIndex(c => c.id === conv.id)
         );
         
-        if (uniqueConversations.length !== conversationsArray.length) {
-          console.warn(`⚠️ Eliminados ${conversationsArray.length - uniqueConversations.length} duplicados en el frontend`);
-        }
-        
-        // Ordenar conversaciones por updated_at descendente (más recientes primero)
-        const sortedConversations = uniqueConversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-        console.log("🔄 Conversaciones ordenadas:", sortedConversations);
-        console.log(`✅ Retornando ${sortedConversations.length} conversaciones únicas`);
-        return sortedConversations;
+        // Ordenar por fecha de actualización (más recientes primero)
+        return uniqueConversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
       } catch (error) {
-        console.error("❌ Error detallado obteniendo conversaciones:", error);
-        console.error("❌ Error response:", error.response);
-        console.error("❌ Error status:", error.response?.status);
-        console.error("❌ Error data:", error.response?.data);
         throw error;
       }
     },
     {
-      enabled: !!user, // Solo ejecutar si hay usuario autenticado
-      staleTime: 15 * 1000, // Reducido de 30s a 15s - datos frescos más rápido
-      refetchInterval: 5000, // Reducido de 10s a 5s - actualizaciones más frecuentes
+      enabled: !!user,
+      staleTime: 15 * 1000,
+      refetchInterval: 5000,
       retry: 3,
       onError: (error) => {
-        console.error("❌ Error en query de conversaciones:", error);
         if (error.response?.status === 401) {
           toast.error("Sesión expirada. Por favor, inicia sesión nuevamente.");
         } else {
@@ -140,27 +71,17 @@ const Messages = () => {
         }
       },
       onSuccess: (data) => {
-        console.log("✅ Query de conversaciones exitosa. Datos finales:", data);
-        console.log("✅ Cantidad de conversaciones para mostrar:", data?.length || 0);
-        
-        // ACTUALIZAR HEADER: Sincronizar el selectedChat cuando se actualicen las conversaciones
+        // Sincronizar el selectedChat cuando se actualicen las conversaciones
         setSelectedChat(prevChat => {
           if (prevChat && data) {
-            // Buscar la conversación actualizada que corresponde al chat seleccionado
             const updatedConversation = data.find(conv => conv.id === prevChat.id);
             if (updatedConversation && updatedConversation.other_user) {
-              console.log("🔄 Sincronizando header con conversación actualizada");
-              console.log("📸 Header anterior:", prevChat.other_user);
-              console.log("📸 Header nuevo:", updatedConversation.other_user);
-              
-              // Si la imagen cambió, actualizar el selectedChat
               if (prevChat.other_user?.profile_picture !== updatedConversation.other_user?.profile_picture) {
-                console.log("🖼️ Imagen de perfil cambió en header - actualizando");
                 return {
                   ...prevChat,
                   other_user: {
                     ...updatedConversation.other_user,
-                    _profileUpdated: Date.now() // Forzar re-render
+                    _profileUpdated: Date.now()
                   }
                 };
               }
@@ -192,38 +113,26 @@ const Messages = () => {
     }
   );
 
-  // Función estable para marcar mensajes como leídos (optimizada para velocidad)
+  // Marcar mensajes como leídos
   const markAsRead = useCallback(
     async (chatId) => {
       try {
-        console.log(`📖 Marcando mensajes como leídos para chat ${chatId}`);
-        
-        // ⚡ ACTUALIZACIÓN OPTIMISTA: Actualizar el estado local INMEDIATAMENTE
+        // Actualización optimista
         queryClient.setQueryData("conversations", (oldConversations) => {
           if (!oldConversations) return oldConversations;
           
           return oldConversations.map(conversation => {
             if (conversation.id === chatId) {
-              console.log(`🔄 Actualizando unread_count para chat ${chatId}: ${conversation.unread_count} -> 0 (optimista)`);
-              return {
-                ...conversation,
-                unread_count: 0
-              };
+              return { ...conversation, unread_count: 0 };
             }
             return conversation;
           });
         });
         
-        // Luego hacer la llamada al servidor (sin bloquear la UI)
-        api.post(`/chat/chats/${chatId}/read/`).then(() => {
-          console.log(`✅ Mensajes marcados como leídos en servidor para chat ${chatId}`);
-        }).catch((error) => {
-          console.error("❌ Error en servidor, revirtiendo estado:", error);
-          // En caso de error, podríamos revertir el estado optimista aquí
-        });
-        
+        // Llamada al servidor
+        await api.post(`/chat/chats/${chatId}/read/`);
       } catch (error) {
-        console.error("❌ Error marking messages as read:", error);
+        // Error silencioso, no afecta la UX
       }
     },
     [queryClient]
@@ -236,7 +145,7 @@ const Messages = () => {
     }
   };
 
-  // Función para manejar typing indicators
+  // Manejar indicadores de escritura
   const handleTypingStart = () => {
     if (selectedChat && !isTyping) {
       setIsTyping(true);
@@ -247,15 +156,13 @@ const Messages = () => {
       });
     }
 
-    // Limpiar timeout anterior
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Establecer nuevo timeout para parar typing después de 2 segundos
     typingTimeoutRef.current = setTimeout(() => {
       handleTypingStop();
-    }, 2000);
+    }, 3000);
   };
 
   const handleTypingStop = () => {
@@ -278,11 +185,9 @@ const Messages = () => {
   }, [messages]);
 
   useEffect(() => {
-    // Asegurar que el WebSocket esté conectado al cargar la página de mensajes
     if (user && !socketService.isConnected()) {
       const token = localStorage.getItem("access_token");
       if (token) {
-        console.log("Reconectando WebSocket para mensajes...");
         socketService.connect(token);
       }
     }
@@ -304,29 +209,57 @@ const Messages = () => {
       toast.error("Desconectado del chat", { duration: 3000 });
     });
 
+    // Escuchar actualizaciones de conversaciones (nuevos mensajes)
+    socketService.on("conversation_update", (data) => {
+      if (data.action === "new_message") {
+        // Actualizar contador de mensajes no leídos
+        queryClient.setQueryData("conversations", (oldConversations) => {
+          if (!oldConversations) return oldConversations;
+          
+          return oldConversations.map(conversation => {
+            if (conversation.id === data.chat_room_id) {
+              const isMyMessage = data.sender_id === user?.id;
+              
+              // Si no es mi mensaje, incrementar el contador
+              // Solo NO incrementar si es mi mensaje o si estoy activamente en ese chat
+              let newUnreadCount = conversation.unread_count || 0;
+              if (!isMyMessage) {
+                // Si selectedChat es null (fuera de la página o sin chat abierto) 
+                // o si no es el chat activo, incrementar
+                const isCurrentlyInThisChat = selectedChat && selectedChat.id === data.chat_room_id;
+                if (!isCurrentlyInThisChat) {
+                  newUnreadCount = newUnreadCount + 1;
+                }
+              }
+              
+              return {
+                ...conversation,
+                unread_count: newUnreadCount,
+                updated_at: new Date().toISOString()
+              };
+            }
+            return conversation;
+          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        });
+        
+        // Luego invalidar para obtener datos frescos del servidor
+        queryClient.invalidateQueries("conversations");
+      }
+    });
+
     // Escuchar actualizaciones de perfil de usuarios
     socketService.onProfileUpdate((data) => {
-      console.log("📸 Actualización de perfil recibida en Messages.js:", data);
       const { user_id, user_data } = data;
       const updateTimestamp = Date.now();
       
-      console.log("🆔 User ID del evento:", user_id);
-      console.log("📊 User data del evento:", user_data);
-      console.log("⏰ Timestamp generado:", updateTimestamp);
-      
-      // Limpiar cache de imágenes para forzar recarga con nueva imagen
       clearUserImageCache(user_id);
-      
-      // FALLBACK: También invalidar las conversaciones para forzar refetch
       queryClient.invalidateQueries("conversations");
       
-      // Actualizar la lista de conversaciones si el usuario actualizado está en alguna
       queryClient.setQueryData("conversations", (oldConversations) => {
         if (!oldConversations) return oldConversations;
         
         return oldConversations.map(conversation => {
           if (conversation.other_user?.id === user_id) {
-            console.log(`📸 Actualizando perfil de ${conversation.other_user.username} en conversaciones`);
             return {
               ...conversation,
               other_user: {
@@ -340,16 +273,9 @@ const Messages = () => {
         });
       });
 
-      // Actualizar el chat seleccionado si corresponde al usuario actualizado
       setSelectedChat(prevChat => {
         if (prevChat && prevChat.other_user?.id === user_id) {
-          console.log(`📸 Actualizando perfil de ${prevChat.other_user.username} en chat seleccionado`);
-          console.log('📸 Datos anteriores:', prevChat.other_user);
-          console.log('📸 Nuevos datos:', user_data);
-          console.log('📸 Timestamp de actualización:', updateTimestamp);
-          
-          // Crear un objeto completamente nuevo para forzar re-render
-          const updatedChat = {
+          return {
             ...prevChat,
             other_user: {
               ...prevChat.other_user,
@@ -357,16 +283,10 @@ const Messages = () => {
               _profileUpdated: updateTimestamp
             }
           };
-          
-          console.log('📸 Chat actualizado:', updatedChat);
-          return updatedChat;
         }
         return prevChat;
       });
     });
-
-    // NO usar listener global aquí - ya se maneja en el useEffect del chat específico
-    // Solo manejar eventos de conexión/desconexión
 
     return () => {
       socketService.listeners.delete("reconnecting");
@@ -389,16 +309,9 @@ const Messages = () => {
 
       // Escuchar nuevos mensajes
       socketService.onMessage((data) => {
-        console.log("Mensaje recibido por WebSocket:", data);
-        // Asegurar que el mensaje tenga la estructura correcta
         const newMessage = data.message || data;
-        console.log("Mensaje procesado:", newMessage);
         
-        // Si el mensaje es para el chat activo, agregarlo a la lista
         if (data.room === selectedChat.id) {
-          console.log("Mensaje para chat activo - agregando a la lista");
-          
-          // Evitar duplicados comprobando si el mensaje ya existe
           setMessages((prev) => {
             const messageExists = prev.some(msg => {
               const existingMsg = msg.message || msg;
@@ -408,46 +321,29 @@ const Messages = () => {
                       Math.abs(new Date(existingMsg.timestamp) - new Date(newMessage.timestamp)) < 1000);
             });
             
-            if (messageExists) {
-              console.log("Mensaje duplicado detectado, no agregando");
-              return prev; // No agregar si ya existe
-            }
+            if (messageExists) return prev;
             
-            console.log("Agregando nuevo mensaje al chat activo");
             return [...prev, newMessage];
           });
           
-          // Marcar mensajes como leídos inmediatamente cuando se reciben en chat activo
           if (newMessage.sender_id !== user.id && newMessage.sender !== user.id) {
-            // Marcado inmediato sin delay
             markAsRead(selectedChat.id);
           }
         }
         
-        // Siempre actualizar la lista de conversaciones con el último mensaje
-        // (tanto para chat activo como inactivo)
+        // Actualizar lista de conversaciones
         queryClient.setQueryData("conversations", (oldConversations) => {
           if (!oldConversations) return oldConversations;
           
           return oldConversations.map(conversation => {
             if (conversation.id === data.room) {
-              // Si es el chat activo y el mensaje no es del usuario actual, mantener unread_count en 0
-              // Si es un chat inactivo y el mensaje no es del usuario actual, incrementar unread_count
               const isActiveChat = selectedChat.id === data.room;
               const isMyMessage = newMessage.sender_id === user.id || newMessage.sender === user.id;
               
               let newUnreadCount = conversation.unread_count || 0;
               if (!isMyMessage) {
-                if (isActiveChat) {
-                  // Chat activo: marcar como leído automáticamente
-                  newUnreadCount = 0;
-                } else {
-                  // Chat inactivo: incrementar contador
-                  newUnreadCount = newUnreadCount + 1;
-                }
+                newUnreadCount = isActiveChat ? 0 : newUnreadCount + 1;
               }
-              
-              console.log(`📊 Actualizando unread_count para chat ${data.room}: ${conversation.unread_count} -> ${newUnreadCount} (activo: ${isActiveChat}, mi mensaje: ${isMyMessage})`);
               
               return {
                 ...conversation,
@@ -461,17 +357,17 @@ const Messages = () => {
               };
             }
             return conversation;
-          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)); // Ordenar por más reciente
+          }).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
         });
       });
 
-      // Escuchar typing indicators
+      // Escuchar indicadores de escritura
       socketService.on("typing_start", (data) => {
         if (data.room === selectedChat.id && data.user !== user.id) {
-          setTypingUsers((prev) => [
-            ...prev.filter((u) => u !== data.user),
-            data.user,
-          ]);
+          setTypingUsers((prev) => {
+            if (prev.includes(data.user)) return prev;
+            return [...prev, data.user];
+          });
         }
       });
 
@@ -481,14 +377,9 @@ const Messages = () => {
         }
       });
 
-      // Marcar mensajes como leídos al abrir el chat (delay mínimo para evitar bucles)
-      const markReadTimer = setTimeout(() => {
-        markAsRead(selectedChat.id);
-      }, 50); // Reducido de 100ms a 50ms
+      const markReadTimer = setTimeout(() => markAsRead(selectedChat.id), 50);
 
-      return () => {
-        clearTimeout(markReadTimer);
-      };
+      return () => clearTimeout(markReadTimer);
     }
 
     return () => {
@@ -556,6 +447,9 @@ const Messages = () => {
       const messageText = message.trim();
       const timestamp = new Date().toISOString();
       
+      // Detener el indicador de typing inmediatamente al enviar
+      handleTypingStop();
+      
       // Actualizar inmediatamente la lista de conversaciones
       queryClient.setQueryData("conversations", (oldConversations) => {
         if (!oldConversations) return oldConversations;
@@ -583,15 +477,18 @@ const Messages = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px] flex mt-10">
+    <div className="bg-gradient-to-br from-white via-gray-50/30 to-white rounded-2xl shadow-md border border-gray-200 h-[600px] flex mt-10 overflow-hidden">
       {/* Sidebar - Lista de conversaciones */}
-      <div className="w-1/3 border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <div className="w-1/3 border-r border-gray-200 bg-white/50 flex flex-col">
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Mensajes</h2>
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary-600" />
+              Mensajes
+            </h2>
             <button
               onClick={() => setShowCreateChat(!showCreateChat)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-100 rounded-lg transition-all"
             >
               {showCreateChat ? (
                 <X className="h-5 w-5" />
@@ -605,10 +502,10 @@ const Messages = () => {
             <form onSubmit={handleCreateChat} className="mt-3">
               <input
                 type="text"
-                placeholder="Nombre de usuario..."
+                placeholder="Buscar usuario..."
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
                 autoFocus
               />
               <button
@@ -616,14 +513,14 @@ const Messages = () => {
                 disabled={
                   !searchUsername.trim() || createChatMutation.isLoading
                 }
-                className="mt-2 w-full bg-primary-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+                className="mt-2 w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 shadow-md transition-all"
               >
                 {createChatMutation.isLoading ? "Creando..." : "Crear Chat"}
               </button>
             </form>
           ) : (
-            <div className="mt-2 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="mt-3 relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
@@ -631,13 +528,13 @@ const Messages = () => {
                 placeholder="Buscar conversaciones..."
                 value={searchConversation}
                 onChange={(e) => setSearchConversation(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
               />
             </div>
           )}
         </div>
 
-        <div className="overflow-y-auto h-full">
+        <div className="overflow-y-auto flex-1">
           {(() => {
             // Mostrar estado de carga
             if (isLoadingConversations) {
@@ -668,12 +565,7 @@ const Messages = () => {
               );
             }
 
-            // Asegurar que conversations es un array válido
             const convList = Array.isArray(conversations) ? conversations : [];
-            console.log("🗂️ Lista de conversaciones para renderizar:", convList);
-            console.log("🗂️ Cantidad de conversaciones:", convList.length);
-            console.log("🗂️ Tipo de conversations:", typeof conversations);
-            console.log("🗂️ Es array conversations:", Array.isArray(conversations));
 
             // Filtrar conversaciones por búsqueda
             const filteredConvs = searchConversation.trim()
@@ -693,13 +585,7 @@ const Messages = () => {
                 })
               : convList;
 
-            console.log("🔍 Conversaciones filtradas:", filteredConvs);
-            console.log("🔍 Cantidad de conversaciones filtradas:", filteredConvs.length);
-            console.log("🔍 Término de búsqueda:", searchConversation);
-            console.log("🔍 Mostrar crear chat:", showCreateChat);
-
             if (filteredConvs.length === 0 && !showCreateChat) {
-              console.log("⚠️ Mostrando mensaje de 'No tienes conversaciones'");
               return (
                 <div className="flex items-center justify-center h-full p-4">
                   <div className="text-center">
@@ -727,19 +613,19 @@ const Messages = () => {
               );
             }
 
-            console.log("✅ Renderizando conversaciones:", filteredConvs.length);
             return filteredConvs.map((conversation) => (
               <button
                 key={conversation.id}
                 onClick={() => {
                   setSelectedChat(conversation);
-                  // Marcar mensajes como leídos inmediatamente al seleccionar el chat
                   if (conversation.unread_count > 0) {
                     markAsRead(conversation.id);
                   }
                 }}
-                className={`w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 ${
-                  selectedChat?.id === conversation.id ? "bg-primary-50" : ""
+                className={`w-full p-3 text-left hover:bg-primary-50/50 border-b border-gray-100 transition-all ${
+                  selectedChat?.id === conversation.id 
+                    ? "bg-gradient-to-r from-primary-50 to-purple-50 border-l-4 border-l-primary-600" 
+                    : "border-l-4 border-l-transparent"
                 }`}
               >
                 <div className="flex items-center space-x-3">
@@ -751,17 +637,17 @@ const Messages = () => {
                       updateKey={conversation.other_user?._profileUpdated}
                     />
                     {conversation.unread_count > 0 && selectedChat?.id !== conversation.id && (
-                      <div className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-pink-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
                         {conversation.unread_count}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-semibold text-gray-900 truncate text-sm">
                       {conversation.other_user?.full_name ||
                         "Usuario desconocido"}
                     </p>
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-xs text-gray-500 truncate">
                       {conversation.last_message?.content || "Sin mensajes"}
                     </p>
                   </div>
@@ -773,11 +659,11 @@ const Messages = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50/50 to-white">
         {selectedChat ? (
-          <div className="flex-1 overflow-y-auto">
+          <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
+            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-white via-primary-50/20 to-white z-10 shadow-sm">
               <div className="flex items-center space-x-3">
                 <ChatAvatar
                   src={selectedChat.other_user?.profile_picture}
@@ -786,14 +672,14 @@ const Messages = () => {
                   updateKey={selectedChat.other_user?._profileUpdated}
                 />
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-semibold text-gray-900">
                     {selectedChat.other_user?.full_name ||
                       "Usuario desconocido"}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     @{selectedChat.other_user?.username || "usuario"}
                     {isReconnecting && (
-                      <span className="ml-2 text-xs text-amber-600">
+                      <span className="ml-2 text-xs text-amber-600 font-semibold">
                         • Reconectando...
                       </span>
                     )}
@@ -806,14 +692,7 @@ const Messages = () => {
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="px-4 pt-8 pb-4 space-y-4"
-              style={{
-                minHeight: 0,
-                flexShrink: 1,
-                flexGrow: 1,
-                display: 'flex',
-                flexDirection: 'column'
-              }}
+              className="flex-1 overflow-y-auto px-4 pt-8 pb-16 space-y-4"
             >
               {isLoadingMore && (
                 <div className="text-center py-2">
@@ -821,16 +700,12 @@ const Messages = () => {
                 </div>
               )}
               {messages.map((msg, index) => {
-                // Asegurar que msg tenga la estructura correcta
                 const messageObj = msg.message || msg;
 
-                // Extraer el contenido del mensaje de forma segura
+                // Extraer contenido del mensaje
                 let messageContent;
-                
-                // Si el contenido es un string que parece JSON, parsearlo
                 if (typeof messageObj.content === "string") {
                   try {
-                    // Intentar parsear si parece ser JSON
                     if (messageObj.content.startsWith('{') || messageObj.content.startsWith('[')) {
                       const parsed = JSON.parse(messageObj.content);
                       messageContent = parsed.content || parsed.message || parsed.text || messageObj.content;
@@ -838,27 +713,21 @@ const Messages = () => {
                       messageContent = messageObj.content;
                     }
                   } catch (e) {
-                    // Si no es JSON válido, usar como string
                     messageContent = messageObj.content;
                   }
                 } else if (typeof messageObj.content === "object" && messageObj.content?.content) {
                   messageContent = messageObj.content.content;
-                } else if (messageObj.text) {
-                  messageContent = messageObj.text;
                 } else {
-                  // Último recurso: buscar cualquier campo que parezca contenido
-                  messageContent = messageObj.body || messageObj.message || "Sin contenido";
+                  messageContent = messageObj.text || messageObj.body || messageObj.message || "Sin contenido";
                 }
 
-                const isOwnMessage =
-                  messageObj.sender_id === user.id ||
-                  messageObj.sender === user.id;
+                const isOwnMessage = messageObj.sender_id === user.id || messageObj.sender === user.id;
                 return (
                   <div
                     key={messageObj.id || index}
                     className={`flex ${
                       isOwnMessage ? "justify-end" : "justify-start"
-                    } mb-4`}
+                    } mb-3`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md ${
@@ -867,17 +736,17 @@ const Messages = () => {
                     >
                       {/* Nombre del usuario (solo para mensajes de otros) */}
                       {!isOwnMessage && (
-                        <p className="text-xs text-gray-600 mb-1 px-2">
+                        <p className="text-xs text-gray-500 mb-1 px-2 font-medium">
                           {messageObj.sender_username || selectedChat.other_user?.username || "Usuario"}
                         </p>
                       )}
                       
                       {/* Burbuja del mensaje */}
                       <div
-                        className={`inline-block px-4 py-2 rounded-lg ${
+                        className={`inline-block px-4 py-2.5 rounded-2xl shadow-sm ${
                           isOwnMessage
-                            ? "bg-primary-500 text-white"
-                            : "bg-gray-200 text-gray-900"
+                            ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white"
+                            : "bg-white text-gray-900 border border-gray-200"
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">{messageContent}</p>
@@ -915,26 +784,42 @@ const Messages = () => {
                 );
               })}
 
-              {/* Typing indicator */}
+              {/* Typing indicator - Indicador de escritura en tiempo real */}
               {typingUsers.length > 0 && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-sm">
-                        {typingUsers.length === 1
-                          ? "Escribiendo"
-                          : "Varios usuarios escribiendo"}
-                      </span>
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.1s" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        ></div>
+                <div className="flex justify-start mb-4 animate-fade-in">
+                  <div className="flex items-center space-x-3">
+                    {/* Avatar del usuario que está escribiendo */}
+                    <ChatAvatar
+                      src={selectedChat.other_user?.profile_picture}
+                      alt={selectedChat.other_user?.full_name || "Usuario"}
+                      size="xs"
+                      updateKey={selectedChat.other_user?._profileUpdated}
+                    />
+                    
+                    {/* Burbuja del indicador */}
+                    <div className="bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-3 rounded-2xl shadow-sm border border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm font-medium text-gray-700">
+                          {typingUsers.length === 1
+                            ? `${selectedChat.other_user?.full_name || "Usuario"} está escribiendo`
+                            : "Varios usuarios están escribiendo"}
+                        </span>
+                        
+                        {/* Animación de puntos */}
+                        <div className="flex space-x-1.5">
+                          <div 
+                            className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-bounce"
+                            style={{ animationDuration: "1s" }}
+                          ></div>
+                          <div 
+                            className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-bounce"
+                            style={{ animationDuration: "1s", animationDelay: "0.15s" }}
+                          ></div>
+                          <div 
+                            className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-bounce"
+                            style={{ animationDuration: "1s", animationDelay: "0.3s" }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -947,7 +832,7 @@ const Messages = () => {
             {/* Message Input */}
             <form
               onSubmit={sendMessage}
-              className="p-4 border-t border-gray-200"
+              className="p-4 border-t border-gray-200 bg-white"
             >
               <div className="flex items-center space-x-2">
                 <input
@@ -957,27 +842,27 @@ const Messages = () => {
                     setMessage(e.target.value);
                     handleTypingStart();
                   }}
-                  onBlur={handleTypingStop}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-gray-50 focus:bg-white transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!message.trim()}
-                  className="p-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
                 >
                   <Send className="h-5 w-5" />
                 </button>
               </div>
             </form>
-          </div>
+          </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50">
             <div className="text-center">
-              <p className="text-gray-500 text-lg">
+              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg font-semibold mb-1">
                 Selecciona una conversación
               </p>
-              <p className="text-gray-400">para comenzar a chatear</p>
+              <p className="text-gray-400 text-sm">para comenzar a chatear</p>
             </div>
           </div>
         )}

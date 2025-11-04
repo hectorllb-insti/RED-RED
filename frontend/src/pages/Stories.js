@@ -89,15 +89,18 @@ const Stories = () => {
   }
 
   return (
-    <div className="space-y-6 mt-10">
+    <div className="space-y-5 mt-10">
       {/* Stories Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Historias</h1>
+      <div className="flex items-center justify-between bg-white rounded-xl shadow-md border border-gray-200 p-4">
+        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <Camera className="h-5 w-5 text-primary-600" />
+          Historias
+        </h1>
         <button
           onClick={() => setShowCreateStory(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-lg hover:from-primary-700 hover:to-primary-600 shadow-md transition-all text-sm font-semibold"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           <span>Crear Historia</span>
         </button>
       </div>

@@ -1,5 +1,35 @@
 # Changelog - Red Social Improvements
 
+## 📅 Fecha: 1 de Noviembre de 2025
+
+### 🎨 Nuevas Funcionalidades
+
+#### ✅ Mejora de Comentarios con Likes y Diseño Renovado
+
+- **Likes en comentarios**: Los usuarios pueden dar like a comentarios individuales
+- **Notificaciones**: Sistema de notificaciones en tiempo real para likes en comentarios
+- **Diseño mejorado**: 
+  - Burbujas de comentarios con gradientes y sombras suaves
+  - Avatares con rings coloridos
+  - Scroll personalizado para muchos comentarios
+  - Animaciones suaves en hover
+  - Estado vacío con iconos descriptivos
+- **Modelo CommentLike**: Nueva tabla para gestionar likes en comentarios
+- **API actualizada**: Nuevos campos `likes_count` e `is_liked` en comentarios
+- **Endpoint nuevo**: `POST /api/posts/comments/<comment_id>/like/`
+- **Migración**: `0004_commentlike.py` aplicada exitosamente
+
+#### ✅ Soporte para GIFs en Posts
+
+- **Modelo Post**: Campo `image` actualizado de `ImageField` a `FileField` para soportar GIFs animados
+- **Validación**: Se añadió `image/gif` a los tipos de archivo permitidos
+- **Formatos soportados**: JPEG, PNG, WebP y **GIF** (nuevo)
+- **Límite de tamaño**: 10 MB por archivo
+- **Frontend**: Compatible automáticamente con la etiqueta `<img>` estándar
+- **Migración**: `0003_alter_post_image.py` aplicada exitosamente
+
+---
+
 ## 📅 Fecha: Octubre 2025
 
 ### 🎯 Resumen

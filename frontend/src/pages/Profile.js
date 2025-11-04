@@ -1,7 +1,7 @@
 "use client";
 
-import { Camera, ChevronDown, ChevronUp, Settings, UserMinus, UserPlus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Camera, ChevronDown, ChevronUp, Heart, MessageCircle, Settings, UserMinus, UserPlus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
@@ -21,6 +21,8 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showComments, setShowComments] = useState({});
+  const profilePictureInputRef = useRef(null);
+  const coverPictureInputRef = useRef(null);
 
   // Si no hay userId, mostrar perfil del usuario actual
   const isOwnProfile =
@@ -163,6 +165,64 @@ const Profile = () => {
     reloadProfileData();
   }, [profileIdentifier, refetchProfile, refetchPosts, profileUser?.username, queryClient]);
 
+  // Efecto para polling automático cada 30 segundos
+  useEffect(() => {
+    const autoRefreshData = async () => {
+      try {
+        const token = tokenManager.getToken();
+        if (!token) return;
+
+        // Actualizar posts del usuario
+        if (profileUser?.username) {
+          const response = await fetch(
+            `${API_BASE_URL}/posts/user/${profileUser.username}/`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            // Actualizar cache de React Query con los nuevos datos
+            queryClient.setQueryData(["userPosts", profileUser.username], data);
+          }
+        }
+
+        // Actualizar comentarios de posts visibles
+        const visiblePostIds = Object.keys(showComments).filter(
+          (postId) => showComments[postId]
+        );
+
+        for (const postId of visiblePostIds) {
+          const response = await fetch(
+            `${API_BASE_URL}/posts/${postId}/comments/`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const comments = await response.json();
+            queryClient.setQueryData(["comments", parseInt(postId)], comments);
+          }
+        }
+      } catch (error) {
+        // Error silencioso en auto-refresh
+      }
+    };
+
+    autoRefreshData();
+    const intervalId = setInterval(autoRefreshData, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [profileUser?.username, showComments, queryClient]);
+
   // Función para recargar comentarios específicos
   const refreshComments = async (postId) => {
     try {
@@ -216,6 +276,159 @@ const Profile = () => {
     followMutation.mutate();
   };
 
+  // Mutation para actualizar la imagen de perfil
+  const updateProfilePictureMutation = useMutation(
+    async (file) => {
+      const formData = new FormData();
+      formData.append("profile_picture", file);
+
+      const token = tokenManager.getToken();
+      const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar la imagen de perfil");
+      }
+
+      return await response.json();
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["profile", profileIdentifier]);
+        toast.success("Imagen de perfil actualizada");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Error al actualizar la imagen de perfil");
+      },
+    }
+  );
+
+  // Mutation para actualizar la imagen de portada
+  const updateCoverPictureMutation = useMutation(
+    async (file) => {
+      const formData = new FormData();
+      formData.append("cover_picture", file);
+
+      const token = tokenManager.getToken();
+      const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar la imagen de portada");
+      }
+
+      return await response.json();
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["profile", profileIdentifier]);
+        toast.success("Imagen de portada actualizada");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Error al actualizar la imagen de portada");
+      },
+    }
+  );
+
+  // Handler para cambiar la imagen de perfil
+  const handleProfilePictureChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validar tipo de archivo
+      if (!file.type.startsWith("image/")) {
+        toast.error("Por favor selecciona una imagen válida");
+        return;
+      }
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("La imagen no debe superar los 5MB");
+        return;
+      }
+      updateProfilePictureMutation.mutate(file);
+    }
+  };
+
+  // Handler para cambiar la imagen de portada
+  const handleCoverPictureChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validar tipo de archivo
+      if (!file.type.startsWith("image/")) {
+        toast.error("Por favor selecciona una imagen válida");
+        return;
+      }
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("La imagen no debe superar los 5MB");
+        return;
+      }
+      updateCoverPictureMutation.mutate(file);
+    }
+  };
+
+  // Mutation para dar like/unlike a publicaciones
+  const likeMutation = useMutation(
+    async (postId) => {
+      const response = await api.post(`/posts/${postId}/like/`);
+      return response.data;
+    },
+    {
+      onMutate: async (postId) => {
+        // Cancelar queries pendientes
+        await queryClient.cancelQueries(["userPosts", profileUser?.username]);
+        
+        // Snapshot del valor anterior
+        const previousPosts = queryClient.getQueryData(["userPosts", profileUser?.username]);
+        
+        // Actualización optimista
+        queryClient.setQueryData(["userPosts", profileUser?.username], (old) => {
+          if (!old?.results) return old;
+          
+          return {
+            ...old,
+            results: old.results.map((post) => {
+              if (post.id === postId) {
+                const currentlyLiked = post.is_liked || false;
+                return {
+                  ...post,
+                  is_liked: !currentlyLiked,
+                  likes_count: currentlyLiked 
+                    ? Math.max(0, post.likes_count - 1)
+                    : post.likes_count + 1
+                };
+              }
+              return post;
+            })
+          };
+        });
+        
+        return { previousPosts };
+      },
+      onError: (err, postId, context) => {
+        // Revertir en caso de error
+        queryClient.setQueryData(["userPosts", profileUser?.username], context.previousPosts);
+      },
+      onSettled: () => {
+        // Refetch para sincronizar con el servidor
+        queryClient.invalidateQueries(["userPosts", profileUser?.username]);
+      },
+    }
+  );
+
+  const handleLike = (postId) => {
+    likeMutation.mutate(postId);
+  };
+
   if (isLoading) {
     return (
       <LoadingSpinner variant="spinner" text="Cargando perfil..." fullScreen />
@@ -231,11 +444,11 @@ const Profile = () => {
   }
 
   return (
-    <div className="space-y-6 mt-10">
+    <div className="space-y-5 mt-10">
       {/* Profile Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
         {/* Cover Photo */}
-        <div className="h-52 bg-gradient-to-br from-primary-500 via-primary-600 to-accent-600 relative">
+        <div className="h-48 bg-gradient-to-br from-primary-500 via-primary-600 to-purple-600 relative">
           {profileUser.cover_picture && (
             <img
               src={profileUser.cover_picture || "/placeholder.svg"}
@@ -244,43 +457,79 @@ const Profile = () => {
             />
           )}
           {isOwnProfile && (
-            <button className="absolute top-4 right-4 p-2.5 bg-gray-900/60 backdrop-blur-sm rounded-xl text-white hover:bg-gray-900/80 transition-all">
-              <Camera className="h-5 w-5" />
-            </button>
+            <>
+              <input
+                type="file"
+                ref={coverPictureInputRef}
+                onChange={handleCoverPictureChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                onClick={() => coverPictureInputRef.current?.click()}
+                disabled={updateCoverPictureMutation.isLoading}
+                className="absolute top-4 right-4 p-2 bg-gray-900/60 backdrop-blur-sm rounded-lg text-white hover:bg-gray-900/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Cambiar imagen de portada"
+              >
+                {updateCoverPictureMutation.isLoading ? (
+                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5" />
+                )}
+              </button>
+            </>
           )}
         </div>
 
         {/* Profile Info */}
-        <div className="p-6">
-          <div className="flex items-start justify-between -mt-20">
+        <div className="p-5">
+          <div className="flex items-start justify-between -mt-16">
             <div className="flex items-end gap-4">
               <div className="relative">
                 <img
-                  className="h-36 w-36 rounded-2xl border-4 border-white shadow-xl ring-2 ring-gray-100"
+                  className="h-32 w-32 rounded-xl border-4 border-white shadow-lg ring-2 ring-gray-100"
                   src={profileUser.profile_picture || "/default-avatar.png"}
                   alt={profileUser.full_name}
                 />
                 {isOwnProfile && (
-                  <button className="absolute bottom-2 right-2 p-2 bg-primary-600 rounded-xl text-white shadow-lg hover:bg-primary-700 transition-all">
-                    <Camera className="h-4 w-4" />
-                  </button>
+                  <>
+                    <input
+                      type="file"
+                      ref={profilePictureInputRef}
+                      onChange={handleProfilePictureChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => profilePictureInputRef.current?.click()}
+                      disabled={updateProfilePictureMutation.isLoading}
+                      className="absolute bottom-2 right-2 p-2 bg-primary-600 rounded-lg text-white shadow-md hover:bg-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Cambiar imagen de perfil"
+                    >
+                      {updateProfilePictureMutation.isLoading ? (
+                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </button>
+                  </>
                 )}
               </div>
-              <div className="pb-2">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {profileUser.full_name}
+              <div className="pb-1">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                  {profileUser.full_name || profileUser.first_name + ' ' + profileUser.last_name || profileUser.username}
                 </h1>
-                <p className="text-gray-600 font-medium">
+                <p className="text-gray-500 text-sm">
                   @{profileUser.username}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-20">
+            <div className="flex items-center gap-2 mt-16">
               {isOwnProfile ? (
                 <button
                   onClick={() => setShowEditProfile(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium text-sm"
                 >
                   <Settings className="h-4 w-4" />
                   <span>Editar perfil</span>
@@ -318,28 +567,28 @@ const Profile = () => {
             </p>
           )}
 
-          <div className="flex items-center gap-8 mt-6 pt-6 border-t border-gray-100">
+          <div className="flex items-center gap-6 mt-5 pt-4 border-t border-gray-100">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {userPosts?.count || 0}
               </p>
-              <p className="text-sm text-gray-600 font-medium mt-1">
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
                 Publicaciones
               </p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {profileUser.followers_count || 0}
               </p>
-              <p className="text-sm text-gray-600 font-medium mt-1">
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
                 Seguidores
               </p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {profileUser.following_count || 0}
               </p>
-              <p className="text-sm text-gray-600 font-medium mt-1">
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
                 Siguiendo
               </p>
             </div>
@@ -347,17 +596,17 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-        <div className="border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200">
+        <div className="border-b border-gray-200 bg-gray-50/50">
           <nav className="flex">
             {["posts", "about"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-4 text-sm font-semibold border-b-2 transition-all ${
+                className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
                   activeTab === tab
-                    ? "border-primary-600 text-primary-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-primary-600 text-primary-600 bg-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 {tab === "posts" ? "Publicaciones" : "Acerca de"}
@@ -368,38 +617,57 @@ const Profile = () => {
 
         <div className="p-6">
           {activeTab === "posts" && (
-            <div className="space-y-5">
-              {userPosts?.results?.map((post) => (
+            <div className="space-y-4">
+              {userPosts?.results?.map((post, index) => (
                 <div
                   key={post.id}
-                  className="border-b border-gray-100 pb-5 last:border-b-0"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all stagger-item"
+                  style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-[15px]">
                     {post.content}
                   </p>
                   {post.image && (
                     <img
                       src={post.image || "/placeholder.svg"}
                       alt="Post"
-                      className="mt-3 rounded-xl max-w-full h-auto"
+                      className="mt-4 rounded-xl max-w-full h-auto border border-gray-100"
                     />
                   )}
-                  <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
-                    <div className="flex items-center gap-4 font-medium">
-                      <span>{post.likes_count} likes</span>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => !isOwnProfile && handleLike(post.id)}
+                        disabled={isOwnProfile}
+                        className={`like-button flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
+                          post.is_liked
+                            ? "bg-red-50 text-red-600 liked"
+                            : "bg-gray-100 text-gray-700"
+                        } ${
+                          !isOwnProfile ? "hover:bg-red-50 hover:text-red-600 hover-scale cursor-pointer" : "cursor-default opacity-75"
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 transition-all ${post.is_liked ? "fill-current" : ""}`} />
+                        <span>{post.likes_count}</span>
+                      </button>
                       <button
                         onClick={() => toggleComments(post.id)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all hover-scale ${
+                          showComments[post.id]
+                            ? "bg-primary-100 text-primary-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                       >
-                        <span>{post.comments_count} comentarios</span>
+                        <MessageCircle className="h-4 w-4 transition-transform" />
+                        <span>{post.comments_count}</span>
                         {showComments[post.id] ? (
-                          <ChevronUp className="h-4 w-4" />
+                          <ChevronUp className="h-3.5 w-3.5 transition-transform" />
                         ) : (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-3.5 w-3.5 transition-transform" />
                         )}
                       </button>
                     </div>
-                    <span className="font-medium">
+                    <span className="text-xs text-gray-500 font-medium">
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -469,95 +737,156 @@ const Profile = () => {
 
 // Componente para mostrar los comentarios en dropdown
 const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [newComment, setNewComment] = useState("");
   const { data: comments, isLoading, refetch } = usePostComments(postId);
 
-  // Función para recargar comentarios
-  const handleRefresh = async () => {
-    try {
-      await refetch();
-      if (refreshComments) {
-        await refreshComments(postId);
-      }
-    } catch (error) {
-      console.error("Error recargando comentarios:", error);
+  // Mutation para crear comentario
+  const commentMutation = useMutation(
+    async (commentData) => {
+      const response = await api.post(`/posts/${postId}/comment/`, commentData);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["comments", postId]);
+        queryClient.invalidateQueries(["userPosts"]);
+        setNewComment("");
+        toast.success("Comentario publicado");
+        refetch();
+      },
+      onError: () => {
+        toast.error("Error al publicar el comentario");
+      },
     }
+  );
+
+  // Mutation para dar like/unlike a comentarios
+  const likeCommentMutation = useMutation(
+    async (commentId) => {
+      const response = await api.post(`/posts/comments/${commentId}/like/`);
+      return response.data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["comments", postId]);
+        refetch();
+      },
+    }
+  );
+
+  const handleCommentSubmit = () => {
+    if (!newComment.trim()) return;
+    commentMutation.mutate({ content: newComment });
   };
 
-  if (isLoading) {
-    return (
-      <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-center">
-          <LoadingSpinner variant="pulse" size="sm" />
-          <span className="ml-2 text-sm text-gray-600">Cargando comentarios...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!comments || comments.length === 0) {
-    return (
-      <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-between">
-          <p className="text-gray-500 text-sm">
-            No hay comentarios en esta publicación
-          </p>
-          <button
-            onClick={handleRefresh}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            Recargar
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleCommentLike = (commentId) => {
+    likeCommentMutation.mutate(commentId);
+  };
 
   return (
-    <div className="mt-3 bg-gray-50 rounded-lg">
-      {/* Header con botón de recarga */}
-      <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">
-          {comments.length} comentario{comments.length !== 1 ? 's' : ''}
-        </span>
-        <button
-          onClick={handleRefresh}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-        >
-          Recargar
-        </button>
-      </div>
-      
-      {/* Lista de comentarios */}
-      <div className="divide-y divide-gray-200">
-      {comments.map((comment) => (
-        <div key={comment.id} className="p-4 flex space-x-3">
+    <div className="mt-3 border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white rounded-b-lg animate-slideDown">
+      {/* Formulario para nuevo comentario */}
+      <div className="p-5 border-b border-gray-200 bg-white animate-fadeIn">
+        <div className="flex space-x-3">
           <img
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-            src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
-            alt={comment.author_username || "Usuario"}
+            className="h-10 w-10 rounded-full object-cover flex-shrink-0 ring-2 ring-primary-100"
+            src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
+            alt={user?.full_name || "Tu perfil"}
             onError={(e) => {
               e.target.src = "/default-avatar.png";
             }}
           />
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="font-medium text-sm text-gray-900">
-                {comment.author_username}
-              </p>
-              <p className="text-sm text-gray-800 mt-1">
-                {comment.content}
-              </p>
+          <div className="flex-1">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Escribe un comentario..."
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 placeholder-gray-400 transition-all"
+              rows="2"
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleCommentSubmit}
+                disabled={!newComment.trim() || commentMutation.isLoading}
+                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary-500/30 transition-all hover-lift active:scale-95"
+              >
+                {commentMutation.isLoading ? "Enviando..." : "Comentar"}
+              </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(comment.created_at).toLocaleDateString()} a las{" "}
-              {new Date(comment.created_at).toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Lista de comentarios */}
+      <div className="p-5 space-y-4 max-h-96 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <LoadingSpinner variant="pulse" size="sm" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {comments && comments.length > 0 ? (
+              comments.map((comment, index) => (
+                <div key={comment.id} className="flex space-x-3 group comment-appear" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <img
+                    className="h-9 w-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
+                    src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
+                    alt={comment.author_username || "Usuario"}
+                    onError={(e) => {
+                      e.target.src = "/default-avatar.png";
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 transition-all">
+                      <p className="font-semibold text-sm text-gray-900">
+                        {comment.author_username}
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1 break-words">
+                        {comment.content}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4 mt-2 px-2">
+                      <button
+                        onClick={() => handleCommentLike(comment.id)}
+                        className={`like-button flex items-center gap-1 text-xs font-medium transition-all hover-scale ${
+                          comment.is_liked
+                            ? "text-red-500 liked"
+                            : "text-gray-500 hover:text-red-500"
+                        }`}
+                      >
+                        <Heart
+                          className={`h-4 w-4 transition-all ${
+                            comment.is_liked ? "fill-current" : ""
+                          }`}
+                        />
+                        <span>{comment.likes_count || 0}</span>
+                      </button>
+                      <span className="text-xs text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString()} •{" "}
+                        {new Date(comment.created_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">
+                  No hay comentarios aún
+                </p>
+                <p className="text-gray-400 text-xs mt-1">
+                  ¡Sé el primero en comentar!
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

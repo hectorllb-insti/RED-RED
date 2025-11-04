@@ -113,18 +113,13 @@ class SocketService {
   // Manejar mensajes entrantes
   handleMessage(data) {
     const { type, message, room } = data;
-    
-    console.log("🔗 WebSocket mensaje recibido:", data);
 
     switch (type) {
       case "chat_message":
-        // Asegurar que el mensaje tenga formato consistente
         let processedMessage = message;
         
-        // Si el mensaje tiene contenido anidado, normalizarlo
         if (message && typeof message.content === 'string') {
           try {
-            // Si el contenido parece ser JSON serializado, parsearlo
             if (message.content.startsWith('{') || message.content.startsWith('[')) {
               const parsed = JSON.parse(message.content);
               processedMessage = {
@@ -133,7 +128,6 @@ class SocketService {
               };
             }
           } catch (e) {
-            // Si no es JSON válido, mantener el contenido original
             processedMessage = message;
           }
         }
@@ -141,14 +135,23 @@ class SocketService {
         this.triggerListener("message", { message: processedMessage, room });
         break;
       case "profile_updated":
-        // Manejar actualización de perfil de usuario
-        console.log("📸 WebSocket profile_updated recibido:", data);
-        console.log("👤 Usuario ID:", data.user_id);
-        console.log("📊 User data:", data.user_data);
-        
         this.triggerListener("profile_updated", { 
           user_id: data.user_id, 
           user_data: data.user_data 
+        });
+        break;
+      case "typing_start":
+        this.triggerListener("typing_start", { 
+          room: data.room, 
+          user: data.user,
+          username: data.username 
+        });
+        break;
+      case "typing_stop":
+        this.triggerListener("typing_stop", { 
+          room: data.room, 
+          user: data.user,
+          username: data.username 
         });
         break;
       case "user_joined":
@@ -158,7 +161,8 @@ class SocketService {
         this.triggerListener("user_left", { room, user: data.user });
         break;
       default:
-        console.log("❓ Mensaje WebSocket no reconocido:", type, data);
+        // Mensaje no reconocido - ignorar silenciosamente
+        break;
     }
   }
 

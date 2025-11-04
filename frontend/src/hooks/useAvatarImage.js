@@ -56,20 +56,15 @@ export const useAvatarImage = (src, alt = "Usuario", watchUpdates = true) => {
 
     // Si la imagen base cambió o es una URL completamente nueva
     if (cleanSrc !== previousCleanSrc || !currentImageUrl) {
-      console.log('🖼️ Detectado cambio en imagen:', { from: previousCleanSrc, to: cleanSrc });
-      
       const newUrl = getOptimizedUrl(src);
       
-      // Precargar nueva imagen
       preloadImage(newUrl)
         .then(() => {
-          console.log('✅ Nueva imagen precargada:', newUrl);
           setCurrentImageUrl(newUrl);
           setImageError(false);
           setIsLoading(false);
         })
         .catch(() => {
-          console.log('❌ Error cargando nueva imagen:', newUrl);
           setImageError(true);
           setIsLoading(false);
           setCurrentImageUrl("/default-avatar.png");

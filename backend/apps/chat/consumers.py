@@ -22,6 +22,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
         
+        # Suscribirse a actualizaciones de conversaciones del usuario
+        self.chat_updates_group = f'chat_updates_{self.user.id}'
+        await self.channel_layer.group_add(
+            self.chat_updates_group,
+            self.channel_name
+        )
+        
         # Enviar mensaje de bienvenida
         await self.send(text_data=json.dumps({
             'type': 'connection_established',
@@ -35,6 +42,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        
+        # Desuscribirse de actualizaciones de conversaciones
+        if hasattr(self, 'chat_updates_group'):
+            await self.channel_layer.group_discard(
+                self.chat_updates_group,
+                self.channel_name
+            )
 
     async def receive(self, text_data):
         try:
@@ -111,6 +125,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         }
                     )
             
+            elif message_type == 'typing_start':
+                room_id = text_data_json.get('room', self.current_room)
+                if room_id:
+                    await self.channel_layer.group_send(
+                        f'chat_{room_id}',
+                        {
+                            'type': 'typing_start_handler',
+                            'user': self.user.id,
+                            'username': self.user.username,
+                            'room': room_id
+                        }
+                    )
+            
+            elif message_type == 'typing_stop':
+                room_id = text_data_json.get('room', self.current_room)
+                if room_id:
+                    await self.channel_layer.group_send(
+                        f'chat_{room_id}',
+                        {
+                            'type': 'typing_stop_handler',
+                            'user': self.user.id,
+                            'username': self.user.username,
+                            'room': room_id
+                        }
+                    )
+            
             elif message_type == 'profile_updated':
                 # Manejar actualización de perfil del usuario
                 await self.broadcast_profile_update()
@@ -137,19 +177,43 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'user': event['user'],
                 'is_typing': event['is_typing'],
             }))
+    
+    async def typing_start_handler(self, event):
+        # No enviar el indicador al usuario que está escribiendo
+        if event['user'] != self.user.id:
+            await self.send(text_data=json.dumps({
+                'type': 'typing_start',
+                'user': event['user'],
+                'username': event['username'],
+                'room': event['room']
+            }))
+    
+    async def typing_stop_handler(self, event):
+        # No enviar el indicador al usuario que dejó de escribir
+        if event['user'] != self.user.id:
+            await self.send(text_data=json.dumps({
+                'type': 'typing_stop',
+                'user': event['user'],
+                'username': event['username'],
+                'room': event['room']
+            }))
+
+    async def conversation_update(self, event):
+        # Enviar actualización de conversación al cliente
+        await self.send(text_data=json.dumps({
+            'type': 'conversation_update',
+            'action': event.get('action'),
+            'chat_room_id': event.get('chat_room_id'),
+            'sender_id': event.get('sender_id'),
+            'sender_username': event.get('sender_username')
+        }))
 
     async def profile_update(self, event):
-        # Enviar actualización de perfil a todos los clientes conectados
-        print(f"🔄 Consumer recibió profile_update para usuario {event['user_id']}")
-        print(f"📊 Enviando a cliente: {event['user_data']}")
-        
         await self.send(text_data=json.dumps({
             'type': 'profile_updated',
             'user_id': event['user_id'],
             'user_data': event['user_data']
         }))
-        
-        print(f"✅ Profile update enviado al cliente para usuario {event['user_id']}")
 
     async def broadcast_profile_update(self):
         # Obtener datos actualizados del usuario
