@@ -47,11 +47,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         }))
     
     async def disconnect(self, close_code):
-        # Salir del grupo
-        await self.channel_layer.group_discard(
-            self.notification_group_name,
-            self.channel_name
-        )
+        # Salir del grupo solo si fue conectado exitosamente
+        if hasattr(self, 'notification_group_name'):
+            await self.channel_layer.group_discard(
+                self.notification_group_name,
+                self.channel_name
+            )
     
     async def receive(self, text_data):
         """Manejar mensajes del cliente"""

@@ -1,18 +1,26 @@
 "use client";
 
-import { Camera, ChevronDown, ChevronUp, Settings, UserMinus, UserPlus } from "lucide-react";
-import { useState, useEffect } from "react";
+import {
+  Camera,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  UserMinus,
+  UserPlus,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProfileEdit from "../components/ProfileEdit";
 import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 import { tokenManager } from "../services/tokenManager";
 import { getImageUrl } from "../utils/imageUtils";
-import api from "../services/api";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
 const Profile = () => {
   const { userId } = useParams();
@@ -30,7 +38,11 @@ const Profile = () => {
   const profileIdentifier = userId || currentUser?.id;
 
   // Obtener datos del perfil
-  const { data: profileUser, isLoading, refetch: refetchProfile } = useQuery(
+  const {
+    data: profileUser,
+    isLoading,
+    refetch: refetchProfile,
+  } = useQuery(
     ["profile", profileIdentifier],
     async () => {
       const token = tokenManager.getToken();
@@ -78,7 +90,7 @@ const Profile = () => {
       staleTime: 0, // Considerar datos como obsoletos inmediatamente
       refetchOnMount: true, // Recargar cuando el componente se monta
       refetchOnWindowFocus: true, // Recargar cuando se enfoca la ventana
-      retry: 1
+      retry: 1,
     }
   );
 
@@ -109,15 +121,15 @@ const Profile = () => {
       staleTime: 0, // Considerar datos como obsoletos inmediatamente
       refetchOnMount: true, // Recargar cuando el componente se monta
       refetchOnWindowFocus: false, // No recargar automáticamente al enfocar
-      retry: 1
+      retry: 1,
     }
   );
 
   // Función para alternar la visibilidad de comentarios
   const toggleComments = (postId) => {
-    setShowComments(prev => ({
+    setShowComments((prev) => ({
       ...prev,
-      [postId]: !prev[postId]
+      [postId]: !prev[postId],
     }));
   };
 
@@ -134,7 +146,7 @@ const Profile = () => {
         staleTime: 0, // Considerar datos como obsoletos inmediatamente
         refetchOnMount: true, // Recargar cuando el componente se monta
         refetchOnWindowFocus: false, // No recargar automáticamente al enfocar
-        retry: 1
+        retry: 1,
       }
     );
   };
@@ -145,15 +157,14 @@ const Profile = () => {
       try {
         // Recargar perfil
         await refetchProfile();
-        
+
         // Recargar posts si ya hay datos del perfil
         if (profileUser?.username) {
           await refetchPosts();
         }
-        
+
         // Invalidar todas las queries de comentarios para forzar recarga
         queryClient.invalidateQueries(["comments"]);
-        
       } catch (error) {
         console.error("Error recargando datos del perfil:", error);
       }
@@ -161,7 +172,13 @@ const Profile = () => {
 
     // Ejecutar la recarga cuando el componente se monta o cambia el profileIdentifier
     reloadProfileData();
-  }, [profileIdentifier, refetchProfile, refetchPosts, profileUser?.username, queryClient]);
+  }, [
+    profileIdentifier,
+    refetchProfile,
+    refetchPosts,
+    profileUser?.username,
+    queryClient,
+  ]);
 
   // Función para recargar comentarios específicos
   const refreshComments = async (postId) => {
@@ -191,7 +208,9 @@ const Profile = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Error al actualizar el seguimiento");
+        throw new Error(
+          errorData.error || "Error al actualizar el seguimiento"
+        );
       }
 
       return await response.json();
@@ -403,12 +422,12 @@ const Profile = () => {
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  
+
                   {/* Dropdown de comentarios */}
                   {showComments[post.id] && (
-                    <CommentsDropdown 
-                      postId={post.id} 
-                      usePostComments={usePostComments} 
+                    <CommentsDropdown
+                      postId={post.id}
+                      usePostComments={usePostComments}
                       refreshComments={refreshComments}
                     />
                   )}
@@ -488,7 +507,9 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
       <div className="mt-3 p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center justify-center">
           <LoadingSpinner variant="pulse" size="sm" />
-          <span className="ml-2 text-sm text-gray-600">Cargando comentarios...</span>
+          <span className="ml-2 text-sm text-gray-600">
+            Cargando comentarios...
+          </span>
         </div>
       </div>
     );
@@ -517,7 +538,7 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
       {/* Header con botón de recarga */}
       <div className="p-3 border-b border-gray-200 flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">
-          {comments.length} comentario{comments.length !== 1 ? 's' : ''}
+          {comments.length} comentario{comments.length !== 1 ? "s" : ""}
         </span>
         <button
           onClick={handleRefresh}
@@ -526,38 +547,40 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
           Recargar
         </button>
       </div>
-      
+
       {/* Lista de comentarios */}
       <div className="divide-y divide-gray-200">
-      {comments.map((comment) => (
-        <div key={comment.id} className="p-4 flex space-x-3">
-          <img
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-            src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
-            alt={comment.author_username || "Usuario"}
-            onError={(e) => {
-              e.target.src = "/default-avatar.png";
-            }}
-          />
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="font-medium text-sm text-gray-900">
-                {comment.author_username}
-              </p>
-              <p className="text-sm text-gray-800 mt-1">
-                {comment.content}
+        {comments.map((comment) => (
+          <div key={comment.id} className="p-4 flex space-x-3">
+            <img
+              className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
+              src={
+                comment.author_profile_picture
+                  ? getImageUrl(comment.author_profile_picture)
+                  : "/default-avatar.png"
+              }
+              alt={comment.author_username || "Usuario"}
+              onError={(e) => {
+                e.target.src = "/default-avatar.png";
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <p className="font-medium text-sm text-gray-900">
+                  {comment.author_username}
+                </p>
+                <p className="text-sm text-gray-800 mt-1">{comment.content}</p>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {new Date(comment.created_at).toLocaleDateString()} a las{" "}
+                {new Date(comment.created_at).toLocaleTimeString("es-ES", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(comment.created_at).toLocaleDateString()} a las{" "}
-              {new Date(comment.created_at).toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
           </div>
-        </div>
-      ))}
+        ))}
       </div>
     </div>
   );

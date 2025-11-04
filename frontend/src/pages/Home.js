@@ -17,8 +17,8 @@ import EmptyState from "../components/EmptyState";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { securityUtils } from "../utils/security";
 import { getImageUrl } from "../utils/imageUtils";
+import { securityUtils } from "../utils/security";
 
 const Home = () => {
   const { user } = useAuth();
@@ -351,7 +351,7 @@ const Home = () => {
               <div className="flex items-center gap-2">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                   onChange={handleImageSelect}
                   className="hidden"
                   id="image-upload"
@@ -422,7 +422,10 @@ const Home = () => {
                 <div className="flex items-center gap-3">
                   <img
                     className="h-11 w-11 rounded-full ring-2 ring-gray-100 object-cover"
-                    src={getImageUrl(post.author_profile_picture) || "/default-avatar.png"}
+                    src={
+                      getImageUrl(post.author_profile_picture) ||
+                      "/default-avatar.png"
+                    }
                     alt={`${post.author_first_name} ${post.author_last_name}`}
                   />
                   <div>
@@ -607,7 +610,11 @@ const CommentsSection = ({
         <div className="flex space-x-3">
           <img
             className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-            src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
+            src={
+              user?.profile_picture
+                ? getImageUrl(user.profile_picture)
+                : "/default-avatar.png"
+            }
             alt={user?.full_name || "Tu perfil"}
             onError={(e) => {
               e.target.src = "/default-avatar.png";
@@ -645,7 +652,11 @@ const CommentsSection = ({
                 <div key={comment.id} className="flex space-x-3">
                   <img
                     className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-                    src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
+                    src={
+                      comment.author_profile_picture
+                        ? getImageUrl(comment.author_profile_picture)
+                        : "/default-avatar.png"
+                    }
                     alt={comment.author_username || "Usuario"}
                     onError={(e) => {
                       e.target.src = "/default-avatar.png";

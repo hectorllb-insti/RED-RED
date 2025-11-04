@@ -1,11 +1,13 @@
 import axios from "axios";
 import { tokenManager } from "./tokenManager";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
 // Configuración de axios
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000, // 30 segundos
   headers: {
     "Content-Type": "application/json",
   },

@@ -83,7 +83,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
                 )
             
             # Validar tipo de archivo
-            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']
             if value.content_type not in allowed_types:
                 raise serializers.ValidationError(
                     'Tipo de archivo no permitido. Solo JPEG, PNG y WebP'

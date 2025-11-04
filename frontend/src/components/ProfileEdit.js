@@ -84,9 +84,13 @@ const ProfileEdit = ({ onClose }) => {
 
       // Validar tipo
       if (
-        !["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(
-          file.type
-        )
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/jpg",
+          "image/webp",
+          "image/gif",
+        ].includes(file.type)
       ) {
         toast.error("Tipo de archivo no permitido. Solo JPEG, PNG y WebP");
         return;
@@ -112,9 +116,13 @@ const ProfileEdit = ({ onClose }) => {
 
       // Validar tipo
       if (
-        !["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(
-          file.type
-        )
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/jpg",
+          "image/webp",
+          "image/gif",
+        ].includes(file.type)
       ) {
         toast.error("Tipo de archivo no permitido. Solo JPEG, PNG y WebP");
         return;

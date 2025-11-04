@@ -13,9 +13,8 @@ class SocketService {
   connect(token) {
     if (!this.socket && token) {
       // Conexión WebSocket segura - token enviado en query string
-      const wsUrl = `ws://localhost:8000/ws/chat/?token=${encodeURIComponent(
-        token
-      )}`;
+      const wsBaseUrl = process.env.REACT_APP_WS_URL || "ws://localhost:8000";
+      const wsUrl = `${wsBaseUrl}/ws/chat/?token=${encodeURIComponent(token)}`;
       this.socket = new WebSocket(wsUrl);
       this.token = token;
 
@@ -113,23 +112,30 @@ class SocketService {
   // Manejar mensajes entrantes
   handleMessage(data) {
     const { type, message, room } = data;
-    
+
     console.log("🔗 WebSocket mensaje recibido:", data);
 
     switch (type) {
       case "chat_message":
         // Asegurar que el mensaje tenga formato consistente
         let processedMessage = message;
-        
+
         // Si el mensaje tiene contenido anidado, normalizarlo
-        if (message && typeof message.content === 'string') {
+        if (message && typeof message.content === "string") {
           try {
             // Si el contenido parece ser JSON serializado, parsearlo
-            if (message.content.startsWith('{') || message.content.startsWith('[')) {
+            if (
+              message.content.startsWith("{") ||
+              message.content.startsWith("[")
+            ) {
               const parsed = JSON.parse(message.content);
               processedMessage = {
                 ...message,
-                content: parsed.content || parsed.message || parsed.text || message.content
+                content:
+                  parsed.content ||
+                  parsed.message ||
+                  parsed.text ||
+                  message.content,
               };
             }
           } catch (e) {
@@ -137,7 +143,7 @@ class SocketService {
             processedMessage = message;
           }
         }
-        
+
         this.triggerListener("message", { message: processedMessage, room });
         break;
       case "profile_updated":
@@ -145,10 +151,10 @@ class SocketService {
         console.log("📸 WebSocket profile_updated recibido:", data);
         console.log("👤 Usuario ID:", data.user_id);
         console.log("📊 User data:", data.user_data);
-        
-        this.triggerListener("profile_updated", { 
-          user_id: data.user_id, 
-          user_data: data.user_data 
+
+        this.triggerListener("profile_updated", {
+          user_id: data.user_id,
+          user_data: data.user_data,
         });
         break;
       case "user_joined":
