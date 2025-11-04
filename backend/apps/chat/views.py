@@ -31,16 +31,9 @@ class ChatRoomListCreateView(generics.ListCreateAPIView):
         return ChatRoomSerializer
     
     def get_queryset(self):
-        queryset = ChatRoom.objects.filter(
+        return ChatRoom.objects.filter(
             participants=self.request.user
         ).distinct().order_by('-updated_at')
-        
-        print(f"Consulta de conversaciones para usuario {self.request.user.username}: {queryset.count()} encontradas")
-        for chat in queryset:
-            participants = [p.username for p in chat.participants.all()]
-            print(f"  Chat {chat.id}: {participants} - {chat.updated_at}")
-        
-        return queryset
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
@@ -85,7 +78,7 @@ def mark_messages_read(request, chat_room_id):
         read_by__user=request.user
     )
     
-    print(f"Marcando {unread_messages.count()} mensajes como leídos en chat {chat_room_id} para usuario {request.user.username}")
+    count = unread_messages.count()
     
     for message in unread_messages:
         MessageRead.objects.get_or_create(
@@ -93,9 +86,7 @@ def mark_messages_read(request, chat_room_id):
             user=request.user
         )
     
-    return Response({
-        'message': f'{unread_messages.count()} mensajes marcados como leídos'
-    })
+    return Response({'message': f'{count} mensajes marcados como leídos'})
 
 
 @api_view(['POST'])
@@ -121,15 +112,9 @@ def create_private_chat(request, username):
     ).first()
     
     if existing_chat:
-        print(f"Chat existente encontrado: {existing_chat.id} entre {request.user.username} y {other_user.username}")
-        serializer = ChatRoomSerializer(
-            existing_chat,
-            context={'request': request}
-        )
+        serializer = ChatRoomSerializer(existing_chat, context={'request': request})
         return Response(serializer.data)
     
-    print(f"Creando nuevo chat entre {request.user.username} y {other_user.username}")
-    # Crear nuevo chat
     chat_room = ChatRoom.objects.create()
     chat_room.participants.set([request.user, other_user])
     

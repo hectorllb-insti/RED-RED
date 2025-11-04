@@ -205,60 +205,60 @@ const Settings = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="max-w-4xl mx-auto mt-10">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-          <p className="text-gray-600 mt-1">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30">
+          <h1 className="text-xl font-bold text-gray-900">Configuración</h1>
+          <p className="text-gray-600 text-sm mt-0.5">
             Administra tu cuenta y configuraciones de privacidad
           </p>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 bg-gray-50/50">
           <button
             onClick={() => setActiveTab("profile")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${
               activeTab === "profile"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-primary-600 text-primary-600 bg-white"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <User className="h-4 w-4 inline mr-2" />
+            <User className="h-3.5 w-3.5 inline mr-1.5" />
             Perfil
           </button>
           <button
             onClick={() => setActiveTab("privacy")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${
               activeTab === "privacy"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-primary-600 text-primary-600 bg-white"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <Shield className="h-4 w-4 inline mr-2" />
+            <Shield className="h-3.5 w-3.5 inline mr-1.5" />
             Privacidad
           </button>
           <button
             onClick={() => setActiveTab("notifications")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${
               activeTab === "notifications"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-primary-600 text-primary-600 bg-white"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <Bell className="h-4 w-4 inline mr-2" />
+            <Bell className="h-3.5 w-3.5 inline mr-1.5" />
             Notificaciones
           </button>
           <button
             onClick={() => setActiveTab("security")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${
               activeTab === "security"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-primary-600 text-primary-600 bg-white"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <Lock className="h-4 w-4 inline mr-2" />
+            <Lock className="h-3.5 w-3.5 inline mr-1.5" />
             Seguridad
           </button>
         </div>

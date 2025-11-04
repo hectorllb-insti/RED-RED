@@ -7,7 +7,7 @@ User = get_user_model()
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(max_length=2000)
-    image = models.ImageField(upload_to='posts/', blank=True, null=True)
+    image = models.FileField(upload_to='posts/', blank=True, null=True)  # Cambiado a FileField para soportar GIFs
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -48,6 +48,21 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.author.username}: {self.content[:30]}..."
+
+    def get_likes_count(self):
+        return self.comment_likes.count()
+
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comment_likes')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'comment')
+
+    def __str__(self):
+        return f"{self.user.username} likes comment {self.comment.id}"
 
 
 class SharedPost(models.Model):

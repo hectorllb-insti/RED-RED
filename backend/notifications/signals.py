@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from apps.posts.models import Like, Comment, SharedPost
+from apps.posts.models import Like, Comment, CommentLike, SharedPost
 from apps.users.models import Follow
 from notifications.models import Notification
 from notifications.serializers import NotificationSerializer
@@ -79,10 +79,8 @@ def create_follow_notification(sender, instance, created, **kwargs):
         ).first()
         
         if existing_notification:
-            print(f"⚠️ Evitando notificación duplicada de follow: {instance.follower.username} -> {instance.following.username}")
             return
             
-        print(f"✅ Creando notificación de follow: {instance.follower.username} -> {instance.following.username}")
         notification = Notification.objects.create(
             recipient=instance.following,
             sender=instance.follower,
@@ -121,6 +119,25 @@ def create_share_notification(sender, instance, created, **kwargs):
                 title='Te compartieron una publicación',
                 message=f'{instance.shared_by.username} compartió contigo: "{message_text[:50]}"',
                 related_post_id=instance.original_post.id
+            )
+            # Enviar por WebSocket
+            send_notification_to_websocket(notification)
+
+
+@receiver(post_save, sender=CommentLike)
+def create_comment_like_notification(sender, instance, created, **kwargs):
+    """Crear notificación cuando alguien da like a un comentario"""
+    if created:
+        # No notificar si el usuario le da like a su propio comentario
+        if instance.comment.author != instance.user:
+            notification = Notification.objects.create(
+                recipient=instance.comment.author,
+                sender=instance.user,
+                notification_type='like',
+                title='Like en tu comentario',
+                message=f'{instance.user.username} le gustó tu comentario',
+                related_post_id=instance.comment.post.id,
+                related_comment_id=instance.comment.id
             )
             # Enviar por WebSocket
             send_notification_to_websocket(notification)

@@ -41,12 +41,10 @@ class JwtAuthMiddleware(BaseMiddleware):
 
         if token:
             try:
-                # Validar token JWT
                 validated_token = UntypedToken(token)
                 user_id = validated_token['user_id']
                 scope['user'] = await get_user(user_id)
-            except (InvalidToken, TokenError, KeyError) as e:
-                print(f"JWT validation error: {e}")
+            except (InvalidToken, TokenError, KeyError):
                 scope['user'] = AnonymousUser()
         else:
             scope['user'] = AnonymousUser()

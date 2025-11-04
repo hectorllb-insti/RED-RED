@@ -128,48 +128,49 @@ const Notifications = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="max-w-4xl mx-auto mt-10">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary-600" />
                 Notificaciones
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 text-sm mt-0.5">
                 Administra todas tus notificaciones
               </p>
             </div>
 
             {/* Filter buttons */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   filter === "all"
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-primary-600 text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 Todas
               </button>
               <button
                 onClick={() => setFilter("unread")}
-                className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   filter === "unread"
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-primary-600 text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 No leídas
               </button>
               <button
                 onClick={() => setFilter("read")}
-                className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   filter === "read"
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-primary-600 text-white shadow-md"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 Leídas
@@ -179,18 +180,18 @@ const Notifications = () => {
 
           {/* Bulk actions */}
           {selectedNotifications.length > 0 && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-              <span className="text-sm text-gray-600">
+            <div className="mt-3 p-3 bg-primary-50 border border-primary-200 rounded-lg flex items-center justify-between">
+              <span className="text-sm text-gray-700 font-medium">
                 {selectedNotifications.length} notificación(es) seleccionada(s)
               </span>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() =>
                     bulkMarkReadMutation.mutate(selectedNotifications)
                   }
-                  className="flex items-center space-x-1 px-3 py-1 bg-primary-600 text-white rounded text-sm hover:bg-primary-700"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-lg text-xs font-semibold hover:from-primary-700 hover:to-primary-600 shadow-md transition-all"
                 >
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="h-3.5 w-3.5" />
                   <span>Marcar como leídas</span>
                 </button>
                 <button
@@ -252,11 +253,11 @@ const Notifications = () => {
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 ${
-                      !notification.is_read ? "bg-primary-50" : ""
+                    className={`p-3 hover:bg-gray-50 transition-all ${
+                      !notification.is_read ? "bg-primary-50/50 border-l-4 border-l-primary-500" : "border-l-4 border-l-transparent"
                     }`}
                   >
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start gap-3">
                       <input
                         type="checkbox"
                         checked={selectedNotifications.includes(
@@ -274,12 +275,12 @@ const Notifications = () => {
                       <div className="flex-shrink-0">
                         {notification.actor?.profile_picture ? (
                           <img
-                            className="h-12 w-12 rounded-full"
+                            className="h-10 w-10 rounded-full ring-2 ring-gray-100"
                             src={notification.actor.profile_picture}
                             alt={notification.actor.full_name}
                           />
                         ) : (
-                          <div className="h-12 w-12 bg-gray-200 rounded-full flex items-center justify-center">
+                          <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
                             {getNotificationIcon(notification.type)}
                           </div>
                         )}
@@ -288,13 +289,13 @@ const Notifications = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-semibold text-gray-900">
                               {notification.title}
                             </p>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-xs text-gray-600 mt-0.5">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-500 mt-2">
+                            <p className="text-xs text-gray-400 mt-1.5 font-medium">
                               {formatDateTime(notification.created_at)}
                             </p>
                           </div>
