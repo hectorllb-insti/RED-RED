@@ -10,18 +10,22 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import EmptyState from "../components/EmptyState";
+import { TextWithHashtags } from "../components/HashtagLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
+import { formatDateShort, formatTime } from "../utils/dateUtils";
 import { getImageUrl } from "../utils/imageUtils";
 import { securityUtils } from "../utils/security";
 
 const Home = () => {
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
   const [newPost, setNewPost] = useState("");
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
@@ -31,6 +35,7 @@ const Home = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const queryClient = useQueryClient();
+  const isDark = actualTheme === "dark";
 
   // Obtener publicaciones del feed
   const { data: posts, isLoading } = useQuery(
@@ -313,7 +318,13 @@ const Home = () => {
   return (
     <div className="space-y-4 mt-10">
       {/* Tarjeta de crear publicación */}
-      <div className="bg-gradient-to-r from-white via-primary-50/20 to-white rounded-xl shadow-md border border-gray-200 p-4 hover:shadow-lg hover:border-primary-300 transition-all duration-300 group">
+      <div
+        className={`rounded-xl shadow-md border p-4 hover:shadow-lg transition-all duration-300 group ${
+          isDark
+            ? "bg-gradient-to-r from-slate-800 via-slate-800/50 to-slate-800 border-slate-700 hover:border-slate-600"
+            : "bg-gradient-to-r from-white via-primary-50/20 to-white border-gray-200 hover:border-primary-300"
+        }`}
+      >
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
@@ -325,7 +336,11 @@ const Home = () => {
           </div>
           <button
             onClick={() => setShowCreatePost(true)}
-            className="flex-1 text-left px-5 py-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full text-gray-600 hover:from-primary-50 hover:to-purple-50 hover:text-primary-700 transition-all text-sm font-medium group-hover:shadow-inner"
+            className={`flex-1 text-left px-5 py-3 rounded-full text-sm font-medium group-hover:shadow-inner transition-all ${
+              isDark
+                ? "bg-gradient-to-r from-slate-700 to-slate-600 text-slate-300 hover:from-slate-600 hover:to-slate-500 hover:text-slate-100"
+                : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 hover:from-primary-50 hover:to-purple-50 hover:text-primary-700"
+            }`}
           >
             💭 ¿Qué estás pensando, {user?.first_name}?
           </button>
@@ -337,7 +352,11 @@ const Home = () => {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="¿Qué estás pensando?"
-              className="w-full p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-400"
+              className={`w-full p-4 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 ${
+                isDark
+                  ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                  : "bg-gray-50 border-gray-200 text-gray-900"
+              }`}
               rows="4"
               autoFocus
             />
@@ -360,7 +379,11 @@ const Home = () => {
               </div>
             )}
 
-            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+            <div
+              className={`flex justify-between items-center pt-3 border-t ${
+                isDark ? "border-slate-700" : "border-gray-100"
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <input
                   type="file"
@@ -371,7 +394,11 @@ const Home = () => {
                 />
                 <label
                   htmlFor="image-upload"
-                  className="cursor-pointer flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                  className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    isDark
+                      ? "text-slate-300 hover:text-primary-400 hover:bg-slate-700"
+                      : "text-gray-600 hover:text-primary-600 hover:bg-primary-50"
+                  }`}
                 >
                   <ImageIcon className="h-5 w-5" />
                   <span className="text-sm font-medium">Foto</span>
@@ -380,7 +407,11 @@ const Home = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreatePost(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all font-medium"
+                  className={`px-4 py-2 rounded-lg transition-all font-medium ${
+                    isDark
+                      ? "text-slate-300 hover:text-slate-100 hover:bg-slate-700"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                  }`}
                 >
                   Cancelar
                 </button>
@@ -428,19 +459,36 @@ const Home = () => {
           return postList.map((post, index) => (
             <div
               key={post.id}
-              className="bg-gradient-to-br from-white via-gray-50/50 to-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg hover:border-primary-200 transition-all duration-300 stagger-item overflow-hidden"
+              className={`rounded-2xl shadow-md border hover:shadow-lg transition-all duration-300 stagger-item overflow-hidden ${
+                isDark
+                  ? "bg-gradient-to-br from-slate-800 via-slate-800/50 to-slate-800 border-slate-700 hover:border-slate-600"
+                  : "bg-gradient-to-br from-white via-gray-50/50 to-white border-gray-200 hover:border-primary-200"
+              }`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* Post Header con gradiente sutil */}
-              <div className="p-4 bg-gradient-to-r from-transparent via-primary-50/20 to-transparent flex items-center justify-between">
+              <div
+                className={`p-4 flex items-center justify-between ${
+                  isDark
+                    ? "bg-gradient-to-r from-transparent via-slate-700/20 to-transparent"
+                    : "bg-gradient-to-r from-transparent via-primary-50/20 to-transparent"
+                }`}
+              >
                 <div className="flex items-center gap-3">
                   <img
                     className="h-10 w-10 rounded-full ring-2 ring-primary-100 object-cover"
-                    src={getImageUrl(post.author_profile_picture) || "/default-avatar.png"}
+                    src={
+                      getImageUrl(post.author_profile_picture) ||
+                      "/default-avatar.png"
+                    }
                     alt={`${post.author_first_name} ${post.author_last_name}`}
                   />
                   <div>
-                    <p className="font-bold text-gray-900 text-sm">
+                    <p
+                      className={`font-bold text-sm ${
+                        isDark ? "text-slate-100" : "text-gray-900"
+                      }`}
+                    >
                       {post.author_first_name} {post.author_last_name}
                     </p>
                     <p className="text-xs text-primary-600 font-medium">
@@ -452,14 +500,22 @@ const Home = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleStartEdit(post)}
-                      className="text-gray-500 hover:text-primary-600 hover:bg-primary-50 p-2 rounded-lg transition-all"
+                      className={`p-2 rounded-lg transition-all ${
+                        isDark
+                          ? "text-slate-400 hover:text-primary-400 hover:bg-slate-700"
+                          : "text-gray-500 hover:text-primary-600 hover:bg-primary-50"
+                      }`}
                       title="Editar publicación"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeletePost(post.id)}
-                      className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
+                      className={`p-2 rounded-lg transition-all ${
+                        isDark
+                          ? "text-slate-400 hover:text-red-400 hover:bg-red-900/20"
+                          : "text-gray-500 hover:text-red-600 hover:bg-red-50"
+                      }`}
                       title="Eliminar publicación"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -471,18 +527,32 @@ const Home = () => {
               {/* Post Content */}
               <div className="px-4 pb-4">
                 {editingPost === post.id ? (
-                  <div className="space-y-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <div
+                    className={`space-y-3 p-3 rounded-xl border ${
+                      isDark
+                        ? "bg-slate-800 border-slate-700"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
                     <textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none bg-white text-gray-800 placeholder-gray-400 transition-all"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none transition-all ${
+                        isDark
+                          ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                          : "border-gray-300 bg-white text-gray-800 placeholder-gray-400"
+                      }`}
                       rows="3"
                       placeholder="¿Qué estás pensando?"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={handleCancelEdit}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-2 transition-all font-medium"
+                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-medium ${
+                          isDark
+                            ? "text-slate-300 hover:text-slate-100 hover:bg-slate-700"
+                            : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                        }`}
                       >
                         <X className="h-4 w-4" />
                         <span>Cancelar</span>
@@ -505,11 +575,19 @@ const Home = () => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-sm">
-                      {post.content}
-                    </p>
+                    <div
+                      className={`whitespace-pre-wrap leading-relaxed text-sm ${
+                        isDark ? "text-slate-200" : "text-gray-800"
+                      }`}
+                    >
+                      <TextWithHashtags text={post.content} />
+                    </div>
                     {post.image && (
-                      <div className="mt-3 rounded-xl overflow-hidden border border-gray-200">
+                      <div
+                        className={`mt-3 rounded-xl overflow-hidden border ${
+                          isDark ? "border-slate-700" : "border-gray-200"
+                        }`}
+                      >
                         <img
                           src={post.image || "/placeholder.svg"}
                           alt="Contenido del post"
@@ -522,60 +600,101 @@ const Home = () => {
               </div>
 
               {/* Sección de interacciones */}
-              <div className="px-4 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+              <div
+                className={`px-4 py-3 border-t flex items-center justify-between ${
+                  isDark
+                    ? "bg-slate-800/50 border-slate-700"
+                    : "bg-gray-50/50 border-gray-100"
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleLike(post.id)}
                     className={`like-button flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
                       post.is_liked
                         ? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md liked"
+                        : isDark
+                        ? "bg-slate-700 text-slate-300 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/50 border border-slate-600"
                         : "bg-white text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-300 border border-gray-200"
                     }`}
                   >
-                    <div style={{ width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       <Heart
                         className={`transition-colors ${
                           post.is_liked ? "fill-current" : ""
                         }`}
                         strokeWidth={post.is_liked ? 0 : 2}
-                        style={{ 
-                          width: '18px',
-                          height: '18px'
+                        style={{
+                          width: "18px",
+                          height: "18px",
                         }}
                       />
                     </div>
-                    <span className="font-medium">
-                      {post.likes_count}
-                    </span>
+                    <span className="font-medium">{post.likes_count}</span>
                   </button>
                   <button
                     onClick={() => toggleComments(post.id)}
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
                       showComments[post.id]
                         ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                        : isDark
+                        ? "bg-slate-700 text-slate-300 hover:bg-blue-900/30 hover:text-blue-400 hover:border-blue-500/50 border border-slate-600"
                         : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 border border-gray-200"
                     }`}
                   >
                     <MessageCircle className="h-4 w-4" />
-                    <span className="font-medium">
-                      {post.comments_count}
-                    </span>
+                    <span className="font-medium">{post.comments_count}</span>
                   </button>
                   <button
                     onClick={() => handleSharePost(post.id)}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all bg-white text-gray-600 hover:bg-green-50 hover:text-green-600 hover:border-green-300 border border-gray-200 w-24"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-24 ${
+                      isDark
+                        ? "bg-slate-700 text-slate-300 hover:bg-green-900/30 hover:text-green-400 hover:border-green-500/50 border border-slate-600"
+                        : "bg-white text-gray-600 hover:bg-green-50 hover:text-green-600 hover:border-green-300 border border-gray-200"
+                    }`}
                     title="Compartir publicación"
                   >
                     <Share2 className="h-4 w-4" />
                     <span className="font-medium">Compartir</span>
                   </button>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full border border-gray-200 shadow-sm">
-                  <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-sm ${
+                    isDark
+                      ? "bg-gradient-to-r from-slate-800 to-slate-700 border-slate-600"
+                      : "bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200"
+                  } border`}
+                >
+                  <svg
+                    className={`h-3.5 w-3.5 ${
+                      isDark ? "text-slate-400" : "text-gray-400"
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
-                  <span className="text-xs text-gray-600 font-medium">
-                    {new Date(post.created_at).toLocaleDateString()} • {new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? "text-slate-300" : "text-gray-600"
+                    }`}
+                  >
+                    {formatDateShort(post.created_at)} •{" "}
+                    {formatTime(post.created_at)}
                   </span>
                 </div>
               </div>
@@ -604,8 +723,16 @@ const Home = () => {
         return (
           postList.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No hay publicaciones aún</p>
-              <p className="text-gray-400">¡Sé el primero en publicar algo!</p>
+              <p
+                className={`text-lg ${
+                  isDark ? "text-slate-400" : "text-gray-500"
+                }`}
+              >
+                No hay publicaciones aún
+              </p>
+              <p className={isDark ? "text-slate-500" : "text-gray-400"}>
+                ¡Sé el primero en publicar algo!
+              </p>
             </div>
           )
         );
@@ -623,7 +750,9 @@ const CommentsSection = ({
   isSubmitting,
 }) => {
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
   const queryClient = useQueryClient();
+  const isDark = actualTheme === "dark";
 
   // Query para obtener comentarios del post
   const { data: comments, isLoading } = useQuery(
@@ -658,10 +787,10 @@ const CommentsSection = ({
             return old.map((comment) => {
               if (comment.id === commentId) {
                 const newIsLiked = !comment.is_liked;
-                const newLikesCount = newIsLiked 
-                  ? (comment.likes_count || 0) + 1 
+                const newLikesCount = newIsLiked
+                  ? (comment.likes_count || 0) + 1
                   : Math.max(0, (comment.likes_count || 0) - 1);
-                
+
                 return {
                   ...comment,
                   is_liked: newIsLiked,
@@ -693,7 +822,10 @@ const CommentsSection = ({
       onError: (err, commentId, context) => {
         // Revertir en caso de error
         if (context?.previousComments) {
-          queryClient.setQueryData(["comments", postId], context.previousComments);
+          queryClient.setQueryData(
+            ["comments", postId],
+            context.previousComments
+          );
         }
       },
     }
@@ -704,13 +836,29 @@ const CommentsSection = ({
   };
 
   return (
-    <div className="border-t border-gray-100 bg-gray-50/30">
+    <div
+      className={`border-t ${
+        isDark
+          ? "border-slate-700 bg-slate-800/30"
+          : "border-gray-100 bg-gray-50/30"
+      }`}
+    >
       {/* Formulario para nuevo comentario */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div
+        className={`p-4 border-b ${
+          isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"
+        }`}
+      >
         <div className="flex space-x-3">
           <img
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-            src={user?.profile_picture ? getImageUrl(user.profile_picture) : "/default-avatar.png"}
+            className={`h-8 w-8 rounded-full object-cover flex-shrink-0 border ${
+              isDark ? "border-slate-600" : "border-gray-200"
+            }`}
+            src={
+              user?.profile_picture
+                ? getImageUrl(user.profile_picture)
+                : "/default-avatar.png"
+            }
             alt={user?.full_name || "Tu perfil"}
             onError={(e) => {
               e.target.src = "/default-avatar.png";
@@ -721,7 +869,11 @@ const CommentsSection = ({
               value={newComment}
               onChange={(e) => onCommentChange(postId, e.target.value)}
               placeholder="Escribe un comentario..."
-              className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white placeholder-gray-400 transition-all"
+              className={`w-full p-3 border rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all ${
+                isDark
+                  ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+              }`}
               rows="2"
             />
             <div className="flex justify-end mt-2">
@@ -745,30 +897,58 @@ const CommentsSection = ({
           <div className="space-y-3">
             {comments && comments.length > 0 ? (
               comments.map((comment, index) => (
-                <div key={comment.id} className="flex space-x-3 group" style={{ animationDelay: `${index * 0.05}s` }}>
+                <div
+                  key={comment.id}
+                  className="flex space-x-3 group"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
                   <img
-                    className="h-8 w-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
-                    src={comment.author_profile_picture ? getImageUrl(comment.author_profile_picture) : "/default-avatar.png"}
+                    className={`h-8 w-8 rounded-full object-cover flex-shrink-0 border ${
+                      isDark ? "border-slate-600" : "border-gray-200"
+                    }`}
+                    src={
+                      comment.author_profile_picture
+                        ? getImageUrl(comment.author_profile_picture)
+                        : "/default-avatar.png"
+                    }
                     alt={comment.author_username || "Usuario"}
                     onError={(e) => {
                       e.target.src = "/default-avatar.png";
                     }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 group-hover:border-gray-300 transition-all">
-                      <p className="font-semibold text-sm text-gray-900">
+                    <div
+                      className={`rounded-xl p-3 border transition-all ${
+                        isDark
+                          ? "bg-slate-700 border-slate-600 group-hover:border-slate-500"
+                          : "bg-gray-50 border-gray-200 group-hover:border-gray-300"
+                      }`}
+                    >
+                      <p
+                        className={`font-semibold text-sm ${
+                          isDark ? "text-slate-100" : "text-gray-900"
+                        }`}
+                      >
                         {comment.author_username}
                       </p>
-                      <p className="text-sm text-gray-700 mt-1 break-words">
-                        {comment.content}
-                      </p>
+                      <div
+                        className={`text-sm mt-1 break-words ${
+                          isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
+                      >
+                        <TextWithHashtags text={comment.content} />
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 mt-2 px-2">
                       <button
                         onClick={() => handleCommentLike(comment.id)}
                         className={`like-button flex items-center gap-1 text-xs font-medium transition-all w-10 ${
                           comment.is_liked
-                            ? "text-red-500"
+                            ? isDark
+                              ? "text-red-400"
+                              : "text-red-500"
+                            : isDark
+                            ? "text-slate-400 hover:text-red-400"
                             : "text-gray-500 hover:text-red-500"
                         }`}
                       >
@@ -779,8 +959,13 @@ const CommentsSection = ({
                         />
                         <span>{comment.likes_count || 0}</span>
                       </button>
-                      <span className="text-xs text-gray-400">
-                        {new Date(comment.created_at).toLocaleDateString()} • {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span
+                        className={`text-xs ${
+                          isDark ? "text-slate-400" : "text-gray-400"
+                        }`}
+                      >
+                        {formatDateShort(comment.created_at)} •{" "}
+                        {formatTime(comment.created_at)}
                       </span>
                     </div>
                   </div>
@@ -788,11 +973,23 @@ const CommentsSection = ({
               ))
             ) : (
               <div className="text-center py-8">
-                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm font-medium">
+                <MessageCircle
+                  className={`h-12 w-12 mx-auto mb-3 ${
+                    isDark ? "text-slate-600" : "text-gray-300"
+                  }`}
+                />
+                <p
+                  className={`text-sm font-medium ${
+                    isDark ? "text-slate-400" : "text-gray-500"
+                  }`}
+                >
                   No hay comentarios aún
                 </p>
-                <p className="text-gray-400 text-xs mt-1">
+                <p
+                  className={`text-xs mt-1 ${
+                    isDark ? "text-slate-500" : "text-gray-400"
+                  }`}
+                >
                   ¡Sé el primero en comentar!
                 </p>
               </div>

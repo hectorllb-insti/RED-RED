@@ -37,6 +37,7 @@ LOCAL_APPS = [
     'apps.posts',
     'apps.stories',
     'apps.chat',
+    'apps.administration',
     'notifications',
 ]
 
@@ -138,6 +139,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        'apps.users.middleware.IsNotBanned',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': config('PAGE_SIZE', default=20, cast=int)

@@ -7,6 +7,21 @@ User = get_user_model()
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        # Validar credenciales primero
+        data = super().validate(attrs)
+        
+        # Verificar si el usuario está baneado
+        if self.user.is_banned:
+            raise serializers.ValidationError({
+                'detail': f'Tu cuenta ha sido suspendida. Razón: {self.user.ban_reason}',
+                'is_banned': True,
+                'ban_reason': self.user.ban_reason,
+                'banned_at': self.user.banned_at
+            })
+        
+        return data
+    
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

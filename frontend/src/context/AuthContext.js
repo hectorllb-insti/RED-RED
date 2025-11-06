@@ -50,6 +50,15 @@ export const AuthProvider = ({ children }) => {
       if (authService.isAuthenticated()) {
         try {
           const user = await authService.getCurrentUser();
+
+          // Verificar si el usuario está baneado
+          if (user.is_banned) {
+            authService.logout();
+            dispatch({ type: "LOGOUT" });
+            window.location.href = "/login?banned=true";
+            return;
+          }
+
           dispatch({ type: "LOGIN_SUCCESS", payload: user });
 
           // Conectar WebSocket
@@ -84,7 +93,17 @@ export const AuthProvider = ({ children }) => {
 
       if (error.response?.data) {
         const data = error.response.data;
-        if (data.detail) {
+
+        // Manejar error de usuario baneado
+        if (
+          data.detail &&
+          typeof data.detail === "string" &&
+          data.detail.includes("suspendida")
+        ) {
+          errorMessage = data.detail;
+        } else if (data.is_banned) {
+          errorMessage = `Tu cuenta ha sido suspendida. Razón: ${data.ban_reason}`;
+        } else if (data.detail) {
           errorMessage = "Credenciales inválidas";
         } else if (data.message) {
           errorMessage = data.message;
@@ -140,12 +159,12 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     dispatch({ type: "UPDATE_USER", payload: userData });
-    
+
     // Notificar al WebSocket sobre la actualización del perfil
     if (socketService.isConnected()) {
       socketService.send({
         type: "profile_updated",
-        user_data: userData
+        user_data: userData,
       });
     }
   };

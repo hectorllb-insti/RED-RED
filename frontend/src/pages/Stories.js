@@ -4,10 +4,14 @@ import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
+import { formatDateShort, formatDateTime } from "../utils/dateUtils";
 
 const Stories = () => {
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [storyContent, setStoryContent] = useState("");
   const [selectedStory, setSelectedStory] = useState(null);
@@ -91,9 +95,21 @@ const Stories = () => {
   return (
     <div className="space-y-5 mt-10">
       {/* Stories Header */}
-      <div className="flex items-center justify-between bg-white rounded-xl shadow-md border border-gray-200 p-4">
-        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Camera className="h-5 w-5 text-primary-600" />
+      <div
+        className={`flex items-center justify-between rounded-xl shadow-md border p-4 ${
+          isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"
+        }`}
+      >
+        <h1
+          className={`text-xl font-bold flex items-center gap-2 ${
+            isDark ? "text-slate-100" : "text-gray-900"
+          }`}
+        >
+          <Camera
+            className={`h-5 w-5 ${
+              isDark ? "text-primary-400" : "text-primary-600"
+            }`}
+          />
           Historias
         </h1>
         <button
@@ -108,12 +124,26 @@ const Stories = () => {
       {/* Create Story Modal */}
       {showCreateStory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div
+            className={`rounded-lg p-6 w-full max-w-md ${
+              isDark ? "bg-slate-800" : "bg-white"
+            }`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Crear Historia</h2>
+              <h2
+                className={`text-lg font-semibold ${
+                  isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+              >
+                Crear Historia
+              </h2>
               <button
                 onClick={() => setShowCreateStory(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className={
+                  isDark
+                    ? "text-slate-400 hover:text-slate-300"
+                    : "text-gray-400 hover:text-gray-600"
+                }
               >
                 <X className="h-6 w-6" />
               </button>
@@ -127,8 +157,20 @@ const Stories = () => {
                   alt={user?.full_name}
                 />
                 <div>
-                  <p className="font-medium">{user?.full_name}</p>
-                  <p className="text-sm text-gray-500">Tu historia</p>
+                  <p
+                    className={`font-medium ${
+                      isDark ? "text-slate-100" : "text-gray-900"
+                    }`}
+                  >
+                    {user?.full_name}
+                  </p>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-slate-400" : "text-gray-500"
+                    }`}
+                  >
+                    Tu historia
+                  </p>
                 </div>
               </div>
 
@@ -136,7 +178,11 @@ const Stories = () => {
                 value={storyContent}
                 onChange={(e) => setStoryContent(e.target.value)}
                 placeholder="¿Qué quieres compartir en tu historia?"
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  isDark
+                    ? "border-slate-600 bg-slate-700 text-slate-100 placeholder-slate-400"
+                    : "border-gray-300 bg-white text-gray-900 placeholder-gray-400"
+                }`}
                 rows="4"
                 maxLength="500"
               />
@@ -161,7 +207,11 @@ const Stories = () => {
 
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-500">
+                  <span
+                    className={`text-sm ${
+                      isDark ? "text-slate-400" : "text-gray-500"
+                    }`}
+                  >
                     {storyContent.length}/500
                   </span>
 
@@ -266,7 +316,7 @@ const Stories = () => {
                 {/* Time */}
                 <div className="absolute bottom-4 left-4">
                   <span className="text-white text-xs">
-                    {new Date(story.created_at).toLocaleDateString()}
+                    {formatDateShort(story.created_at)}
                   </span>
                 </div>
               </button>
@@ -318,7 +368,7 @@ const Stories = () => {
                       {selectedStory.author_last_name}
                     </p>
                     <p className="text-gray-300 text-sm">
-                      {new Date(selectedStory.created_at).toLocaleString()}
+                      {formatDateTime(selectedStory.created_at)}
                     </p>
                   </div>
                 </div>

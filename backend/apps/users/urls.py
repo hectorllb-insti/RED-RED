@@ -6,6 +6,7 @@ urlpatterns = [
     # capture segmentos literales como 'follow' o 'unfollow'.
     path('profile/', views.UserProfileView.as_view(), name='user-profile'),
     path('profile/delete/', views.delete_account, name='delete-account'),
+    path('change-password/', views.change_password, name='change-password'),
     path('suggested/', views.SuggestedUsersView.as_view(), name='suggested-users'),
     path('follow/<str:username>/', views.follow_user, name='follow-user'),
     path('unfollow/<str:username>/', views.unfollow_user, name='unfollow-user'),

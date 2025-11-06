@@ -1,39 +1,73 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Heart, Lock, Mail, MessageCircle, Sparkles, Users } from "lucide-react"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { Link } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
+import { motion } from "framer-motion";
+import {
+  Heart,
+  Lock,
+  Mail,
+  MessageCircle,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 const Login = () => {
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm()
+  } = useForm();
+
+  // Verificar si viene de un redirect por baneo
+  const urlParams = new URLSearchParams(window.location.search);
+  const isBanned = urlParams.get("banned") === "true";
+
+  // Mostrar mensaje de baneo si existe
+  if (isBanned) {
+    setTimeout(() => {
+      toast.error(
+        "Tu cuenta ha sido suspendida. Contacta con un administrador.",
+        {
+          duration: 6000,
+        }
+      );
+    }, 100);
+  }
 
   const onSubmit = async (data) => {
     try {
-      setLoading(true)
-      const result = await login(data.email, data.password)
+      setLoading(true);
+      const result = await login(data.email, data.password);
 
       if (result.success) {
-        toast.success("¡Bienvenido de vuelta!")
+        toast.success("¡Bienvenido de vuelta!");
       } else {
-        toast.error(result.error || "Error al iniciar sesión. Verifica tus credenciales.")
+        // Manejar error de usuario baneado
+        if (result.error && result.error.includes("suspendida")) {
+          toast.error(result.error, { duration: 6000 });
+        } else {
+          toast.error(
+            result.error ||
+              "Error al iniciar sesión. Verifica tus credenciales."
+          );
+        }
       }
     } catch (error) {
-      console.error("Error en login:", error)
-      toast.error("Error al conectar con el servidor")
+      console.error("Error en login:", error);
+      toast.error("Error al conectar con el servidor");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Animaciones de partículas flotantes
   const floatingIcons = [
@@ -45,16 +79,24 @@ const Login = () => {
     { Icon: Users, delay: 1.2, duration: 3.8, left: 90, top: 30 },
     { Icon: MessageCircle, delay: 0.3, duration: 4.2, left: 25, top: 10 },
     { Icon: Sparkles, delay: 1.8, duration: 3.3, left: 80, top: 80 },
-  ]
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-rose-50 to-red-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div
+      className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${
+        isDark
+          ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+          : "bg-gradient-to-br from-red-50 via-rose-50 to-red-100"
+      }`}
+    >
       {/* Elementos decorativos de fondo animados */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {floatingIcons.map(({ Icon, delay, duration, left, top }, index) => (
           <motion.div
             key={index}
-            className="absolute text-red-400/40"
+            className={
+              isDark ? "absolute text-red-600/30" : "absolute text-red-400/40"
+            }
             style={{
               left: `${left}%`,
               top: `${top}%`,
@@ -75,10 +117,12 @@ const Login = () => {
             <Icon size={48} strokeWidth={1.5} />
           </motion.div>
         ))}
-        
+
         {/* Círculos decorativos */}
         <motion.div
-          className="absolute -top-20 -left-20 w-72 h-72 bg-red-300/20 rounded-full blur-3xl"
+          className={`absolute -top-20 -left-20 w-72 h-72 rounded-full blur-3xl ${
+            isDark ? "bg-red-900/20" : "bg-red-300/20"
+          }`}
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -90,7 +134,9 @@ const Login = () => {
           }}
         />
         <motion.div
-          className="absolute -bottom-20 -right-20 w-96 h-96 bg-rose-300/20 rounded-full blur-3xl"
+          className={`absolute -bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl ${
+            isDark ? "bg-rose-900/20" : "bg-rose-300/20"
+          }`}
           animate={{
             scale: [1, 1.3, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -112,14 +158,16 @@ const Login = () => {
           transition={{ duration: 0.5 }}
           className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 relative overflow-hidden"
           style={{
-            boxShadow: '0 -10px 40px -10px rgba(239, 68, 68, 0.3), 0 20px 40px -10px rgba(0, 0, 0, 0.1)'
+            boxShadow:
+              "0 -10px 40px -10px rgba(239, 68, 68, 0.3), 0 20px 40px -10px rgba(0, 0, 0, 0.1)",
           }}
         >
           {/* Efecto de brillo en el borde */}
           <motion.div
             className="absolute inset-0 rounded-3xl pointer-events-none"
             style={{
-              background: "linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent)",
+              background:
+                "linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent)",
               zIndex: 0,
             }}
             animate={{
@@ -186,17 +234,23 @@ const Login = () => {
           </motion.div>
 
           {/* Formulario */}
-          <form className="space-y-5 relative z-10" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="space-y-5 relative z-10"
+            onSubmit={handleSubmit(onSubmit)}
+          >
             {/* Campo Email */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Correo electrónico
               </label>
-              <motion.div 
+              <motion.div
                 className="relative group"
                 whileHover={{ scale: 1.01 }}
                 whileFocus={{ scale: 1.01 }}
@@ -237,10 +291,13 @@ const Login = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Contraseña
               </label>
-              <motion.div 
+              <motion.div
                 className="relative group"
                 whileHover={{ scale: 1.01 }}
                 whileFocus={{ scale: 1.01 }}
@@ -286,9 +343,10 @@ const Login = () => {
                 type="submit"
                 disabled={loading}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/30 transition-all overflow-hidden"
-                whileHover={{ 
+                whileHover={{
                   scale: 1.02,
-                  boxShadow: "0 20px 25px -5px rgba(239, 68, 68, 0.4), 0 10px 10px -5px rgba(239, 68, 68, 0.04)"
+                  boxShadow:
+                    "0 20px 25px -5px rgba(239, 68, 68, 0.4), 0 10px 10px -5px rgba(239, 68, 68, 0.04)",
                 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -334,7 +392,7 @@ const Login = () => {
                     delay: 1.2,
                   }}
                 />
-                
+
                 {/* Efecto de brillo en el botón */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -348,12 +406,16 @@ const Login = () => {
                     ease: "linear",
                   }}
                 />
-                
+
                 <span className="relative flex items-center gap-2">
                   {loading && (
                     <motion.div
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                     >
                       <Sparkles size={16} />
                     </motion.div>
@@ -389,7 +451,7 @@ const Login = () => {
         </motion.p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

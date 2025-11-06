@@ -1,5 +1,10 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
+
+# Router para ViewSets
+router = DefaultRouter()
+router.register(r'hashtags', views.HashtagViewSet, basename='hashtag')
 
 urlpatterns = [
     path('', views.PostListCreateView.as_view(), name='post-list-create'),
@@ -11,4 +16,7 @@ urlpatterns = [
     path('<int:post_id>/share/', views.share_post, name='share-post'),
     path('shared/', views.shared_posts_list, name='shared-posts-list'),
     path('comments/<int:comment_id>/like/', views.like_comment, name='like-comment'),
+    
+    # Rutas del router (hashtags)
+    path('', include(router.urls)),
 ]

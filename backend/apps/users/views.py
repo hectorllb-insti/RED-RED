@@ -17,6 +17,21 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Filtrar campos no permitidos
+        allowed_fields = ['first_name', 'last_name', 'bio', 'location', 'website', 
+                         'date_of_birth', 'is_private', 'profile_picture', 'cover_picture', 'email']
+        filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = self.get_serializer(instance, data=filtered_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
 
 
 class UserDetailView(generics.RetrieveAPIView):
@@ -177,5 +192,46 @@ def delete_account(request):
             'message': f'La cuenta de {username} ha sido eliminada exitosamente',
             'deleted': True
         },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """
+    Cambia la contraseña del usuario autenticado
+    """
+    user = request.user
+    
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response(
+            {'error': 'Se requieren ambas contraseñas'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verificar que la contraseña actual sea correcta
+    if not user.check_password(current_password):
+        return Response(
+            {'error': 'La contraseña actual es incorrecta'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Validar longitud de la nueva contraseña
+    if len(new_password) < 8:
+        return Response(
+            {'error': 'La nueva contraseña debe tener al menos 8 caracteres'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Cambiar la contraseña
+    user.set_password(new_password)
+    user.save()
+    
+    return Response(
+        {'message': 'Contraseña actualizada exitosamente'},
         status=status.HTTP_200_OK
     )

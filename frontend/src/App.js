@@ -9,8 +9,10 @@ import {
   Routes,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Páginas
+import HashtagPage from "./pages/HashtagPage";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Messages from "./pages/Messages";
@@ -20,6 +22,13 @@ import Register from "./pages/Register";
 import Search from "./pages/Search";
 import Settings from "./pages/Settings";
 import Stories from "./pages/Stories";
+import TrendingPage from "./pages/TrendingPage";
+
+// Admin Pages
+import AdminConfig from "./pages/AdminConfig";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogs from "./pages/AdminLogs";
+import AdminUsers from "./pages/AdminUsers";
 
 // Componentes
 import Layout from "./components/Layout";
@@ -48,6 +57,25 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return isAuthenticated ? children : <Navigate to="/login" />;
+};
+
+// Componente para rutas de admin
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (user.role !== "admin" && user.role !== "moderator") {
+    return <Navigate to="/" />;
+  }
+
+  return children;
 };
 
 // Componente para rutas públicas (solo para no autenticados)
@@ -156,6 +184,66 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/hashtags/:slug"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <HashtagPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trending"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <TrendingPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <Layout>
+                <AdminUsers />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/logs"
+          element={
+            <AdminRoute>
+              <Layout>
+                <AdminLogs />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/config"
+          element={
+            <AdminRoute>
+              <Layout>
+                <AdminConfig />
+              </Layout>
+            </AdminRoute>
+          }
+        />
       </Routes>
     </Router>
   );
@@ -164,31 +252,33 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="App">
-          <AppRoutes />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: "#171717",
-                color: "#fff",
-                borderRadius: "12px",
-                padding: "16px",
-                fontSize: "14px",
-                fontWeight: "500",
-              },
-              success: {
-                iconTheme: {
-                  primary: "#ef4444",
-                  secondary: "#fff",
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="App">
+            <AppRoutes />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: "#171717",
+                  color: "#fff",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  fontSize: "14px",
+                  fontWeight: "500",
                 },
-              },
-            }}
-          />
-        </div>
-      </AuthProvider>
+                success: {
+                  iconTheme: {
+                    primary: "#ef4444",
+                    secondary: "#fff",
+                  },
+                },
+              }}
+            />
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

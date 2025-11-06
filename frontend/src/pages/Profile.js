@@ -17,8 +17,14 @@ import { useParams } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProfileEdit from "../components/ProfileEdit";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 import { tokenManager } from "../services/tokenManager";
+import {
+  formatDate,
+  formatDateShort,
+  formatDateTime,
+} from "../utils/dateUtils";
 import { getImageUrl } from "../utils/imageUtils";
 
 const API_BASE_URL =
@@ -27,12 +33,15 @@ const API_BASE_URL =
 const Profile = () => {
   const { userId } = useParams();
   const { user: currentUser } = useAuth();
+  const { actualTheme } = useTheme();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showComments, setShowComments] = useState({});
   const profilePictureInputRef = useRef(null);
   const coverPictureInputRef = useRef(null);
+
+  const isDark = actualTheme === "dark";
 
   // Si no hay userId, mostrar perfil del usuario actual
   const isOwnProfile =
@@ -412,7 +421,9 @@ const Profile = () => {
   if (!profileUser) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Usuario no encontrado</p>
+        <p className={isDark ? "text-slate-400" : "text-gray-500"}>
+          Usuario no encontrado
+        </p>
       </div>
     );
   }
@@ -420,7 +431,11 @@ const Profile = () => {
   return (
     <div className="space-y-5 mt-10">
       {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+      <div
+        className={`rounded-xl shadow-md border overflow-hidden ${
+          isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"
+        }`}
+      >
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-br from-primary-500 via-primary-600 to-purple-600 relative">
           {profileUser.cover_picture && (
@@ -442,7 +457,11 @@ const Profile = () => {
               <button
                 onClick={() => coverPictureInputRef.current?.click()}
                 disabled={updateCoverPictureMutation.isLoading}
-                className="absolute top-4 right-4 p-2 bg-gray-900/60 backdrop-blur-sm rounded-lg text-white hover:bg-gray-900/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`absolute top-4 right-4 p-2 backdrop-blur-sm rounded-lg text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark
+                    ? "bg-slate-900/70 hover:bg-slate-900/90"
+                    : "bg-gray-900/60 hover:bg-gray-900/80"
+                }`}
                 title="Cambiar imagen de portada"
               >
                 {updateCoverPictureMutation.isLoading ? (
@@ -461,7 +480,11 @@ const Profile = () => {
             <div className="flex items-end gap-4">
               <div className="relative">
                 <img
-                  className="h-32 w-32 rounded-xl border-4 border-white shadow-lg ring-2 ring-gray-100"
+                  className={`h-32 w-32 rounded-xl border-4 shadow-lg ring-2 ${
+                    isDark
+                      ? "border-slate-800 ring-slate-700"
+                      : "border-white ring-gray-100"
+                  }`}
                   src={profileUser.profile_picture || "/default-avatar.png"}
                   alt={profileUser.full_name}
                 />
@@ -490,12 +513,22 @@ const Profile = () => {
                 )}
               </div>
               <div className="pb-1">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                <h1
+                  className={`text-2xl font-bold mb-1 ${
+                    isDark ? "text-slate-100" : "text-gray-900"
+                  }`}
+                >
                   {profileUser.full_name ||
                     profileUser.first_name + " " + profileUser.last_name ||
                     profileUser.username}
                 </h1>
-                <p className="text-gray-500 text-sm">@{profileUser.username}</p>
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-slate-400" : "text-gray-500"
+                  }`}
+                >
+                  @{profileUser.username}
+                </p>
               </div>
             </div>
 
@@ -503,7 +536,11 @@ const Profile = () => {
               {isOwnProfile ? (
                 <button
                   onClick={() => setShowEditProfile(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium text-sm"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm ${
+                    isDark
+                      ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
                   <Settings className="h-4 w-4" />
                   <span>Editar perfil</span>
@@ -514,7 +551,9 @@ const Profile = () => {
                   disabled={followMutation.isLoading}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all ${
                     profileUser.is_following
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? isDark
+                        ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       : "bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/30"
                   } disabled:opacity-50`}
                 >
@@ -536,33 +575,65 @@ const Profile = () => {
 
           {/* Bio */}
           {profileUser.bio && (
-            <p className="mt-5 text-gray-700 leading-relaxed">
+            <p
+              className={`mt-5 leading-relaxed ${
+                isDark ? "text-slate-300" : "text-gray-700"
+              }`}
+            >
               {profileUser.bio}
             </p>
           )}
 
-          <div className="flex items-center gap-6 mt-5 pt-4 border-t border-gray-100">
+          <div
+            className={`flex items-center gap-6 mt-5 pt-4 border-t ${
+              isDark ? "border-slate-700" : "border-gray-100"
+            }`}
+          >
             <div className="text-center">
-              <p className="text-xl font-bold text-gray-900">
+              <p
+                className={`text-xl font-bold ${
+                  isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+              >
                 {userPosts?.count || 0}
               </p>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
+              <p
+                className={`text-xs font-medium mt-0.5 ${
+                  isDark ? "text-slate-400" : "text-gray-500"
+                }`}
+              >
                 Publicaciones
               </p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold text-gray-900">
+              <p
+                className={`text-xl font-bold ${
+                  isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+              >
                 {profileUser.followers_count || 0}
               </p>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
+              <p
+                className={`text-xs font-medium mt-0.5 ${
+                  isDark ? "text-slate-400" : "text-gray-500"
+                }`}
+              >
                 Seguidores
               </p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold text-gray-900">
+              <p
+                className={`text-xl font-bold ${
+                  isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+              >
                 {profileUser.following_count || 0}
               </p>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
+              <p
+                className={`text-xs font-medium mt-0.5 ${
+                  isDark ? "text-slate-400" : "text-gray-500"
+                }`}
+              >
                 Siguiendo
               </p>
             </div>
@@ -570,8 +641,18 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md border border-gray-200">
-        <div className="border-b border-gray-200 bg-gray-50/50">
+      <div
+        className={`rounded-xl shadow-md border ${
+          isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"
+        }`}
+      >
+        <div
+          className={`border-b ${
+            isDark
+              ? "border-slate-700 bg-slate-800/50"
+              : "border-gray-200 bg-gray-50/50"
+          }`}
+        >
           <nav className="flex">
             {["posts", "about"].map((tab) => (
               <button
@@ -579,7 +660,11 @@ const Profile = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
                   activeTab === tab
-                    ? "border-primary-600 text-primary-600 bg-white"
+                    ? isDark
+                      ? "border-primary-500 text-primary-400 bg-slate-800"
+                      : "border-primary-600 text-primary-600 bg-white"
+                    : isDark
+                    ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -595,31 +680,51 @@ const Profile = () => {
               {userPosts?.results?.map((post, index) => (
                 <div
                   key={post.id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all stagger-item"
+                  className={`rounded-2xl shadow-sm border p-5 hover:shadow-md transition-all stagger-item ${
+                    isDark
+                      ? "bg-slate-800 border-slate-700"
+                      : "bg-white border-gray-200"
+                  }`}
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-[15px]">
+                  <p
+                    className={`whitespace-pre-wrap leading-relaxed text-[15px] ${
+                      isDark ? "text-slate-200" : "text-gray-800"
+                    }`}
+                  >
                     {post.content}
                   </p>
                   {post.image && (
                     <img
                       src={post.image || "/placeholder.svg"}
                       alt="Post"
-                      className="mt-4 rounded-xl max-w-full h-auto border border-gray-100"
+                      className={`mt-4 rounded-xl max-w-full h-auto border ${
+                        isDark ? "border-slate-700" : "border-gray-100"
+                      }`}
                     />
                   )}
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <div
+                    className={`flex items-center justify-between mt-4 pt-4 border-t ${
+                      isDark ? "border-slate-700" : "border-gray-100"
+                    }`}
+                  >
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => !isOwnProfile && handleLike(post.id)}
                         disabled={isOwnProfile}
                         className={`like-button flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${
                           post.is_liked
-                            ? "bg-red-50 text-red-600 liked"
+                            ? isDark
+                              ? "bg-red-900/30 text-red-400 liked"
+                              : "bg-red-50 text-red-600 liked"
+                            : isDark
+                            ? "bg-slate-700 text-slate-300"
                             : "bg-gray-100 text-gray-700"
                         } ${
                           !isOwnProfile
-                            ? "hover:bg-red-50 hover:text-red-600 hover-scale cursor-pointer"
+                            ? isDark
+                              ? "hover:bg-red-900/30 hover:text-red-400 hover-scale cursor-pointer"
+                              : "hover:bg-red-50 hover:text-red-600 hover-scale cursor-pointer"
                             : "cursor-default opacity-75"
                         }`}
                       >
@@ -634,7 +739,11 @@ const Profile = () => {
                         onClick={() => toggleComments(post.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all hover-scale ${
                           showComments[post.id]
-                            ? "bg-primary-100 text-primary-700"
+                            ? isDark
+                              ? "bg-primary-900/30 text-primary-400"
+                              : "bg-primary-100 text-primary-700"
+                            : isDark
+                            ? "bg-slate-700 text-slate-300 hover:bg-slate-600"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -647,8 +756,12 @@ const Profile = () => {
                         )}
                       </button>
                     </div>
-                    <span className="text-xs text-gray-500 font-medium">
-                      {new Date(post.created_at).toLocaleDateString()}
+                    <span
+                      className={`text-xs font-medium ${
+                        isDark ? "text-slate-400" : "text-gray-500"
+                      }`}
+                    >
+                      {formatDateShort(post.created_at)}
                     </span>
                   </div>
 
@@ -663,7 +776,11 @@ const Profile = () => {
                 </div>
               ))}
               {(!userPosts?.results || userPosts.results.length === 0) && (
-                <p className="text-gray-500 text-center py-12 font-medium">
+                <p
+                  className={`text-center py-12 font-medium ${
+                    isDark ? "text-slate-400" : "text-gray-500"
+                  }`}
+                >
                   {isOwnProfile
                     ? "Aún no has publicado nada"
                     : "Este usuario no ha publicado nada"}
@@ -675,8 +792,18 @@ const Profile = () => {
           {activeTab === "about" && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Información</h3>
-                <div className="space-y-2 text-sm">
+                <h3
+                  className={`font-medium mb-2 ${
+                    isDark ? "text-slate-100" : "text-gray-900"
+                  }`}
+                >
+                  Información
+                </h3>
+                <div
+                  className={`space-y-2 text-sm ${
+                    isDark ? "text-slate-300" : "text-gray-700"
+                  }`}
+                >
                   {profileUser.location && (
                     <p>
                       <span className="font-medium">Ubicación:</span>{" "}
@@ -690,15 +817,17 @@ const Profile = () => {
                         href={profileUser.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary-600 hover:underline ml-1"
+                        className={`ml-1 hover:underline ${
+                          isDark ? "text-primary-400" : "text-primary-600"
+                        }`}
                       >
                         {profileUser.website}
                       </a>
                     </p>
                   )}
                   <p>
-                    <span className="font-medium">Se unió:</span>
-                    {new Date(profileUser.created_at).toLocaleDateString()}
+                    <span className="font-medium">Se unió:</span>{" "}
+                    {formatDate(profileUser.created_at)}
                   </p>
                 </div>
               </div>
@@ -717,8 +846,12 @@ const Profile = () => {
 
 // Componente para mostrar los comentarios en dropdown
 const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
+  // Estas variables están aquí para futuro uso (añadir comentarios, etc)
+  // eslint-disable-next-line no-unused-vars
   const { user } = useAuth();
+  // eslint-disable-next-line no-unused-vars
   const queryClient = useQueryClient();
+  // eslint-disable-next-line no-unused-vars
   const [newComment, setNewComment] = useState("");
   const { data: comments, isLoading, refetch } = usePostComments(postId);
 
@@ -804,11 +937,7 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
                 <p className="text-sm text-gray-800 mt-1">{comment.content}</p>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {new Date(comment.created_at).toLocaleDateString()} a las{" "}
-                {new Date(comment.created_at).toLocaleTimeString("es-ES", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatDateTime(comment.created_at)}
               </p>
             </div>
           </div>

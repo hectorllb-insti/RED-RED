@@ -1,0 +1,264 @@
+.hashtag-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.hashtag-header {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #1da1f2;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: rgba(29, 161, 242, 0.1);
+}
+
+.hashtag-info h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0 0 8px 0;
+}
+
+.hashtag-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #657786;
+  font-size: 14px;
+}
+
+.usage-count {
+  font-weight: 600;
+}
+
+.hashtag-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.post-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.post-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-right: 12px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.post-avatar:hover {
+  opacity: 0.9;
+}
+
+.post-author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.post-author {
+  font-weight: 700;
+  color: #14171a;
+  cursor: pointer;
+}
+
+.post-author:hover {
+  text-decoration: underline;
+}
+
+.post-username {
+  color: #657786;
+}
+
+.post-date {
+  color: #657786;
+}
+
+.post-content {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #14171a;
+  margin-bottom: 12px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.post-image-container {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.post-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.post-stats {
+  display: flex;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e1e8ed;
+  font-size: 14px;
+  color: #657786;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.no-posts {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #657786;
+}
+
+.hashtag-loading,
+.hashtag-error {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hashtag-loading .spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 12px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #1da1f2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hashtag-error h2 {
+  color: #e74c3c;
+  margin-bottom: 16px;
+}
+
+.hashtag-error .back-button {
+  background: #1da1f2;
+  color: white;
+  padding: 10px 20px;
+}
+
+.hashtag-error .back-button:hover {
+  background: #1a91da;
+}
+
+/* Tema oscuro */
+.dark-mode .hashtag-page {
+  color: #e7e9ea;
+}
+
+.dark-mode .hashtag-header,
+.dark-mode .post-card,
+.dark-mode .no-posts,
+.dark-mode .hashtag-loading,
+.dark-mode .hashtag-error {
+  background: #192734;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .hashtag-info h1,
+.dark-mode .post-author,
+.dark-mode .post-content {
+  color: #e7e9ea;
+}
+
+.dark-mode .hashtag-meta,
+.dark-mode .post-username,
+.dark-mode .post-date,
+.dark-mode .post-stats,
+.dark-mode .no-posts {
+  color: #8b98a5;
+}
+
+.dark-mode .post-stats {
+  border-top-color: #38444d;
+}
+
+.dark-mode .back-button {
+  color: #1da1f2;
+}
+
+.dark-mode .back-button:hover {
+  background-color: rgba(29, 161, 242, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hashtag-page {
+    padding: 0;
+  }
+
+  .hashtag-header,
+  .post-card {
+    border-radius: 0;
+  }
+
+  .hashtag-info h1 {
+    font-size: 24px;
+  }
+
+  .post-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .post-content {
+    font-size: 14px;
+  }
+}

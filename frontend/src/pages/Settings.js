@@ -1,13 +1,16 @@
-import { Bell, Lock, Save, Shield, User } from "lucide-react";
+import { Bell, Lock, Palette, Save, Shield, User } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import DeleteAccountButtonSimple from "../components/DeleteAccountButtonSimple";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 
 const Settings = () => {
   const { user } = useAuth();
+  const { theme, changeTheme } = useTheme();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -53,10 +56,15 @@ const Settings = () => {
   const { isLoading } = useQuery(
     "user-settings",
     async () => {
-      const response = await api.get("/users/settings/");
-      return response.data;
+      // TODO: Implementar endpoint /users/settings/ en el backend
+      // Por ahora, solo cargamos los datos del perfil del usuario
+      return {
+        privacy: {},
+        notifications: {},
+      };
     },
     {
+      enabled: false, // Deshabilitado hasta implementar el endpoint
       onSuccess: (data) => {
         if (data.privacy) {
           setPrivacySettings({ ...privacySettings, ...data.privacy });
@@ -74,7 +82,11 @@ const Settings = () => {
   // Mutation para actualizar configuración de privacidad
   const updatePrivacyMutation = useMutation(
     async (settings) => {
-      const response = await api.put("/users/privacy-settings/", settings);
+      // TODO: Implementar endpoint /users/privacy-settings/ en el backend
+      // Por ahora guardamos is_private en el perfil
+      const response = await api.put("/users/profile/", {
+        is_private: settings.profile_visibility === "private",
+      });
       return response.data;
     },
     {
@@ -82,8 +94,13 @@ const Settings = () => {
         queryClient.invalidateQueries("user-settings");
         toast.success("Configuración de privacidad actualizada");
       },
-      onError: () => {
-        toast.error("Error al actualizar la configuración de privacidad");
+      onError: (error) => {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          "Error al actualizar la configuración de privacidad";
+        toast.error(errorMessage);
+        console.error("Error detallado:", error.response?.data);
       },
     }
   );
@@ -100,8 +117,14 @@ const Settings = () => {
         queryClient.invalidateQueries("user-settings");
         toast.success("Perfil actualizado");
       },
-      onError: () => {
-        toast.error("Error al actualizar el perfil");
+      onError: (error) => {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          JSON.stringify(error.response?.data) ||
+          "Error al actualizar el perfil";
+        toast.error(errorMessage);
+        console.error("Error detallado:", error.response?.data);
       },
     }
   );
@@ -109,19 +132,22 @@ const Settings = () => {
   // Mutation para actualizar notificaciones
   const updateNotificationsMutation = useMutation(
     async (notifications) => {
-      const response = await api.put(
-        "/users/notification-settings/",
-        notifications
-      );
-      return response.data;
+      // TODO: Implementar endpoint /users/notification-settings/ en el backend
+      // Por ahora solo simulamos el guardado
+      return { success: true };
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries("user-settings");
-        toast.success("Configuración de notificaciones actualizada");
+        toast.success("Configuración de notificaciones guardada (local)");
       },
-      onError: () => {
-        toast.error("Error al actualizar las notificaciones");
+      onError: (error) => {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          "Error al actualizar las notificaciones";
+        toast.error(errorMessage);
+        console.error("Error detallado:", error.response?.data);
       },
     }
   );
@@ -260,6 +286,17 @@ const Settings = () => {
           >
             <Lock className="h-3.5 w-3.5 inline mr-1.5" />
             Seguridad
+          </button>
+          <button
+            onClick={() => setActiveTab("appearance")}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${
+              activeTab === "appearance"
+                ? "border-primary-600 text-primary-600 bg-white"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <Palette className="h-3.5 w-3.5 inline mr-1.5" />
+            Apariencia
           </button>
         </div>
 
@@ -856,6 +893,61 @@ const Settings = () => {
                 {/* Zona de Peligro - Eliminar Cuenta */}
                 <div className="mt-8">
                   <DeleteAccountButtonSimple />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Appearance Tab */}
+          {activeTab === "appearance" && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Apariencia y Personalización
+                </h3>
+
+                {/* Tema */}
+                <div className="border border-gray-200 rounded-lg p-6 mb-6">
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    Tema de Interfaz
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Elige el tema de la interfaz que más te guste. El modo
+                    automático se adapta a la configuración de tu sistema.
+                  </p>
+
+                  <div className="flex justify-center py-4">
+                    <ThemeToggle variant="segmented" showLabel={true} />
+                  </div>
+
+                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>✨ Consejos:</strong>
+                    </p>
+                    <ul className="text-sm text-blue-700 mt-2 space-y-1 list-disc list-inside">
+                      <li>
+                        <strong>Claro:</strong> Ideal para ambientes bien
+                        iluminados
+                      </li>
+                      <li>
+                        <strong>Oscuro:</strong> Reduce el cansancio visual en
+                        ambientes con poca luz
+                      </li>
+                      <li>
+                        <strong>Automático:</strong> Cambia según la hora del
+                        día y configuración del sistema
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Próximamente - Otras personalizaciones */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-800">
+                    <strong>Próximamente:</strong> Personalización de colores de
+                    acento, fuentes, tamaño de texto y más opciones de
+                    visualización.
+                  </p>
                 </div>
               </div>
             </div>

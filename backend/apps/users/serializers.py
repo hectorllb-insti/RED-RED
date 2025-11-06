@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Follow
+from .utils import optimize_profile_picture, optimize_cover_picture
 
 User = get_user_model()
 
@@ -17,10 +18,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'bio',
             'profile_picture', 'cover_picture', 'date_of_birth', 'location',
-            'website', 'is_private', 'followers_count', 'following_count',
-            'is_following', 'created_at'
+            'website', 'is_private', 'role', 'is_banned', 'theme_preference',
+            'followers_count', 'following_count', 'is_following', 'created_at'
         ]
-        read_only_fields = ['id', 'created_at', 'followers_count', 'following_count', 'is_following']
+        read_only_fields = ['id', 'created_at', 'followers_count', 'following_count', 'is_following', 'role', 'is_banned']
 
     def get_profile_picture(self, obj):
         if obj.profile_picture:
@@ -54,15 +55,17 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
+    full_name = serializers.CharField(read_only=True)
     
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 'bio',
+            'id', 'username', 'email', 'first_name', 'last_name', 'full_name', 'bio',
             'profile_picture', 'cover_picture', 'date_of_birth', 'location',
-            'website', 'is_private', 'followers_count', 'following_count'
+            'website', 'is_private', 'role', 'is_banned', 'theme_preference',
+            'followers_count', 'following_count'
         ]
-        read_only_fields = ['id', 'username', 'followers_count', 'following_count']
+        read_only_fields = ['id', 'username', 'followers_count', 'following_count', 'role', 'is_banned', 'full_name']
     
     def get_followers_count(self, obj):
         return obj.get_followers_count()
@@ -85,6 +88,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Tipo de archivo no permitido. Solo JPEG, PNG y WebP'
                 )
+            
+            # Optimizar la imagen
+            try:
+                optimized = optimize_profile_picture(value)
+                return optimized
+            except Exception as e:
+                raise serializers.ValidationError(f'Error al procesar imagen: {str(e)}')
         return value
     
     def validate_cover_picture(self, value):
@@ -102,6 +112,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Tipo de archivo no permitido. Solo JPEG, PNG y WebP'
                 )
+            
+            # Optimizar la imagen
+            try:
+                optimized = optimize_cover_picture(value)
+                return optimized
+            except Exception as e:
+                raise serializers.ValidationError(f'Error al procesar imagen: {str(e)}')
         return value
     
     def validate_email(self, value):

@@ -32,6 +32,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Manejar usuario baneado (403 con mensaje de baneo)
+    if (error.response?.status === 403) {
+      const errorData = error.response?.data;
+      if (errorData?.detail && errorData.detail.includes("suspendida")) {
+        tokenManager.clearTokens();
+        window.location.href = "/login?banned=true";
+        return Promise.reject(error);
+      }
+    }
+
     if (error.response?.status === 401) {
       const refreshToken = tokenManager.getRefreshToken();
       if (refreshToken) {

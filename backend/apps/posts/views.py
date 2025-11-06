@@ -1,10 +1,13 @@
-from rest_framework import generics, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, status, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from .models import Post, Like, Comment, CommentLike, SharedPost
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+from .models import Post, Like, Comment, CommentLike, SharedPost, Hashtag, PostHashtag
 from .serializers import (
     PostSerializer, PostCreateSerializer, CommentSerializer,
     SharePostSerializer, SharedPostSerializer
@@ -52,6 +55,23 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ['PUT', 'PATCH']:
             return PostCreateSerializer
         return PostSerializer
+    
+    def perform_update(self, serializer):
+        """Actualizar post y reprocesar hashtags"""
+        from .hashtags import process_hashtags_for_post
+        
+        post = serializer.save()
+        # Reprocesar hashtags cuando se actualiza el contenido
+        process_hashtags_for_post(post)
+        return post
+    
+    def perform_destroy(self, instance):
+        """Eliminar post y decrementar contadores de hashtags"""
+        from .hashtags import remove_hashtags_from_post
+        
+        # Eliminar hashtags asociados
+        remove_hashtags_from_post(instance)
+        instance.delete()
 
 
 class UserPostsView(generics.ListAPIView):
@@ -78,9 +98,105 @@ def like_post(request, post_id):
     else:
         like.delete()
         return Response(
-            {'message': 'Post unliked', 'liked': False}, 
+            {'message': 'Comment unliked', 'liked': False}, 
             status=status.HTTP_200_OK
         )
+
+
+class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para listar y buscar hashtags
+    - list: Lista todos los hashtags ordenados por uso
+    - retrieve: Detalle de un hashtag por slug
+    - trending: Top hashtags de las últimas 24 horas
+    - posts: Posts asociados a un hashtag
+    """
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        queryset = Hashtag.objects.all()
+        
+        # Filtro por búsqueda
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        
+        return queryset.order_by('-usage_count', '-updated_at')
+    
+    def list(self, request, *args, **kwargs):
+        """Lista de hashtags con paginación"""
+        queryset = self.get_queryset()[:50]  # Limitar a top 50
+        
+        data = [
+            {
+                'id': hashtag.id,
+                'name': hashtag.name,
+                'slug': hashtag.slug,
+                'usage_count': hashtag.usage_count,
+                'created_at': hashtag.created_at,
+                'updated_at': hashtag.updated_at
+            }
+            for hashtag in queryset
+        ]
+        
+        return Response(data)
+    
+    def retrieve(self, request, slug=None, *args, **kwargs):
+        """Detalle de un hashtag específico"""
+        hashtag = get_object_or_404(Hashtag, slug=slug)
+        
+        return Response({
+            'id': hashtag.id,
+            'name': hashtag.name,
+            'slug': hashtag.slug,
+            'usage_count': hashtag.usage_count,
+            'created_at': hashtag.created_at,
+            'updated_at': hashtag.updated_at
+        })
+    
+    @action(detail=False, methods=['get'])
+    def trending(self, request):
+        """Top hashtags de las últimas 24 horas"""
+        yesterday = timezone.now() - timedelta(days=1)
+        
+        # Hashtags usados en las últimas 24 horas
+        trending_hashtags = Hashtag.objects.filter(
+            posts__created_at__gte=yesterday
+        ).annotate(
+            recent_count=Count('posts', filter=Q(posts__created_at__gte=yesterday))
+        ).order_by('-recent_count', '-usage_count')[:10]
+        
+        data = [
+            {
+                'id': hashtag.id,
+                'name': hashtag.name,
+                'slug': hashtag.slug,
+                'usage_count': hashtag.usage_count,
+                'recent_count': hashtag.recent_count,
+                'created_at': hashtag.created_at
+            }
+            for hashtag in trending_hashtags
+        ]
+        
+        return Response(data)
+    
+    @action(detail=True, methods=['get'])
+    def posts(self, request, slug=None):
+        """Posts asociados a un hashtag"""
+        hashtag = get_object_or_404(Hashtag, slug=slug)
+        
+        # Obtener posts asociados al hashtag
+        post_ids = PostHashtag.objects.filter(
+            hashtag=hashtag
+        ).values_list('post_id', flat=True)
+        
+        posts = Post.objects.filter(
+            id__in=post_ids
+        ).select_related('author').order_by('-created_at')
+        
+        serializer = PostSerializer(posts, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
