@@ -5,12 +5,15 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 import notificationService from "../services/notificationService";
 
 const NotificationCenter = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
@@ -220,8 +223,12 @@ const NotificationCenter = () => {
         onHoverStart={() => setIsHovering(true)}
         className={`relative p-2 rounded-full transition-all duration-300 ${
           isConnected
-            ? "text-primary-500 hover:text-red-500 hover:bg-red-50"
-            : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+            ? isDark
+              ? "text-primary-400 hover:text-red-400 hover:bg-slate-800"
+              : "text-primary-500 hover:text-red-500 hover:bg-red-50"
+            : isDark
+              ? "text-slate-400 hover:text-red-400 hover:bg-slate-800"
+              : "text-gray-400 hover:text-red-500 hover:bg-red-50"
         }`}
         title={isConnected ? "Notificaciones (Tiempo real)" : "Notificaciones"}
         animate={isHovering ? {
