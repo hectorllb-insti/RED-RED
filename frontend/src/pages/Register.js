@@ -1,15 +1,22 @@
 import { motion } from "framer-motion";
 import { Heart, Lock, Mail, MessageCircle, Sparkles, User, UserPlus, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
   const { register: registerUser } = useAuth();
+  const { changeTheme } = useTheme();
   const navigate = useNavigate();
+
+  // Force light mode on register page
+  useEffect(() => {
+    changeTheme("light");
+  }, []);
   const {
     register,
     handleSubmit,

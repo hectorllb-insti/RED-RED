@@ -29,6 +29,7 @@ const Messages = () => {
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const loadMessagesAbortController = useRef(null);
 
   // Obtener lista de conversaciones
   const {
@@ -203,29 +204,87 @@ const Messages = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (user && !socketService.isConnected()) {
+    let isInitialConnection = true;
+    
+    // Verificar si el socket ya está conectado al montar el componente
+    if (user) {
       const token = localStorage.getItem("access_token");
       if (token) {
-        socketService.connect(token);
+        if (socketService.isConnected()) {
+          // Si ya está conectado, asegurar que isReconnecting esté en false
+          setIsReconnecting(false);
+          isInitialConnection = false;
+        } else {
+          // Sincronizar el estado de reconexión con el servicio
+          setIsReconnecting(socketService.getIsReconnecting());
+          // Si no está conectado ni reconectando, intentar conectar
+          if (!socketService.getIsReconnecting()) {
+            socketService.connect(token);
+          }
+        }
       }
     }
 
-    socketService.on("reconnecting", (data) => {
+    // Listener para reconexión - mostrar estado y notificación
+    const handleReconnecting = (data) => {
       setIsReconnecting(true);
-      toast.loading(`Reconectando... (${data.attempt}/${data.maxAttempts})`, {
-        id: "reconnecting",
+      const message = selectedChat 
+        ? `Reconectando al chat con ${selectedChat.other_user?.full_name || 'usuario'}... (${data.attempt}/${data.maxAttempts})`
+        : `Reconectando al chat... (${data.attempt}/${data.maxAttempts})`;
+      
+      toast.loading(message, {
+        id: 'reconnecting-toast',
+        duration: Infinity,
       });
-    });
+    };
 
-    socketService.on("connect", () => {
+    // Listener para conexión exitosa - mostrar notificación
+    const handleConnect = () => {
+      const wasReconnecting = isReconnecting;
       setIsReconnecting(false);
-      toast.dismiss("reconnecting");
-      toast.success("Conectado al chat", { duration: 2000 });
-    });
+      
+      // Solo mostrar toast si estábamos reconectando (no en la conexión inicial)
+      if (wasReconnecting && !isInitialConnection) {
+        toast.dismiss('reconnecting-toast');
+        const message = selectedChat
+          ? `Reconectado al chat con ${selectedChat.other_user?.full_name || 'usuario'}`
+          : 'Conectado al chat';
+        
+        toast.success(message);
+      }
+      
+      // Marcar que ya no es la conexión inicial
+      isInitialConnection = false;
+    };
 
-    socketService.on("disconnect", () => {
-      toast.error("Desconectado del chat", { duration: 3000 });
-    });
+    // Listener para desconexión - mostrar notificación solo si no va a reconectar
+    const handleDisconnect = () => {
+      // Solo mostrar notificación si no se va a intentar reconectar
+      // (el estado de reconexión se actualizará si es necesario)
+      setTimeout(() => {
+        if (!socketService.getIsReconnecting()) {
+          toast.dismiss('reconnecting-toast');
+          toast.error('Desconectado del chat', {
+            duration: 3000,
+          });
+        }
+      }, 100); // Pequeño delay para permitir que se actualice el estado de reconexión
+    };
+
+    socketService.on("reconnecting", handleReconnecting);
+    socketService.on("connect", handleConnect);
+    socketService.on("disconnect", handleDisconnect);
+
+    // Listener para cuando se alcanza el máximo de intentos de reconexión
+    const handleMaxReconnectAttempts = () => {
+      setIsReconnecting(false);
+      toast.dismiss('reconnecting-toast');
+      toast.error('No se pudo reconectar al chat. Por favor, recarga la página.', {
+        duration: 5000,
+      });
+    };
+
+    socketService.on("max_reconnect_attempts_reached", handleMaxReconnectAttempts);
 
     // Escuchar actualizaciones de conversaciones (nuevos mensajes)
     socketService.on("conversation_update", (data) => {
@@ -310,12 +369,80 @@ const Messages = () => {
     });
 
     return () => {
-      socketService.listeners.delete("reconnecting");
-      socketService.listeners.delete("connect");
-      socketService.listeners.delete("disconnect");
-      socketService.offProfileUpdate();
+      socketService.offMessage();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
-  }, [user, selectedChat, queryClient]);
+  }, [selectedChat, user.id, markAsRead, queryClient]);
+
+  const loadMessages = async (chatId, page = 1) => {
+    try {
+      // Cancelar la petición anterior si existe
+      if (loadMessagesAbortController.current) {
+        loadMessagesAbortController.current.abort();
+        loadMessagesAbortController.current = null;
+        // Pequeño delay para asegurar que la cancelación se complete
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      
+      // Crear un nuevo AbortController para esta petición
+      const controller = new AbortController();
+      loadMessagesAbortController.current = controller;
+      
+      if (page === 1) {
+        setMessages([]);
+        setCurrentPage(1);
+        setHasMoreMessages(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      const response = await api.get(
+        `/chat/chats/${chatId}/messages/?page=${page}`,
+        { signal: controller.signal }
+      );
+      
+      // Verificar que esta petición no fue cancelada
+      if (controller.signal.aborted) {
+        return;
+      }
+      
+      const messagesList = response.data.results || response.data || [];
+
+      // Si es la primera página, reemplazar. Si no, agregar al principio
+      if (page === 1) {
+        setMessages(messagesList.reverse());
+      } else {
+        setMessages((prev) => [...messagesList.reverse(), ...prev]);
+      }
+
+      // Verificar si hay más mensajes
+      setHasMoreMessages(!!response.data.next);
+      setCurrentPage(page);
+    } catch (error) {
+      // Manejar error 404 (página no encontrada) como "no hay más mensajes"
+      if (error.response && error.response.status === 404) {
+        setHasMoreMessages(false);
+        return;
+      }
+
+      // No mostrar error si es una cancelación
+      const isCanceled = 
+        error.code === 'ERR_CANCELED' || 
+        error.name === 'CanceledError' ||
+        error.name === 'AbortError' ||
+        error.message?.includes('cancel') ||
+        error.message?.includes('abort');
+      
+      if (!isCanceled) {
+        console.error("Error loading messages:", error);
+        toast.error("Error al cargar mensajes");
+      }
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedChat) {
@@ -324,6 +451,12 @@ const Messages = () => {
 
       // Unirse a la sala del chat
       socketService.joinRoom(selectedChat.id);
+      
+      // Mostrar notificación de conexión al chat (con ID único para evitar duplicados)
+      const chatName = selectedChat.other_user?.full_name || selectedChat.other_user?.username || 'Usuario';
+      toast.success(`Conectado al chat con ${chatName}`, {
+        id: 'chat-connection',
+      });
 
       // Limpiar listeners previos para evitar duplicación
       socketService.offMessage();
@@ -415,54 +548,17 @@ const Messages = () => {
 
       const markReadTimer = setTimeout(() => markAsRead(selectedChat.id), 50);
 
-      return () => clearTimeout(markReadTimer);
+      return () => {
+        clearTimeout(markReadTimer);
+      };
     }
-
-    return () => {
-      socketService.offMessage();
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, [selectedChat, user.id, markAsRead]);
-
-  const loadMessages = async (chatId, page = 1) => {
-    try {
-      if (page === 1) {
-        setMessages([]);
-        setCurrentPage(1);
-        setHasMoreMessages(true);
-      } else {
-        setIsLoadingMore(true);
-      }
-
-      const response = await api.get(
-        `/chat/chats/${chatId}/messages/?page=${page}`
-      );
-      const messagesList = response.data.results || response.data || [];
-
-      // Si es la primera página, reemplazar. Si no, agregar al principio
-      if (page === 1) {
-        setMessages(messagesList.reverse());
-      } else {
-        setMessages((prev) => [...messagesList.reverse(), ...prev]);
-      }
-
-      // Verificar si hay más mensajes
-      setHasMoreMessages(!!response.data.next);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error("Error loading messages:", error);
-      toast.error("Error al cargar mensajes");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+  }, [selectedChat, user.id, markAsRead, queryClient]);
 
   // Manejar scroll para cargar mensajes antiguos
   const handleScroll = useCallback(() => {
     const container = messagesContainerRef.current;
-    if (!container || isLoadingMore || !hasMoreMessages) return;
+    // Añadido: !messages.length para evitar cargar página 2 si no hay mensajes cargados aún
+    if (!container || isLoadingMore || !hasMoreMessages || messages.length === 0) return;
 
     // Si el usuario scrollea hasta arriba (con un margen de 50px)
     if (container.scrollTop < 50) {
@@ -475,7 +571,7 @@ const Messages = () => {
         });
       });
     }
-  }, [selectedChat, currentPage, isLoadingMore, hasMoreMessages]);
+  }, [selectedChat, currentPage, isLoadingMore, hasMoreMessages, messages.length]);
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -699,58 +795,72 @@ const Messages = () => {
               );
             }
 
-            return filteredConvs.map((conversation) => (
-              <button
-                key={conversation.id}
-                onClick={() => {
-                  setSelectedChat(conversation);
-                  if (conversation.unread_count > 0) {
-                    markAsRead(conversation.id);
-                  }
-                }}
-                className={`w-full p-3 text-left hover:bg-primary-50/50 border-b border-gray-100 transition-all ${
-                  selectedChat?.id === conversation.id
-                    ? "bg-gradient-to-r from-primary-50 to-purple-50 border-l-4 border-l-primary-600"
-                    : "border-l-4 border-l-transparent"
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <ChatAvatar
-                      src={conversation.other_user?.profile_picture}
-                      alt={conversation.other_user?.full_name || "Usuario"}
-                      size="sm"
-                      updateKey={conversation.other_user?._profileUpdated}
-                    />
-                    {conversation.unread_count > 0 &&
-                      selectedChat?.id !== conversation.id && (
+            return filteredConvs.map((conversation) => {
+              const isSelected = selectedChat?.id === conversation.id;
+              return (
+                <button
+                  key={conversation.id}
+                  onClick={() => {
+                    setSelectedChat(conversation);
+                    if (conversation.unread_count > 0) {
+                      markAsRead(conversation.id);
+                    }
+                  }}
+                  className={`w-full p-3 text-left hover:bg-primary-50/50 dark:hover:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 transition-all ${
+                    isSelected
+                      ? "bg-gradient-to-r from-primary-50 to-purple-50 border-l-4 border-l-primary-600"
+                      : "border-l-4 border-l-transparent"
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <ChatAvatar
+                        src={conversation.other_user?.profile_picture}
+                        alt={conversation.other_user?.full_name || "Usuario"}
+                        size="sm"
+                        updateKey={conversation.other_user?._profileUpdated}
+                      />
+                      {conversation.unread_count > 0 && !isSelected && (
                         <div className="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-pink-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
                           {conversation.unread_count}
                         </div>
                       )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`font-semibold truncate text-sm ${
+                          isSelected
+                            ? "text-gray-900"
+                            : "text-gray-900 dark:text-white"
+                        }`}
+                      >
+                        {conversation.other_user?.full_name ||
+                          "Usuario desconocido"}
+                      </p>
+                      <p
+                        className={`text-xs truncate ${
+                          isSelected
+                            ? "text-gray-500"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {conversation.last_message?.content || "Sin mensajes"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate text-sm">
-                      {conversation.other_user?.full_name ||
-                        "Usuario desconocido"}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {conversation.last_message?.content || "Sin mensajes"}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            ));
+                </button>
+              );
+            });
           })()}
         </div>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50/50 to-white">
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50/50 to-white dark:from-slate-900 dark:to-slate-900">
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-white via-primary-50/20 to-white z-10 shadow-sm">
+            <div className="p-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-white via-primary-50/20 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 z-10 shadow-sm">
               <div className="flex items-center space-x-3">
                 <ChatAvatar
                   src={selectedChat.other_user?.profile_picture}
@@ -759,7 +869,7 @@ const Messages = () => {
                   updateKey={selectedChat.other_user?._profileUpdated}
                 />
                 <div>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-gray-900 dark:text-white">
                     {selectedChat.other_user?.full_name ||
                       "Usuario desconocido"}
                   </p>
@@ -839,7 +949,7 @@ const Messages = () => {
                     >
                       {/* Nombre del usuario (solo para mensajes de otros) */}
                       {!isOwnMessage && (
-                        <p className="text-xs text-gray-500 mb-1 px-2 font-medium">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-2 font-medium">
                           {messageObj.sender_username ||
                             selectedChat.other_user?.username ||
                             "Usuario"}
@@ -851,7 +961,7 @@ const Messages = () => {
                         className={`inline-block px-4 py-2.5 rounded-2xl shadow-sm ${
                           isOwnMessage
                             ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white"
-                            : "bg-white text-gray-900 border border-gray-200"
+                            : "bg-white text-gray-900 border border-gray-200 dark:bg-slate-700 dark:text-white dark:border-slate-600"
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">
@@ -861,7 +971,7 @@ const Messages = () => {
                         {/* Timestamp */}
                         <div
                           className={`flex items-center justify-end mt-1 ${
-                            isOwnMessage ? "text-primary-100" : "text-gray-500"
+                            isOwnMessage ? "text-primary-100" : "text-gray-500 dark:text-gray-400"
                           }`}
                         >
                           <p className="text-xs">
@@ -949,7 +1059,7 @@ const Messages = () => {
             {/* Message Input */}
             <form
               onSubmit={sendMessage}
-              className="p-4 border-t border-gray-200 bg-white"
+              className="p-4 border-t border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-700"
             >
               <div className="flex items-center space-x-2">
                 <input
@@ -960,7 +1070,7 @@ const Messages = () => {
                     handleTypingStart();
                   }}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-gray-50 focus:bg-white transition-all"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-gray-50 focus:bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:bg-slate-700 transition-all"
                 />
                 <button
                   type="submit"
@@ -973,7 +1083,7 @@ const Messages = () => {
             </form>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50">
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
             <div className="text-center">
               <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 text-lg font-semibold mb-1">

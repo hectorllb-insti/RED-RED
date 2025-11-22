@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import hashtagService from "../services/hashtagService";
 import "./TrendingPage.css";
 
+import { useTheme } from "../context/ThemeContext";
+
 /**
  * Página de exploración de hashtags y tendencias
  */
 const TrendingPage = () => {
   const navigate = useNavigate();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const [trendingHashtags, setTrendingHashtags] = useState([]);
   const [allHashtags, setAllHashtags] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,7 +77,7 @@ const TrendingPage = () => {
     : allHashtags;
 
   return (
-    <div className="trending-page">
+    <div className={`trending-page ${isDark ? "dark-mode" : ""}`}>
       <div className="trending-header">
         <h1>🔥 Explorar Tendencias</h1>
         <p>Descubre los hashtags más populares</p>
