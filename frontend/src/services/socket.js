@@ -11,14 +11,25 @@ class SocketService {
   }
 
   connect(token) {
-    if (!this.socket && token) {
+    // Si ya existe una conexión activa, no crear una nueva
+    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+      return this.socket;
+    }
+
+    if (token) {
+      console.log("🔌 Intentando conectar WebSocket...");
+      console.log("📝 Token presente:", token ? "Sí (longitud: " + token.length + ")" : "No");
+      
       // Conexión WebSocket segura - token enviado en query string
       const wsBaseUrl = process.env.REACT_APP_WS_URL || "ws://localhost:8000";
       const wsUrl = `${wsBaseUrl}/ws/chat/?token=${encodeURIComponent(token)}`;
+      console.log("🌐 URL WebSocket:", wsBaseUrl + "/ws/chat/?token=***");
+      
       this.socket = new WebSocket(wsUrl);
       this.token = token;
 
       this.socket.onopen = () => {
+        console.log("✅ WebSocket conectado exitosamente");
         // Enviar token de autenticación
         this.socket.send(
           JSON.stringify({
@@ -34,16 +45,34 @@ class SocketService {
       };
 
       this.socket.onclose = (event) => {
+        console.log("❌ WebSocket cerrado:", {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean
+        });
+        
         this.socket = null;
         this.triggerListener("disconnect");
 
-        // Intentar reconectar si no fue cierre manual
-        if (!event.wasClean && this.token) {
+        // Códigos de cierre que NO deberían intentar reconectar:
+        // 1000 = cierre normal
+        // 1008 = violación de política (probablemente autenticación fallida)
+        // 4000-4999 = códigos personalizados de la aplicación
+        const shouldNotReconnect = event.code === 1000 || 
+                                   event.code === 1008 || 
+                                   (event.code >= 4000 && event.code < 5000);
+
+        // Intentar reconectar si no fue cierre manual y el código permite reconexión
+        if (!event.wasClean && this.token && !shouldNotReconnect) {
           this.attemptReconnect();
+        } else if (shouldNotReconnect) {
+          console.warn("⚠️ No se intentará reconectar. Código de cierre:", event.code);
+          this.isReconnecting = false;
         }
       };
 
       this.socket.onerror = (error) => {
+        console.error("❌ Error en WebSocket:", error);
         this.triggerListener("connect_error", error);
       };
 
@@ -60,28 +89,37 @@ class SocketService {
   }
 
   attemptReconnect() {
-    if (
-      this.isReconnecting ||
-      this.reconnectAttempts >= this.maxReconnectAttempts
-    ) {
+    if (this.isReconnecting) {
+      console.log("⏳ Ya hay un intento de reconexión en curso");
+      return;
+    }
+
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error("❌ Máximo de intentos de reconexión alcanzado");
+      this.isReconnecting = false;
+      this.triggerListener("max_reconnect_attempts_reached");
       return;
     }
 
     this.isReconnecting = true;
+    console.log(`🔄 Intento de reconexión ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}`);
+    
     this.triggerListener("reconnecting", {
       attempt: this.reconnectAttempts + 1,
       maxAttempts: this.maxReconnectAttempts,
     });
 
-    // Calcular delay exponencial: 1s, 2s, 4s, 8s, 16s, 30s (max)
+    // Calcular delay exponencial: 0.5s, 1s, 2s, 4s, 8s, 15s (max)
     const delay = Math.min(
       this.reconnectDelay * Math.pow(2, this.reconnectAttempts),
       this.maxReconnectDelay
     );
 
+    console.log(`⏱️ Esperando ${delay}ms antes de reconectar...`);
+
     this.reconnectTimer = setTimeout(() => {
       this.reconnectAttempts++;
-      this.isReconnecting = false;
+      // No resetear isReconnecting aquí - se reseteará cuando la conexión sea exitosa
       this.connect(this.token);
     }, delay);
   }
@@ -242,6 +280,11 @@ class SocketService {
   // Verificar si está conectado
   isConnected() {
     return this.socket && this.socket.readyState === WebSocket.OPEN;
+  }
+
+  // Verificar si está reconectando
+  getIsReconnecting() {
+    return this.isReconnecting;
   }
 }
 
