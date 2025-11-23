@@ -54,17 +54,31 @@ export const addCacheBuster = (imageUrl, forceNew = false) => {
 export const getImageUrl = (imageUrl, forceBust = false) => {
   if (!imageUrl) return "/default-avatar.png";
 
+  // Definir la URL base del backend (sin /api)
+  // Si REACT_APP_API_URL está definido (ej: http://localhost:8000/api), quitamos /api
+  // Si no, usamos http://localhost:8000 por defecto
+  const API_URL = process.env.REACT_APP_API_URL 
+    ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, "") 
+    : "http://localhost:8000";
+
+  let finalUrl = imageUrl;
+
+  // Si la URL es relativa (empieza con /), agregar el dominio del backend
+  if (imageUrl.startsWith("/")) {
+    finalUrl = `${API_URL}${imageUrl}`;
+  }
+
   // Si es una imagen de perfil del backend, aplicar cache busting
   if (
     forceBust || 
-    imageUrl.includes("/media/") || 
-    imageUrl.includes("profile_pics/") ||
-    imageUrl.includes("cover_pics/")
+    finalUrl.includes("/media/") || 
+    finalUrl.includes("profile_pics/") ||
+    finalUrl.includes("cover_pics/")
   ) {
-    return addCacheBuster(imageUrl, false); // No forzar nuevo timestamp siempre
+    return addCacheBuster(finalUrl, false);
   }
 
-  return imageUrl;
+  return finalUrl;
 };
 
 /**

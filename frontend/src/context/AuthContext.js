@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
+import { useTheme } from "../context/ThemeContext";
 import { authService } from "../services/auth";
 import socketService from "../services/socket";
 import { tokenManager } from "../services/tokenManager";
@@ -44,6 +45,7 @@ const authReducer = (state, action) => {
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const { changeTheme } = useTheme();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -155,6 +157,13 @@ export const AuthProvider = ({ children }) => {
     authService.logout();
     socketService.disconnect();
     dispatch({ type: "LOGOUT" });
+    // Reset theme to light mode on logout
+    changeTheme("light");
+    // Also clear any persisted theme preference
+    localStorage.setItem("theme", "light");
+    // Ensure root class is updated
+    const root = window.document.documentElement;
+    root.classList.remove("dark");
   };
 
   const updateUser = (userData) => {

@@ -5,6 +5,7 @@ import {
   Heart,
   ImageIcon,
   MessageCircle,
+  Plus,
   Save,
   Share2,
   Trash2,
@@ -13,6 +14,8 @@ import {
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import CreateStoryModal from "../components/CreateStoryModal";
+import StoryViewerModal from "../components/StoryViewerModal";
 import EmptyState from "../components/EmptyState";
 import { TextWithHashtags } from "../components/HashtagLink";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -28,6 +31,12 @@ const Home = () => {
   const { actualTheme } = useTheme();
   const [newPost, setNewPost] = useState("");
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateStory, setShowCreateStory] = useState(false);
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [viewedStories, setViewedStories] = useState(() => {
+    const saved = localStorage.getItem("viewedStories");
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [editingPost, setEditingPost] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [showComments, setShowComments] = useState({});
@@ -37,6 +46,12 @@ const Home = () => {
   const queryClient = useQueryClient();
   const isDark = actualTheme === "dark";
 
+  // Obtener historias
+  const { data: stories } = useQuery("stories", async () => {
+    const response = await api.get("/stories/");
+    return response.data;
+  });
+
   // Obtener publicaciones del feed
   const { data: posts, isLoading } = useQuery(
     ["posts"],
@@ -45,8 +60,8 @@ const Home = () => {
       return response.data;
     },
     {
-      staleTime: 1 * 60 * 1000, // 1 minuto
-      refetchOnMount: true, // Recargar cuando vuelvas a la página
+      staleTime: 0, // Datos siempre considerados obsoletos para permitir recarga
+      refetchOnMount: "always", // Recargar siempre al montar el componente
       refetchOnWindowFocus: false, // No recargar al cambiar de pestaña
     }
   );
@@ -300,10 +315,21 @@ const Home = () => {
     setImagePreview(null);
   };
 
+  const handleStoryClick = (story) => {
+    setSelectedStory(story);
+    setViewedStories((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(story.id);
+      localStorage.setItem("viewedStories", JSON.stringify([...newSet]));
+      return newSet;
+    });
+  };
+
   // Auto-refresh cada 45 segundos para obtener nuevas publicaciones
   useEffect(() => {
     const autoRefreshInterval = setInterval(() => {
       queryClient.invalidateQueries("posts");
+      queryClient.invalidateQueries("stories");
     }, 45000);
 
     return () => clearInterval(autoRefreshInterval);
@@ -316,7 +342,84 @@ const Home = () => {
   }
 
   return (
-    <div className="space-y-4 mt-10">
+    <div className="space-y-6 mt-10">
+      {/* Stories Bar */}
+      <div
+        className={`rounded-2xl shadow-sm border p-4 overflow-x-auto no-scrollbar ${
+          isDark
+            ? "bg-slate-800/50 border-slate-700"
+            : "bg-white border-gray-200"
+        }`}
+      >
+        <div className="flex items-center gap-4 min-w-max">
+          {/* Create Story Button */}
+          <button
+            onClick={() => setShowCreateStory(true)}
+            className="flex flex-col items-center gap-2 group"
+          >
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full p-0.5 border-2 border-dashed border-gray-300 group-hover:border-primary-500 transition-colors">
+                <img
+                  src={user?.profile_picture || "/default-avatar.png"}
+                  alt="Tu historia"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+              <div className="absolute bottom-0 right-0 bg-primary-500 text-white rounded-full p-1 border-2 border-white dark:border-slate-800">
+                <Plus className="h-3 w-3" />
+              </div>
+            </div>
+            <span className="text-xs font-medium truncate w-16 text-center text-gray-900 dark:text-white">
+              Tu historia
+            </span>
+          </button>
+
+          {/* Stories List */}
+          {stories?.results?.map((story) => (
+            <button
+              key={story.id}
+              onClick={() => handleStoryClick(story)}
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div
+                className={`w-16 h-16 rounded-full p-0.5 ${
+                  viewedStories.has(story.id)
+                    ? "bg-gray-300 dark:bg-slate-600"
+                    : "bg-gradient-to-tr from-yellow-400 to-fuchsia-600"
+                } group-hover:scale-105 transition-transform`}
+              >
+                <div className="w-full h-full rounded-full border-2 border-white dark:border-slate-800 overflow-hidden">
+                  <img
+                    src={
+                      getImageUrl(story.author_profile_picture) ||
+                      "/default-avatar.png"
+                    }
+                    alt={story.author_first_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <span className="text-xs font-medium truncate w-16 text-center text-gray-900 dark:text-white">
+                {story.author_first_name}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Create Story Modal */}
+      {showCreateStory && (
+        <CreateStoryModal onClose={() => setShowCreateStory(false)} />
+      )}
+
+      {/* Story Viewer Modal */}
+      {selectedStory && (
+        <StoryViewerModal
+          story={selectedStory}
+          onClose={() => setSelectedStory(null)}
+        />
+      )}
+
       {/* Tarjeta de crear publicación */}
       <div
         className={`rounded-xl shadow-md border p-4 hover:shadow-lg transition-all duration-300 group ${
@@ -655,7 +758,7 @@ const Home = () => {
                   </button>
                   <button
                     onClick={() => handleSharePost(post.id)}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-24 ${
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
                       isDark
                         ? "bg-slate-700 text-slate-300 hover:bg-green-900/30 hover:text-green-400 hover:border-green-500/50 border border-slate-600"
                         : "bg-white text-gray-600 hover:bg-green-50 hover:text-green-600 hover:border-green-300 border border-gray-200"
@@ -663,7 +766,6 @@ const Home = () => {
                     title="Compartir publicación"
                   >
                     <Share2 className="h-4 w-4" />
-                    <span className="font-medium">Compartir</span>
                   </button>
                 </div>
                 <div
@@ -804,198 +906,148 @@ const CommentsSection = ({
 
         return { previousComments };
       },
-      onSuccess: (data, commentId) => {
-        // Confirmar el estado con el servidor (solo actualizar is_liked, mantener el contador)
-        queryClient.setQueryData(["comments", postId], (old) => {
-          if (!old) return old;
-          return old.map((comment) => {
-            if (comment.id === commentId) {
-              return {
-                ...comment,
-                is_liked: data.liked,
-              };
-            }
-            return comment;
-          });
-        });
+      onError: (err, newTodo, context) => {
+        queryClient.setQueryData(
+          ["comments", postId],
+          context.previousComments
+        );
       },
-      onError: (err, commentId, context) => {
-        // Revertir en caso de error
-        if (context?.previousComments) {
-          queryClient.setQueryData(
-            ["comments", postId],
-            context.previousComments
-          );
-        }
+      onSettled: () => {
+        queryClient.invalidateQueries(["comments", postId]);
       },
     }
   );
 
-  const handleCommentLike = (commentId) => {
+  const handleLikeComment = (commentId) => {
     likeCommentMutation.mutate(commentId);
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 text-center">
+        <LoadingSpinner variant="dots" text="Cargando comentarios..." />
+      </div>
+    );
+  }
 
   return (
     <div
       className={`border-t ${
-        isDark
-          ? "border-slate-700 bg-slate-800/30"
-          : "border-gray-100 bg-gray-50/30"
+        isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-100 bg-gray-50/30"
       }`}
     >
-      {/* Formulario para nuevo comentario */}
-      <div
-        className={`p-4 border-b ${
-          isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"
-        }`}
-      >
-        <div className="flex space-x-3">
-          <img
-            className={`h-8 w-8 rounded-full object-cover flex-shrink-0 border ${
-              isDark ? "border-slate-600" : "border-gray-200"
-            }`}
-            src={
-              user?.profile_picture
-                ? getImageUrl(user.profile_picture)
-                : "/default-avatar.png"
-            }
-            alt={user?.full_name || "Tu perfil"}
-            onError={(e) => {
-              e.target.src = "/default-avatar.png";
-            }}
-          />
-          <div className="flex-1">
-            <textarea
-              value={newComment}
-              onChange={(e) => onCommentChange(postId, e.target.value)}
-              placeholder="Escribe un comentario..."
-              className={`w-full p-3 border rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all ${
-                isDark
-                  ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
-                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
-              }`}
-              rows="2"
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => onCommentSubmit(postId)}
-                disabled={!newComment.trim() || isSubmitting}
-                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-medium rounded-lg hover:from-primary-700 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
-              >
-                {isSubmitting ? "Enviando..." : "Comentar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Lista de comentarios */}
-      <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
-        {isLoading ? (
-          <LoadingSpinner variant="pulse" size="sm" />
-        ) : (
-          <div className="space-y-3">
-            {comments && comments.length > 0 ? (
-              comments.map((comment, index) => (
-                <div
-                  key={comment.id}
-                  className="flex space-x-3 group"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <img
-                    className={`h-8 w-8 rounded-full object-cover flex-shrink-0 border ${
-                      isDark ? "border-slate-600" : "border-gray-200"
+      <div className="p-4 space-y-4">
+        {/* Lista de comentarios */}
+        <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+          {comments?.length > 0 ? (
+            comments.map((comment) => (
+              <div key={comment.id} className="flex gap-3 group">
+                <img
+                  className="h-8 w-8 rounded-full object-cover ring-1 ring-gray-200"
+                  src={
+                    getImageUrl(comment.author_profile_picture) ||
+                    "/default-avatar.png"
+                  }
+                  alt={comment.author_username}
+                />
+                <div className="flex-1">
+                  <div
+                    className={`rounded-2xl px-3 py-2 ${
+                      isDark ? "bg-slate-700" : "bg-white border border-gray-200"
                     }`}
-                    src={
-                      comment.author_profile_picture
-                        ? getImageUrl(comment.author_profile_picture)
-                        : "/default-avatar.png"
-                    }
-                    alt={comment.author_username || "Usuario"}
-                    onError={(e) => {
-                      e.target.src = "/default-avatar.png";
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={`rounded-xl p-3 border transition-all ${
-                        isDark
-                          ? "bg-slate-700 border-slate-600 group-hover:border-slate-500"
-                          : "bg-gray-50 border-gray-200 group-hover:border-gray-300"
-                      }`}
-                    >
-                      <p
-                        className={`font-semibold text-sm ${
-                          isDark ? "text-slate-100" : "text-gray-900"
-                        }`}
-                      >
-                        {comment.author_username}
-                      </p>
-                      <div
-                        className={`text-sm mt-1 break-words ${
-                          isDark ? "text-slate-300" : "text-gray-700"
-                        }`}
-                      >
-                        <TextWithHashtags text={comment.content} />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2 px-2">
-                      <button
-                        onClick={() => handleCommentLike(comment.id)}
-                        className={`like-button flex items-center gap-1 text-xs font-medium transition-all w-10 ${
-                          comment.is_liked
-                            ? isDark
-                              ? "text-red-400"
-                              : "text-red-500"
-                            : isDark
-                            ? "text-slate-400 hover:text-red-400"
-                            : "text-gray-500 hover:text-red-500"
-                        }`}
-                      >
-                        <Heart
-                          className={`h-3.5 w-3.5 ${
-                            comment.is_liked ? "fill-current" : ""
-                          }`}
-                        />
-                        <span>{comment.likes_count || 0}</span>
-                      </button>
+                  >
+                    <div className="flex items-center justify-between mb-1">
                       <span
-                        className={`text-xs ${
-                          isDark ? "text-slate-400" : "text-gray-400"
+                        className={`font-bold text-xs ${
+                          isDark ? "text-slate-200" : "text-gray-900"
                         }`}
                       >
-                        {formatDateShort(comment.created_at)} •{" "}
-                        {formatTime(comment.created_at)}
+                        {comment.author_first_name} {comment.author_last_name}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatDateShort(comment.created_at)}
                       </span>
                     </div>
+                    <p
+                      className={`text-sm ${
+                        isDark ? "text-slate-300" : "text-gray-700"
+                      }`}
+                    >
+                      <TextWithHashtags text={comment.content} />
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 mt-1 ml-2">
+                    <button
+                      onClick={() => handleLikeComment(comment.id)}
+                      className={`text-xs font-medium flex items-center gap-1 transition-colors ${
+                        comment.is_liked
+                          ? "text-red-500"
+                          : isDark
+                          ? "text-slate-400 hover:text-red-400"
+                          : "text-gray-500 hover:text-red-500"
+                      }`}
+                    >
+                      <Heart
+                        className={`h-3 w-3 ${
+                          comment.is_liked ? "fill-current" : ""
+                        }`}
+                      />
+                      {comment.likes_count > 0 && (
+                        <span>{comment.likes_count}</span>
+                      )}
+                      <span>Me gusta</span>
+                    </button>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <MessageCircle
-                  className={`h-12 w-12 mx-auto mb-3 ${
-                    isDark ? "text-slate-600" : "text-gray-300"
-                  }`}
-                />
-                <p
-                  className={`text-sm font-medium ${
-                    isDark ? "text-slate-400" : "text-gray-500"
-                  }`}
-                >
-                  No hay comentarios aún
-                </p>
-                <p
-                  className={`text-xs mt-1 ${
-                    isDark ? "text-slate-500" : "text-gray-400"
-                  }`}
-                >
-                  ¡Sé el primero en comentar!
-                </p>
               </div>
-            )}
+            ))
+          ) : (
+            <p className="text-center text-gray-500 text-sm py-2">
+              No hay comentarios aún. ¡Sé el primero!
+            </p>
+          )}
+        </div>
+
+        {/* Input nuevo comentario */}
+        <div className="flex items-center gap-2 pt-2">
+          <img
+            className="h-8 w-8 rounded-full object-cover"
+            src={user?.profile_picture || "/default-avatar.png"}
+            alt={user?.full_name}
+          />
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => onCommentChange(postId, e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  onCommentSubmit(postId);
+                }
+              }}
+              placeholder="Escribe un comentario..."
+              className={`w-full pl-4 pr-10 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
+                isDark
+                  ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 border"
+              }`}
+            />
+            <button
+              onClick={() => onCommentSubmit(postId)}
+              disabled={!newComment || !newComment.trim() || isSubmitting}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-primary-600 hover:bg-primary-50 rounded-full transition-colors disabled:opacity-50 disabled:hover:bg-transparent"
+            >
+              <svg
+                className="h-4 w-4 transform rotate-90"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

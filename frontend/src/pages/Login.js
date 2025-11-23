@@ -9,7 +9,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -19,7 +19,13 @@ import { useTheme } from "../context/ThemeContext";
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const { actualTheme } = useTheme();
+  const { actualTheme, changeTheme } = useTheme();
+  
+  // Force light mode on login page
+  useEffect(() => {
+    changeTheme("light");
+  }, []);
+
   const isDark = actualTheme === "dark";
   const {
     register,
