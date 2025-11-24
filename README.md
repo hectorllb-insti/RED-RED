@@ -435,6 +435,35 @@ Mecanismo de seguridad que permite o restringe peticiones HTTP entre diferentes 
 
 ---
 
+## 🤖 Herramientas de Desarrollo
+
+### Code Review Agent
+
+RED-RED incluye un **agente de revisión de código** personalizado de GitHub Copilot que ayuda a mantener la calidad, seguridad y mejores prácticas del código.
+
+#### 🎯 Capacidades del Agente
+
+- **📋 Revisión de Código**: Análisis exhaustivo de cambios, identificación de errores lógicos
+- **🔒 Seguridad**: Detección de vulnerabilidades (SQL injection, XSS, CSRF, autenticación)
+- **♻️ Refactorización**: Identificación de code smells y mejoras arquitectónicas
+- **✨ Calidad**: Evaluación de legibilidad, tests, mantenibilidad y accesibilidad
+
+#### 💡 Cómo Usar
+
+En tus Pull Requests:
+```
+@copilot /review usando code-review-agent
+```
+
+En GitHub Copilot Chat:
+```
+@workspace /agent code-review-agent revisa este código
+```
+
+📚 **Documentación completa**: [.github/agents/README.md](.github/agents/README.md)
+
+---
+
 <div align="center">
 
 ## 💝 Creado con Amor
