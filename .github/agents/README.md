@@ -4,168 +4,116 @@ Este directorio contiene agentes personalizados de GitHub Copilot para el proyec
 
 ## 🤖 Agentes Disponibles
 
+### Backend Agent (`backend-agent.md`)
+
+Agente experto en Django, REST APIs, bases de datos y seguridad backend.
+
+**Especialidades:**
+- Django & Django REST Framework
+- API development y JWT authentication
+- Optimización de base de datos y queries
+- Django Channels y WebSockets
+- Testing con pytest
+
+**Uso:**
+```
+@workspace /agent backend-agent implementa endpoint POST /api/posts/ con validación
+```
+
+### Frontend Agent (`frontend-agent.md`)
+
+Agente experto en React, TypeScript, UI/UX y performance frontend.
+
+**Especialidades:**
+- React 18+ con TypeScript
+- TailwindCSS y componentes accesibles
+- Integración con APIs y WebSockets
+- Performance y optimización
+- Testing con Jest y React Testing Library
+
+**Uso:**
+```
+@workspace /agent frontend-agent crea componente PostCard con TypeScript
+```
+
 ### Code Review Agent (`code-review-agent.md`)
 
 Agente especializado en revisión de código, seguridad, refactorización y calidad del código.
 
-#### Capacidades
-
-1. **📋 Revisión de Código**
-   - Análisis exhaustivo de cambios de código
-   - Identificación de errores lógicos y casos límite
-   - Verificación de consistencia con patrones del proyecto
-   - Revisión de manejo de errores y logging
-
-2. **🔒 Detección de Vulnerabilidades de Seguridad**
-   - Escaneo de vulnerabilidades comunes (SQL injection, XSS, CSRF)
-   - Revisión de implementaciones de autenticación y autorización
-   - Verificación de validación y sanitización de entradas
-   - Detección de secretos expuestos
-   - Revisión de configuraciones CORS y seguridad de endpoints
-
-3. **♻️ Recomendaciones de Refactorización**
-   - Identificación de code smells
-   - Sugerencias de mejoras arquitectónicas
-   - Recomendaciones de patrones de diseño
-   - Optimizaciones de rendimiento
-
-4. **✨ Evaluación de Calidad del Código**
-   - Evaluación de legibilidad y convenciones
-   - Revisión de cobertura de tests
-   - Análisis de mantenibilidad
-   - Verificación de accesibilidad
-   - Revisión del uso de TypeScript
-
-#### Cómo Usar el Agente
-
-##### Opción 1: En Pull Requests (Recomendado)
-
-1. **Crear una Pull Request** en GitHub
-2. **Mencionar al agente** en un comentario:
-   ```
-   @copilot /review usando code-review-agent
-   ```
-3. **El agente analizará** todos los cambios y proporcionará feedback detallado
-
-##### Opción 2: En el Chat de GitHub Copilot
-
-1. **Abrir GitHub Copilot Chat** en VS Code o GitHub.com
-2. **Invocar al agente**:
-   ```
-   @workspace /agent code-review-agent revisa este código
-   ```
-
-##### Opción 3: Para Revisión Específica de Archivos
-
-```
-@workspace /agent code-review-agent revisa el archivo backend/apps/posts/views.py
-```
-
-#### Ejemplos de Uso
-
-##### Revisión General de PR
+**Uso:**
 ```
 @copilot /review usando code-review-agent
-
-Por favor, revisa todos los cambios en esta PR, enfocándote especialmente en:
-- Seguridad de la autenticación JWT
-- Validación de entradas de usuario
-- Optimización de queries de base de datos
 ```
 
-##### Revisión de Seguridad Específica
-```
-@workspace /agent code-review-agent
+## 🚀 Cómo Usar los Agentes
 
-Revisa el archivo backend/apps/authentication/views.py y verifica:
-- Que la implementación JWT sea segura
-- Que no haya vulnerabilidades de autenticación
-- Que los tokens se manejen correctamente
-```
+### Para Issues Nuevas
 
-##### Revisión de Calidad de Código
+**Backend:**
 ```
-@workspace /agent code-review-agent
-
-Analiza frontend/src/components/PostCard.tsx y sugiere:
-- Mejoras de rendimiento
-- Refactorizaciones para mejor legibilidad
-- Mejores prácticas de React y TypeScript
+@workspace /agent backend-agent implementa POST /api/posts/ con JWT auth
 ```
 
-#### Resultados Esperados
+**Frontend:**
+```
+@workspace /agent frontend-agent crea componente PostCard con tipos TypeScript
+```
 
-El agente proporcionará feedback estructurado en las siguientes categorías:
+**Full-stack (ambos agentes se coordinan):**
+```
+@workspace /agent backend-agent implementa API de notificaciones
+@workspace /agent frontend-agent integra notificaciones en tiempo real
+```
 
-- **✅ Fortalezas**: Aspectos bien implementados
-- **🔴 Problemas Críticos**: Deben ser corregidos (seguridad, bugs)
-- **🟡 Problemas Importantes**: Deberían ser corregidos (errores lógicos, validaciones)
-- **🔵 Sugerencias**: Considerar para mejoras (refactorización, optimización)
-- **📚 Oportunidades de Aprendizaje**: Mejores prácticas y recursos
+### Para Pull Requests
 
-## 🛠️ Stack Tecnológico Cubierto
+```
+@copilot /review usando code-review-agent
+```
 
-### Backend
-- Django 4.2+
-- Django REST Framework
-- Django Channels (WebSockets)
-- PostgreSQL / SQLite
-- Redis
-- JWT Authentication
+## 🔄 Coordinación entre Agentes
 
-### Frontend
-- React 18+
-- TypeScript 5+
-- TailwindCSS
-- Axios
-- React Router
+Los agentes se comunican mediante tags:
 
-### Herramientas
-- Git
-- pytest (Python testing)
-- Jest + React Testing Library
-- flake8 (Python linting)
-- ESLint (JavaScript/TypeScript linting)
+**Backend necesita Frontend:**
+```
+@frontend-agent Implementé POST /api/posts/
+Detalles del endpoint: [...]
+```
 
-## 📝 Mejores Prácticas para Usar el Agente
+**Frontend necesita Backend:**
+```
+@backend-agent Necesito endpoint GET /api/notifications/
+Con filtrado por usuario y paginación
+```
 
-1. **Usa el agente regularmente** en tus Pull Requests antes de solicitar revisión humana
-2. **Proporciona contexto** sobre lo que cambiaste y por qué
-3. **Sé específico** en tus preguntas para obtener mejor feedback
-4. **Revisa el feedback completo** antes de hacer cambios
-5. **Aprende de las sugerencias** para mejorar tu código futuro
-6. **Combina con revisión humana** para mejores resultados
+**Ambos trabajan en una feature:**
+1. Backend-agent implementa API
+2. Backend-agent documenta endpoint y taguea @frontend-agent
+3. Frontend-agent implementa UI usando el API
+4. Code-review-agent revisa la PR completa
 
-## 🔧 Configuración del Proyecto
+## 🛠️ Stack Tecnológico
 
-El agente está configurado específicamente para el proyecto RED-RED y conoce:
+**Backend**: Django 4.2+, DRF, Django Channels, PostgreSQL, Redis, JWT
+**Frontend**: React 18+, TypeScript 5+, TailwindCSS, Axios, React Router
+**Testing**: pytest, Jest, React Testing Library
+**Linting**: flake8, black, ESLint
 
-- Estructura del proyecto (frontend/backend separados)
-- Convenciones de código establecidas
-- Patrones arquitectónicos utilizados
-- Tecnologías y dependencias del proyecto
-- Requisitos de seguridad específicos
+## 📝 Mejores Prácticas
 
-## 📚 Recursos Adicionales
+1. Usa los agentes especializados (backend-agent, frontend-agent) para implementar features
+2. Usa code-review-agent para revisar PRs antes de merge
+3. Los agentes se coordinan mediante tags (@backend-agent, @frontend-agent)
+4. Proporciona contexto claro en cada solicitud
+5. Todos los cambios pasan por code-review-agent antes del merge
 
-- [Documentación de GitHub Copilot](https://docs.github.com/en/copilot)
-- [Guía de Seguridad del Proyecto](/SECURITY_REPORT.md)
-- [Estructura del Proyecto](/MODULE_STRUCTURE.md)
+## 📚 Recursos
+
 - [Documentación de API](/API_DOCUMENTATION.md)
-
-## 🤝 Contribuir
-
-Si encuentras formas de mejorar el agente:
-
-1. Abre un issue describiendo la mejora
-2. Envía una PR con cambios al archivo `code-review-agent.md`
-3. Documenta los cambios en este README
-
-## 📄 Licencia
-
-Este agente es parte del proyecto RED-RED y está bajo la misma licencia MIT del proyecto.
+- [Estructura del Proyecto](/MODULE_STRUCTURE.md)
+- [Guía de Seguridad](/SECURITY_REPORT.md)
 
 ---
 
-**Última actualización**: Noviembre 2024  
-**Mantenido por**: Equipo RED-RED
+**Última actualización**: Noviembre 2024
