@@ -96,24 +96,21 @@ const AdminDashboard = () => {
 
   return (
     <div
-      className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 ${
-        isDark ? "bg-slate-900" : "bg-gray-50"
-      }`}
+      className={`min-h-screen py-8  rounded-2xl px-4 sm:px-6 lg:px-8 ${isDark ? "bg-slate-900" : "bg-gray-50"
+        }`}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1
-            className={`text-3xl font-bold ${
-              isDark ? "text-slate-100" : "text-gray-900"
-            }`}
+            className={`text-3xl font-bold ${isDark ? "text-slate-100" : "text-gray-900"
+              }`}
           >
             Panel de Administración
           </h1>
           <p
-            className={`mt-2 text-sm ${
-              isDark ? "text-slate-400" : "text-gray-600"
-            }`}
+            className={`mt-2 text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+              }`}
           >
             Bienvenido, {user?.first_name}. Aquí puedes gestionar la plataforma.
           </p>
@@ -124,32 +121,28 @@ const AdminDashboard = () => {
           {statCards.map((stat, index) => (
             <div
               key={index}
-              className={`rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow ${
-                isDark
-                  ? "bg-slate-800 border-slate-700"
-                  : "bg-white border-gray-200"
-              }`}
+              className={`rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow ${isDark
+                ? "bg-slate-800 border-slate-700"
+                : "bg-white border-gray-200"
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p
-                    className={`text-sm font-medium ${
-                      isDark ? "text-slate-400" : "text-gray-600"
-                    }`}
+                    className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-gray-600"
+                      }`}
                   >
                     {stat.title}
                   </p>
                   <p
-                    className={`mt-2 text-3xl font-bold ${
-                      isDark ? "text-slate-100" : "text-gray-900"
-                    }`}
+                    className={`mt-2 text-3xl font-bold ${isDark ? "text-slate-100" : "text-gray-900"
+                      }`}
                   >
                     {stat.value.toLocaleString()}
                   </p>
                   <p
-                    className={`mt-2 text-xs ${
-                      isDark ? "text-slate-500" : "text-gray-500"
-                    }`}
+                    className={`mt-2 text-xs ${isDark ? "text-slate-500" : "text-gray-500"
+                      }`}
                   >
                     {stat.change}
                   </p>
@@ -166,64 +159,56 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Nuevos Usuarios */}
           <div
-            className={`rounded-xl shadow-sm border p-6 ${
-              isDark
-                ? "bg-slate-800 border-slate-700"
-                : "bg-white border-gray-200"
-            }`}
+            className={`rounded-xl shadow-sm border p-6 ${isDark
+              ? "bg-slate-800 border-slate-700"
+              : "bg-white border-gray-200"
+              }`}
           >
             <h3
-              className={`text-lg font-semibold mb-4 ${
-                isDark ? "text-slate-100" : "text-gray-900"
-              }`}
+              className={`text-lg font-semibold mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                }`}
             >
               Nuevos Usuarios
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span
-                  className={`text-sm ${
-                    isDark ? "text-slate-400" : "text-gray-600"
-                  }`}
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
                 >
                   Hoy
                 </span>
                 <span
-                  className={`text-sm font-semibold ${
-                    isDark ? "text-slate-200" : "text-gray-900"
-                  }`}
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
                 >
                   {stats.new_users_today}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span
-                  className={`text-sm ${
-                    isDark ? "text-slate-400" : "text-gray-600"
-                  }`}
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
                 >
                   Esta semana
                 </span>
                 <span
-                  className={`text-sm font-semibold ${
-                    isDark ? "text-slate-200" : "text-gray-900"
-                  }`}
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
                 >
                   {stats.new_users_week}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span
-                  className={`text-sm ${
-                    isDark ? "text-slate-400" : "text-gray-600"
-                  }`}
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
                 >
                   Este mes
                 </span>
                 <span
-                  className={`text-sm font-semibold ${
-                    isDark ? "text-slate-200" : "text-gray-900"
-                  }`}
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
                 >
                   {stats.new_users_month}
                 </span>
@@ -233,31 +218,57 @@ const AdminDashboard = () => {
 
           {/* Nuevos Posts */}
           <div
-            className={`rounded-xl shadow-sm border p-6 ${
-              isDark
-                ? "bg-slate-800 border-slate-700"
-                : "bg-white border-gray-200"
-            }`}
+            className={`rounded-xl shadow-sm border p-6 ${isDark
+              ? "bg-slate-800 border-slate-700"
+              : "bg-white border-gray-200"
+              }`}
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <h3
+              className={`text-lg font-semibold mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+            >
               Nuevos Posts
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Hoy</span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
+                >
+                  Hoy
+                </span>
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
+                >
                   {stats.new_posts_today}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Esta semana</span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
+                >
+                  Esta semana
+                </span>
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
+                >
                   {stats.new_posts_week}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Este mes</span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
+                >
+                  Este mes
+                </span>
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
+                >
                   {stats.new_posts_month}
                 </span>
               </div>
@@ -265,26 +276,58 @@ const AdminDashboard = () => {
           </div>
 
           {/* Roles */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div
+            className={`rounded-xl shadow-sm border p-6 ${isDark
+                ? "bg-slate-800 border-slate-700"
+                : "bg-white border-gray-200"
+              }`}
+          >
+            <h3
+              className={`text-lg font-semibold mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+            >
               Distribución de Roles
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Administradores</span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
+                >
+                  Administradores
+                </span>
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
+                >
                   {stats.admin_count}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Moderadores</span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
+                >
+                  Moderadores
+                </span>
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
+                >
                   {stats.moderator_count}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Usuarios</span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span
+                  className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"
+                    }`}
+                >
+                  Usuarios
+                </span>
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-slate-200" : "text-gray-900"
+                    }`}
+                >
                   {stats.user_count}
                 </span>
               </div>
@@ -292,8 +335,16 @@ const AdminDashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div
+            className={`rounded-xl shadow-sm border p-6 ${isDark
+                ? "bg-slate-800 border-slate-700"
+                : "bg-white border-gray-200"
+              }`}
+          >
+            <h3
+              className={`text-lg font-semibold mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                }`}
+            >
               Acciones Rápidas
             </h3>
             <div className="space-y-3">
@@ -305,7 +356,10 @@ const AdminDashboard = () => {
               </button>
               <button
                 onClick={() => navigate("/admin/logs")}
-                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                className={`w-full px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium ${isDark
+                    ? "bg-slate-600 hover:bg-slate-500"
+                    : "bg-gray-600 hover:bg-gray-700"
+                  }`}
               >
                 Ver Logs de Actividad
               </button>
