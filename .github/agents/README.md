@@ -149,9 +149,9 @@ El agente está configurado específicamente para el proyecto RED-RED y conoce:
 ## 📚 Recursos Adicionales
 
 - [Documentación de GitHub Copilot](https://docs.github.com/en/copilot)
-- [Guía de Seguridad del Proyecto](../../SECURITY_REPORT.md)
-- [Estructura del Proyecto](../../MODULE_STRUCTURE.md)
-- [Documentación de API](../../API_DOCUMENTATION.md)
+- [Guía de Seguridad del Proyecto](/SECURITY_REPORT.md)
+- [Estructura del Proyecto](/MODULE_STRUCTURE.md)
+- [Documentación de API](/API_DOCUMENTATION.md)
 
 ## 🤝 Contribuir
 

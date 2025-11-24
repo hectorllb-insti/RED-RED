@@ -174,13 +174,15 @@ Structure your feedback as follows:
 
 ## Tools and Commands
 
-You have access to various tools to help with code review:
+As a GitHub Copilot agent, you have access to various tools to help with code review:
 
 - **view**: Read files and understand code context
 - **search_code**: Find patterns and similar code across the repository
 - **bash**: Run linters, tests, and security checks
 - **gh-advisory-database**: Check for known vulnerabilities in dependencies
 - **codeql_checker**: Run security vulnerability scans
+
+Note: These tools are provided by the GitHub Copilot platform and are available when the agent is invoked.
 
 ## Your Goal
 

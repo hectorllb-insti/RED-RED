@@ -227,8 +227,8 @@ Recursos y mejores prácticas para el futuro
 
 - [Documentación Completa del Agente](.github/agents/README.md)
 - [Code Review Agent - Configuración](.github/agents/code-review-agent.md)
-- [Security Report del Proyecto](SECURITY_REPORT.md)
-- [Guía de Testing](APP_TESTING_GUIDE.md)
+- [Reporte de Seguridad del Proyecto](SECURITY_REPORT.md)
+- [Guía de Testing de la Aplicación](APP_TESTING_GUIDE.md)
 
 ## ⚡ Tips Avanzados
 

@@ -177,6 +177,10 @@ Sugiere refactorización para backend/apps/posts/serializers.py:
 
 **1. Extraer validación común**
 ```python
+# Imports necesarios
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 # Antes
 class PostSerializer(serializers.ModelSerializer):
     def validate_content(self, value):
