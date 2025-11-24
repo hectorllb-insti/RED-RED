@@ -182,6 +182,7 @@ const api = axios.create({
 });
 
 // Add JWT token to requests
+// Note: In production, prefer httpOnly cookies for better security
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -215,17 +216,27 @@ export const usePosts = () => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchPosts = async () => {
       try {
         const data = await postService.getPosts();
-        setPosts(data);
+        if (isMounted) {
+          setPosts(data);
+        }
       } catch (err) {
-        setError(err as Error);
+        if (isMounted) {
+          setError(err as Error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     fetchPosts();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return { posts, loading, error };
