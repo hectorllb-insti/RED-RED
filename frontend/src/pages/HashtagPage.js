@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TextWithHashtags } from "../components/HashtagLink";
+import { useTheme } from "../context/ThemeContext";
 import hashtagService from "../services/hashtagService";
 import "./HashtagPage.css";
 
@@ -10,6 +11,8 @@ import "./HashtagPage.css";
 const HashtagPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const [hashtag, setHashtag] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +78,7 @@ const HashtagPage = () => {
 
   if (loading) {
     return (
-      <div className="hashtag-page">
+      <div className={`hashtag-page ${isDark ? "dark-mode" : ""}`}>
         <div className="hashtag-loading">
           <div className="spinner"></div>
           <p>Cargando hashtag...</p>
@@ -86,7 +89,7 @@ const HashtagPage = () => {
 
   if (error || !hashtag) {
     return (
-      <div className="hashtag-page">
+      <div className={`hashtag-page ${isDark ? "dark-mode" : ""}`}>
         <div className="hashtag-error">
           <h2>❌ {error || "Hashtag no encontrado"}</h2>
           <button onClick={handleBackClick} className="back-button">
@@ -98,7 +101,7 @@ const HashtagPage = () => {
   }
 
   return (
-    <div className="hashtag-page">
+    <div className={`hashtag-page ${isDark ? "dark-mode" : ""}`}>
       {/* Header */}
       <div className="hashtag-header">
         <button onClick={handleBackClick} className="back-button">
