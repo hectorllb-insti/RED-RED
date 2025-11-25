@@ -200,7 +200,7 @@
 
 /* Tema oscuro */
 .dark-mode .hashtag-page {
-  color: #e7e9ea;
+  color: #f1f5f9;
 }
 
 .dark-mode .hashtag-header,
@@ -208,14 +208,14 @@
 .dark-mode .no-posts,
 .dark-mode .hashtag-loading,
 .dark-mode .hashtag-error {
-  background: #192734;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .dark-mode .hashtag-info h1,
 .dark-mode .post-author,
 .dark-mode .post-content {
-  color: #e7e9ea;
+  color: #f1f5f9;
 }
 
 .dark-mode .hashtag-meta,
@@ -223,19 +223,19 @@
 .dark-mode .post-date,
 .dark-mode .post-stats,
 .dark-mode .no-posts {
-  color: #8b98a5;
+  color: #94a3b8;
 }
 
 .dark-mode .post-stats {
-  border-top-color: #38444d;
+  border-top-color: #334155;
 }
 
 .dark-mode .back-button {
-  color: #1da1f2;
+  color: #60a5fa;
 }
 
 .dark-mode .back-button:hover {
-  background-color: rgba(29, 161, 242, 0.2);
+  background-color: rgba(96, 165, 250, 0.2);
 }
 
 /* Responsive */
