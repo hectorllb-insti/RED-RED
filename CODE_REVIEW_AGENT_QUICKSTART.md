@@ -286,4 +286,4 @@ Revisión final antes de deploy a producción:
 
 **¿Preguntas?** Abre un issue en el repositorio o consulta la [documentación completa](.github/agents/README.md).
 
-**Última actualización**: Noviembre 2024
+**Última actualización**: Noviembre 2025
