@@ -932,29 +932,36 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
               }}
             />
             <div className="flex-1 min-w-0">
+              {/* Nombre y fecha en la misma línea, encima del contenedor */}
+              <div className="flex items-center justify-between mb-1 px-1">
+                <p
+                  className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"
+                    }`}
+                >
+                  {comment.author_first_name && comment.author_last_name
+                    ? `${comment.author_first_name} ${comment.author_last_name}`
+                    : `@${comment.author_username || "usuario"}`}
+                </p>
+                <p
+                  className={`text-xs ${isDark ? "text-slate-400" : "text-gray-500"
+                    }`}
+                >
+                  {formatDateTime(comment.created_at)}
+                </p>
+              </div>
+              
+              {/* Contenedor del comentario solo con el texto */}
               <div
                 className={`rounded-lg p-3 shadow-sm ${isDark ? "bg-slate-800" : "bg-white"
                   }`}
               >
                 <p
-                  className={`font-medium text-sm ${isDark ? "text-slate-100" : "text-gray-900"
-                    }`}
-                >
-                  {comment.author_username}
-                </p>
-                <p
-                  className={`text-sm mt-1 ${isDark ? "text-slate-300" : "text-gray-800"
+                  className={`text-sm ${isDark ? "text-slate-300" : "text-gray-800"
                     }`}
                 >
                   {comment.content}
                 </p>
               </div>
-              <p
-                className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"
-                  }`}
-              >
-                {formatDateTime(comment.created_at)}
-              </p>
             </div>
           </div>
         ))}

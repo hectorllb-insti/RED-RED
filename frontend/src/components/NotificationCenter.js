@@ -256,11 +256,19 @@ const NotificationCenter = () => {
 
       {/* Notifications Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div className={`absolute right-0 mt-2 w-96 rounded-lg shadow-lg border z-[9998] ${
+          isDark
+            ? "bg-slate-800 border-slate-700"
+            : "bg-white border-gray-200"
+        }`}>
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <div className={`p-4 border-b flex items-center justify-between ${
+            isDark ? "border-slate-700" : "border-gray-200"
+          }`}>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className={`text-lg font-semibold ${
+                isDark ? "text-slate-100" : "text-gray-900"
+              }`}>
                 Notificaciones
               </h3>
               {isConnected && (
@@ -275,14 +283,22 @@ const NotificationCenter = () => {
                 <button
                   onClick={handleMarkAllRead}
                   disabled={markAllReadMutation.isLoading}
-                  className="text-sm text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                  className={`text-sm transition-colors ${
+                    isDark
+                      ? "text-primary-400 hover:text-primary-300"
+                      : "text-primary-600 hover:text-primary-700"
+                  } disabled:opacity-50`}
                 >
                   Marcar todas
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className={`p-1 transition-colors ${
+                  isDark
+                    ? "text-slate-400 hover:text-slate-300"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -296,17 +312,29 @@ const NotificationCenter = () => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500 mx-auto"></div>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <Bell className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <div className={`p-6 text-center ${
+                isDark ? "text-slate-400" : "text-gray-500"
+              }`}>
+                <Bell className={`h-12 w-12 mx-auto mb-3 ${
+                  isDark ? "text-slate-600" : "text-gray-300"
+                }`} />
                 <p>No tienes notificaciones</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className={`divide-y ${
+                isDark ? "divide-slate-700" : "divide-gray-100"
+              }`}>
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                      !notification.is_read ? "bg-primary-50" : ""
+                    className={`p-4 cursor-pointer transition-colors ${
+                      !notification.is_read
+                        ? isDark
+                          ? "bg-primary-900/20"
+                          : "bg-primary-50"
+                        : ""
+                    } ${
+                      isDark ? "hover:bg-slate-700" : "hover:bg-gray-50"
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -319,7 +347,9 @@ const NotificationCenter = () => {
                             alt={notification.actor.full_name}
                           />
                         ) : (
-                          <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                            isDark ? "bg-slate-700" : "bg-gray-200"
+                          }`}>
                             {getNotificationIcon(notification.type)}
                           </div>
                         )}
@@ -327,11 +357,15 @@ const NotificationCenter = () => {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className={`text-sm font-medium truncate ${
+                            isDark ? "text-slate-100" : "text-gray-900"
+                          }`}>
                             {notification.title}
                           </p>
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">
+                            <span className={`text-xs ${
+                              isDark ? "text-slate-400" : "text-gray-500"
+                            }`}>
                               {formatRelativeTime(notification.created_at)}
                             </span>
                             {!notification.is_read && (
@@ -340,7 +374,9 @@ const NotificationCenter = () => {
                           </div>
                         </div>
 
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className={`text-sm mt-1 ${
+                          isDark ? "text-slate-300" : "text-gray-600"
+                        }`}>
                           {notification.message}
                         </p>
 
@@ -349,7 +385,11 @@ const NotificationCenter = () => {
                           {notification.action_url && (
                             <Link
                               to={notification.action_url}
-                              className="text-xs text-primary-600 hover:text-primary-700"
+                              className={`text-xs transition-colors ${
+                                isDark
+                                  ? "text-primary-400 hover:text-primary-300"
+                                  : "text-primary-600 hover:text-primary-700"
+                              }`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               Ver detalles
@@ -362,7 +402,11 @@ const NotificationCenter = () => {
                                 notification.id
                               );
                             }}
-                            className="text-xs text-gray-400 hover:text-red-600"
+                            className={`text-xs transition-colors ${
+                              isDark
+                                ? "text-slate-400 hover:text-red-400"
+                                : "text-gray-400 hover:text-red-600"
+                            }`}
                           >
                             Eliminar
                           </button>
@@ -377,10 +421,16 @@ const NotificationCenter = () => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200">
+            <div className={`p-3 border-t ${
+              isDark ? "border-slate-700" : "border-gray-200"
+            }`}>
               <Link
                 to="/notifications"
-                className="block text-center text-sm text-primary-600 hover:text-primary-700"
+                className={`block text-center text-sm transition-colors ${
+                  isDark
+                    ? "text-primary-400 hover:text-primary-300"
+                    : "text-primary-600 hover:text-primary-700"
+                }`}
                 onClick={() => setIsOpen(false)}
               >
                 Ver todas las notificaciones
@@ -392,7 +442,7 @@ const NotificationCenter = () => {
 
       {/* Overlay to close dropdown */}
       {isOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 z-[9997]" onClick={() => setIsOpen(false)} />
       )}
     </div>
   );

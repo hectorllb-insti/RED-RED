@@ -806,9 +806,15 @@ const Messages = () => {
                       markAsRead(conversation.id);
                     }
                   }}
-                  className={`w-full p-3 text-left hover:bg-primary-50/50 dark:hover:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 transition-all ${
+                  className={`w-full p-3 text-left transition-all border-b ${
+                    isDark ? "border-b-slate-800" : "border-b-gray-100"
+                  } ${
+                    isDark ? "hover:bg-slate-800/50" : "hover:bg-primary-50/50"
+                  } ${
                     isSelected
-                      ? "bg-gradient-to-r from-primary-50 to-purple-50 border-l-4 border-l-primary-600"
+                      ? isDark
+                        ? "bg-gradient-to-r from-slate-800 to-slate-700 !border-l-4 !border-l-red-600"
+                        : "bg-gradient-to-r from-primary-50 to-purple-50 !border-l-4 !border-l-red-600"
                       : "border-l-4 border-l-transparent"
                   }`}
                 >
@@ -830,7 +836,9 @@ const Messages = () => {
                       <p
                         className={`font-semibold truncate text-sm ${
                           isSelected
-                            ? "text-gray-900"
+                            ? isDark
+                              ? "text-white"
+                              : "text-gray-900"
                             : "text-gray-900 dark:text-white"
                         }`}
                       >
@@ -840,7 +848,9 @@ const Messages = () => {
                       <p
                         className={`text-xs truncate ${
                           isSelected
-                            ? "text-gray-500"
+                            ? isDark
+                              ? "text-slate-300"
+                              : "text-gray-500"
                             : "text-gray-500 dark:text-gray-400"
                         }`}
                       >
@@ -1016,9 +1026,15 @@ const Messages = () => {
                     />
 
                     {/* Burbuja del indicador */}
-                    <div className="bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-3 rounded-2xl shadow-sm border border-gray-200">
+                    <div className={`px-5 py-3 rounded-2xl shadow-sm border ${
+                      isDark 
+                        ? "bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600" 
+                        : "bg-gradient-to-r from-gray-100 to-gray-200 border-gray-200"
+                    }`}>
                       <div className="flex items-center space-x-3">
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className={`text-sm font-medium ${
+                          isDark ? "text-slate-200" : "text-gray-700"
+                        }`}>
                           {typingUsers.length === 1
                             ? `${
                                 selectedChat.other_user?.full_name || "Usuario"

@@ -100,7 +100,7 @@ const Layout = ({ children }) => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
-        className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl border-b-2 shadow-sm ${
+        className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-2xl border-b-2 shadow-sm ${
           isDark
             ? "bg-slate-900/70 border-slate-700/60"
             : "bg-white/70 border-gray-300/60"
@@ -274,7 +274,11 @@ const Layout = ({ children }) => {
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <Search className="h-5 w-5 text-gray-400" />
                     </div>
-                    <div className="block w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-2xl bg-gray-50 text-gray-500 text-sm font-medium">
+                    <div className={`block w-full pl-12 pr-4 py-3 border-2 rounded-2xl text-sm font-medium ${
+                      isDark
+                        ? "border-slate-600 bg-slate-800 text-slate-400"
+                        : "border-gray-200 bg-gray-50 text-gray-500"
+                    }`}>
                       Buscar...
                     </div>
                   </div>
@@ -291,7 +295,11 @@ const Layout = ({ children }) => {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                         active
-                          ? "bg-red-50 text-red-700"
+                          ? isDark
+                            ? "bg-red-900/30 text-red-400"
+                            : "bg-red-50 text-red-700"
+                          : isDark
+                          ? "text-slate-300 hover:bg-slate-800"
                           : "text-gray-600 hover:bg-gray-50"
                       }`}
                     >
@@ -316,7 +324,11 @@ const Layout = ({ children }) => {
                           onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                             active
-                              ? "bg-indigo-50 text-indigo-700"
+                              ? isDark
+                                ? "bg-indigo-900/30 text-indigo-400"
+                                : "bg-indigo-50 text-indigo-700"
+                              : isDark
+                              ? "text-slate-300 hover:bg-slate-800"
                               : "text-gray-600 hover:bg-gray-50"
                           }`}
                         >
@@ -332,13 +344,17 @@ const Layout = ({ children }) => {
                   </>
                 )}
 
-                <hr className="my-2 border-gray-200" />
+                <hr className={`my-2 ${isDark ? "border-slate-700" : "border-gray-200"}`} />
 
                 {/* Perfil y configuración móvil */}
                 <Link
                   to="/settings"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isDark
+                      ? "text-slate-300 hover:bg-slate-800"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
                 >
                   <Settings className="h-5 w-5" />
                   Configuración
@@ -349,7 +365,11 @@ const Layout = ({ children }) => {
                     logout();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isDark
+                      ? "text-red-400 hover:bg-red-900/30"
+                      : "text-red-600 hover:bg-red-50"
+                  }`}
                 >
                   <LogOut className="h-5 w-5" />
                   Cerrar sesión

@@ -951,23 +951,28 @@ const CommentsSection = ({
                   alt={comment.author_username}
                 />
                 <div className="flex-1">
+                  {/* Nombre y fecha en la misma línea, encima del contenedor */}
+                  <div className="flex items-center justify-between mb-1 px-1">
+                    <span
+                      className={`font-bold text-sm ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {comment.author_first_name && comment.author_last_name
+                        ? `${comment.author_first_name} ${comment.author_last_name}`
+                        : `@${comment.author_username || "usuario"}`}
+                    </span>
+                    <span className={`text-xs ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                      {formatDateShort(comment.created_at)}
+                    </span>
+                  </div>
+                  
+                  {/* Contenedor del comentario solo con el texto */}
                   <div
                     className={`rounded-2xl px-3 py-2 ${
                       isDark ? "bg-slate-700" : "bg-white border border-gray-200"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span
-                        className={`font-bold text-xs ${
-                          isDark ? "text-slate-200" : "text-gray-900"
-                        }`}
-                      >
-                        {comment.author_first_name} {comment.author_last_name}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {formatDateShort(comment.created_at)}
-                      </span>
-                    </div>
                     <p
                       className={`text-sm ${
                         isDark ? "text-slate-300" : "text-gray-700"
