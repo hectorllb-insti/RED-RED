@@ -122,43 +122,52 @@ const CreateStoryModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div
-        className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100 ${
-          isDark
-            ? "bg-slate-900 border border-slate-700"
-            : "bg-white border border-gray-100"
-        }`}
-      >
-        {/* Header */}
+    <>
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] animate-in fade-in duration-200"
+        onClick={onClose}
+      ></div>
+      
+      {/* Modal Content */}
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 pointer-events-none">
         <div
-          className={`p-4 border-b flex items-center justify-between ${
+          onClick={(e) => e.stopPropagation()}
+          className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100 pointer-events-auto ${
             isDark
-              ? "border-slate-700 bg-slate-800/50"
-              : "border-gray-100 bg-gray-50/50"
+              ? "bg-slate-900 border border-slate-700"
+              : "bg-white border border-gray-100"
           }`}
         >
-          <h2
-            className={`text-lg font-bold ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
-            Crear Historia
-          </h2>
-          <button
-            onClick={onClose}
-            className={`p-2 rounded-full transition-colors ${
+          {/* Header */}
+          <div
+            className={`p-4 border-b flex items-center justify-between ${
               isDark
-                ? "hover:bg-slate-700 text-slate-400 hover:text-white"
-                : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+                ? "border-slate-700 bg-slate-800/50"
+                : "border-gray-100 bg-gray-50/50"
             }`}
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+            <h2
+              className={`text-lg font-bold ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Crear Historia
+            </h2>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-full transition-colors ${
+                isDark
+                  ? "hover:bg-slate-700 text-slate-400 hover:text-white"
+                  : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-        {/* Body */}
-        <div className="p-6">
+          {/* Body */}
+          <div className="p-6">
           <form onSubmit={handleCreateStory} className="space-y-6">
             {/* User Info */}
             <div className="flex items-center gap-3">
@@ -330,7 +339,8 @@ const CreateStoryModal = ({ onClose }) => {
           </form>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

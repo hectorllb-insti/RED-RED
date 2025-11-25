@@ -3,10 +3,13 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "react-query";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 
 const ProfileEdit = ({ onClose }) => {
   const { user, updateUser } = useAuth();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
@@ -160,22 +163,40 @@ const ProfileEdit = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
         {/* Overlay */}
         <div
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          className={`fixed inset-0 z-[9999] transition-opacity backdrop-blur-sm ${
+            isDark ? "bg-black/70" : "bg-gray-500/60"
+          }`}
           onClick={onClose}
         ></div>
 
         {/* Modal */}
-        <div className="relative inline-block w-full max-w-2xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+        <div
+          className={`relative z-[10000] inline-block w-full max-w-2xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform shadow-xl rounded-2xl ${
+            isDark
+              ? "bg-slate-900 border border-slate-700"
+              : "bg-white border border-gray-100"
+          }`}
+        >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-900">Editar Perfil</h3>
+            <h3
+              className={`text-2xl font-bold ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Editar Perfil
+            </h3>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className={`p-2 rounded-lg transition-colors ${
+                isDark
+                  ? "text-slate-400 hover:text-white hover:bg-slate-800"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <X className="h-5 w-5" />
             </button>
@@ -184,7 +205,11 @@ const ProfileEdit = ({ onClose }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cover Picture */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-slate-300" : "text-gray-700"
+                }`}
+              >
                 Imagen de portada
               </label>
               <div className="relative h-48 bg-gradient-to-r from-primary-400 to-primary-600 rounded-xl overflow-hidden">
@@ -220,10 +245,20 @@ const ProfileEdit = ({ onClose }) => {
 
             {/* Profile Picture */}
             <div className="relative -mt-20 ml-6 w-32">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-slate-300" : "text-gray-700"
+                }`}
+              >
                 Foto de perfil
               </label>
-              <div className="relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-white bg-gray-200">
+              <div
+                className={`relative w-32 h-32 rounded-full overflow-hidden ring-4 ${
+                  isDark
+                    ? "ring-slate-900 bg-slate-800"
+                    : "ring-white bg-gray-200"
+                }`}
+              >
                 {profilePicturePreview ? (
                   <img
                     src={profilePicturePreview}
@@ -232,7 +267,11 @@ const ProfileEdit = ({ onClose }) => {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <Camera className="h-8 w-8 text-gray-400" />
+                    <Camera
+                      className={`h-8 w-8 ${
+                        isDark ? "text-slate-600" : "text-gray-400"
+                      }`}
+                    />
                   </div>
                 )}
                 <input
@@ -256,7 +295,9 @@ const ProfileEdit = ({ onClose }) => {
               <div>
                 <label
                   htmlFor="first_name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className={`block text-sm font-medium mb-2 ${
+                    isDark ? "text-slate-300" : "text-gray-700"
+                  }`}
                 >
                   Nombre
                 </label>
@@ -266,7 +307,11 @@ const ProfileEdit = ({ onClose }) => {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                    isDark
+                      ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                  }`}
                   placeholder="Tu nombre"
                 />
               </div>
@@ -274,7 +319,9 @@ const ProfileEdit = ({ onClose }) => {
               <div>
                 <label
                   htmlFor="last_name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className={`block text-sm font-medium mb-2 ${
+                    isDark ? "text-slate-300" : "text-gray-700"
+                  }`}
                 >
                   Apellido
                 </label>
@@ -284,7 +331,11 @@ const ProfileEdit = ({ onClose }) => {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                    isDark
+                      ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                  }`}
                   placeholder="Tu apellido"
                 />
               </div>
@@ -293,7 +344,9 @@ const ProfileEdit = ({ onClose }) => {
             <div>
               <label
                 htmlFor="bio"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-slate-300" : "text-gray-700"
+                }`}
               >
                 Biografía
               </label>
@@ -304,10 +357,18 @@ const ProfileEdit = ({ onClose }) => {
                 onChange={handleChange}
                 rows="3"
                 maxLength="200"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-colors ${
+                  isDark
+                    ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                }`}
                 placeholder="Cuéntanos sobre ti..."
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p
+                className={`text-xs mt-1 ${
+                  isDark ? "text-slate-500" : "text-gray-500"
+                }`}
+              >
                 {formData.bio.length}/200 caracteres
               </p>
             </div>
@@ -315,7 +376,9 @@ const ProfileEdit = ({ onClose }) => {
             <div>
               <label
                 htmlFor="location"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-slate-300" : "text-gray-700"
+                }`}
               >
                 Ubicación
               </label>
@@ -325,7 +388,11 @@ const ProfileEdit = ({ onClose }) => {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                  isDark
+                    ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                }`}
                 placeholder="Ciudad, País"
               />
             </div>
@@ -333,7 +400,9 @@ const ProfileEdit = ({ onClose }) => {
             <div>
               <label
                 htmlFor="website"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-slate-300" : "text-gray-700"
+                }`}
               >
                 Sitio web
               </label>
@@ -343,7 +412,11 @@ const ProfileEdit = ({ onClose }) => {
                 name="website"
                 value={formData.website}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                  isDark
+                    ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                }`}
                 placeholder="https://tu-sitio.com"
               />
             </div>
@@ -351,7 +424,9 @@ const ProfileEdit = ({ onClose }) => {
             <div>
               <label
                 htmlFor="date_of_birth"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-slate-300" : "text-gray-700"
+                }`}
               >
                 Fecha de nacimiento
               </label>
@@ -361,16 +436,28 @@ const ProfileEdit = ({ onClose }) => {
                 name="date_of_birth"
                 value={formData.date_of_birth}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                  isDark
+                    ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                }`}
               />
             </div>
 
             {/* Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+            <div
+              className={`flex items-center justify-end gap-3 pt-4 border-t ${
+                isDark ? "border-slate-700" : "border-gray-200"
+              }`}
+            >
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                className={`px-6 py-2 rounded-lg transition-colors font-medium ${
+                  isDark
+                    ? "text-slate-300 bg-slate-800 hover:bg-slate-700"
+                    : "text-gray-700 bg-gray-100 hover:bg-gray-200"
+                }`}
               >
                 Cancelar
               </button>
