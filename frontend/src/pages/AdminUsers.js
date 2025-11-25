@@ -16,10 +16,13 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 
 const AdminUsers = () => {
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -184,30 +187,30 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 ${isDark ? "bg-slate-900" : "bg-gray-50"}`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
             Gestión de Usuarios
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className={`mt-2 text-sm ${isDark ? "text-slate-400" : "text-gray-600"}`}>
             Administra usuarios, roles y permisos
           </p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className={`rounded-xl shadow-sm border p-6 mb-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${isDark ? "text-slate-500" : "text-gray-400"}`} />
               <input
                 type="text"
                 placeholder="Buscar por nombre, email o username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400" : "bg-white border-gray-300 text-gray-900"}`}
               />
             </div>
 
@@ -215,7 +218,7 @@ const AdminUsers = () => {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100" : "bg-white border-gray-300 text-gray-900"}`}
             >
               <option value="">Todos los roles</option>
               <option value="admin">Administradores</option>
@@ -227,7 +230,7 @@ const AdminUsers = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100" : "bg-white border-gray-300 text-gray-900"}`}
             >
               <option value="">Todos los estados</option>
               <option value="false">Activos</option>
@@ -237,24 +240,24 @@ const AdminUsers = () => {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className={`rounded-xl shadow-sm border overflow-hidden ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className={isDark ? "bg-slate-700" : "bg-gray-50"}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-slate-300" : "text-gray-500"}`}>
                     Usuario
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-slate-300" : "text-gray-500"}`}>
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-slate-300" : "text-gray-500"}`}>
                     Rol
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-slate-300" : "text-gray-500"}`}>
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? "text-slate-300" : "text-gray-500"}`}>
                     Estadísticas
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -262,9 +265,9 @@ const AdminUsers = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`divide-y ${isDark ? "bg-slate-800 divide-slate-700" : "bg-white divide-gray-200"}`}>
                 {users?.map((userData) => (
-                  <tr key={userData.id} className="hover:bg-gray-50">
+                  <tr key={userData.id} className={isDark ? "hover:bg-slate-700" : "hover:bg-gray-50"}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
@@ -278,17 +281,17 @@ const AdminUsers = () => {
                           />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className={`text-sm font-medium ${isDark ? "text-slate-100" : "text-gray-900"}`}>
                             {userData.first_name} {userData.last_name}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                             @{userData.username}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className={`text-sm ${isDark ? "text-slate-100" : "text-gray-900"}`}>
                         {userData.email}
                       </div>
                     </td>
@@ -309,7 +312,7 @@ const AdminUsers = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-xs text-gray-500">
+                      <div className={`text-xs ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                         <div>Posts: {userData.posts_count}</div>
                         <div>Seguidores: {userData.followers_count}</div>
                       </div>
@@ -362,7 +365,7 @@ const AdminUsers = () => {
 
           {users?.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No se encontraron usuarios</p>
+              <p className={isDark ? "text-slate-400" : "text-gray-500"}>No se encontraron usuarios</p>
             </div>
           )}
         </div>
@@ -371,9 +374,9 @@ const AdminUsers = () => {
       {/* Modal: Cambiar Rol */}
       {showRoleModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className={`rounded-xl shadow-xl max-w-md w-full p-6 ${isDark ? "bg-slate-800" : "bg-white"}`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                 Cambiar Rol
               </h3>
               <button
@@ -382,7 +385,7 @@ const AdminUsers = () => {
                   setSelectedUser(null);
                   setNewRole("");
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className={isDark ? "text-slate-400 hover:text-slate-300" : "text-gray-400 hover:text-gray-600"}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -390,22 +393,22 @@ const AdminUsers = () => {
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className={`text-sm mb-2 ${isDark ? "text-slate-300" : "text-gray-600"}`}>
                   Usuario:{" "}
                   <span className="font-medium">{selectedUser?.username}</span>
                 </p>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className={`text-sm mb-4 ${isDark ? "text-slate-300" : "text-gray-600"}`}>
                   Rol actual:{" "}
                   <span className="font-medium">{selectedUser?.role}</span>
                 </p>
 
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                   Nuevo rol
                 </label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100" : "bg-white border-gray-300 text-gray-900"}`}
                 >
                   <option value="user">Usuario</option>
                   <option value="moderator">Moderador</option>
@@ -420,7 +423,7 @@ const AdminUsers = () => {
                     setSelectedUser(null);
                     setNewRole("");
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className={`flex-1 px-4 py-2 border rounded-lg transition-colors ${isDark ? "border-slate-600 text-slate-200 hover:bg-slate-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
                 >
                   Cancelar
                 </button>
@@ -440,9 +443,9 @@ const AdminUsers = () => {
       {/* Modal: Banear Usuario */}
       {showBanModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className={`rounded-xl shadow-xl max-w-md w-full p-6 ${isDark ? "bg-slate-800" : "bg-white"}`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                 Banear Usuario
               </h3>
               <button
@@ -451,7 +454,7 @@ const AdminUsers = () => {
                   setSelectedUser(null);
                   setBanReason("");
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className={isDark ? "text-slate-400 hover:text-slate-300" : "text-gray-400 hover:text-gray-600"}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -459,12 +462,12 @@ const AdminUsers = () => {
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className={`text-sm mb-4 ${isDark ? "text-slate-300" : "text-gray-600"}`}>
                   ¿Estás seguro de que quieres banear a{" "}
                   <span className="font-medium">{selectedUser?.username}</span>?
                 </p>
 
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                   Razón del baneo *
                 </label>
                 <textarea
@@ -472,7 +475,7 @@ const AdminUsers = () => {
                   onChange={(e) => setBanReason(e.target.value)}
                   placeholder="Describe la razón del baneo..."
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none ${isDark ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400" : "bg-white border-gray-300 text-gray-900"}`}
                 />
               </div>
 
@@ -483,7 +486,7 @@ const AdminUsers = () => {
                     setSelectedUser(null);
                     setBanReason("");
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className={`flex-1 px-4 py-2 border rounded-lg transition-colors ${isDark ? "border-slate-600 text-slate-200 hover:bg-slate-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
                 >
                   Cancelar
                 </button>
