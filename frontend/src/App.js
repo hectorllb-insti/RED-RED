@@ -23,6 +23,7 @@ import Search from "./pages/Search";
 import Settings from "./pages/Settings";
 import Stories from "./pages/Stories";
 import TrendingPage from "./pages/TrendingPage";
+import LiveStreamPage from "./pages/LiveStreamPage";
 
 // Admin Pages
 import AdminConfig from "./pages/AdminConfig";
@@ -201,6 +202,14 @@ function AppRoutes() {
               <Layout>
                 <TrendingPage />
               </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/live/:streamId"
+          element={
+            <ProtectedRoute>
+              <LiveStreamPage />
             </ProtectedRoute>
           }
         />

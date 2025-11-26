@@ -87,3 +87,13 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"{self.follower.username} follows {self.following.username}"
+
+
+class SystemSetting(models.Model):
+    """Configuraciones globales del sistema"""
+    key = models.CharField(max_length=50, unique=True)
+    value = models.TextField()
+    description = models.CharField(max_length=200, blank=True)
+    
+    def __str__(self):
+        return f"{self.key}: {self.value}"
