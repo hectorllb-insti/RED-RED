@@ -11,6 +11,7 @@ class Notification(models.Model):
         ('follow', 'Follow'),
         ('message', 'Message'),
         ('post', 'Post'),
+        ('live_stream', 'Live Stream'),
     )
 
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -25,6 +26,7 @@ class Notification(models.Model):
     # Optional fields for linking to related objects
     related_post_id = models.PositiveIntegerField(null=True, blank=True)
     related_comment_id = models.PositiveIntegerField(null=True, blank=True)
+    related_live_stream_id = models.PositiveIntegerField(null=True, blank=True)
     
     class Meta:
         ordering = ['-created_at']

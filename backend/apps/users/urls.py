@@ -8,6 +8,7 @@ urlpatterns = [
     path('profile/delete/', views.delete_account, name='delete-account'),
     path('change-password/', views.change_password, name='change-password'),
     path('suggested/', views.SuggestedUsersView.as_view(), name='suggested-users'),
+    path('settings/<str:key>/', views.get_system_setting, name='system-setting'),
     path('follow/<str:username>/', views.follow_user, name='follow-user'),
     path('unfollow/<str:username>/', views.unfollow_user, name='unfollow-user'),
     path('', views.UserListView.as_view(), name='user-list'),

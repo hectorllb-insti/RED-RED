@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Follow
+from .models import User, Follow, SystemSetting
 
 
 @admin.register(User)
@@ -24,3 +24,8 @@ class FollowAdmin(admin.ModelAdmin):
     list_filter = ('created_at',)
     search_fields = ('follower__username', 'following__username')
     ordering = ('-created_at',)
+
+@admin.register(SystemSetting)
+class SystemSettingAdmin(admin.ModelAdmin):
+    list_display = ('key', 'value', 'description')
+    search_fields = ('key', 'description')

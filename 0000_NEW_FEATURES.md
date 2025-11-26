@@ -147,11 +147,4 @@
 - Backups automáticos de base de datos y media
 - Panel para restaurar backups
 
----
 
-## 🛠️ **¿Por dónde quieres empezar?**
-
-- Si quieres el **panel de administración avanzado**, puedo diseñar la estructura, los endpoints y la UI base.
-- Si prefieres otra feature, dime cuál te interesa más y la implemento con lógica y coherencia.
-
-¿Quieres que te proponga el roadmap de implementación para el panel de administración, o prefieres que empiece por otra funcionalidad?

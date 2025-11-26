@@ -10,12 +10,15 @@ import {
   Share2,
   Trash2,
   X,
+  Video,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import CreateStoryModal from "../components/CreateStoryModal";
 import StoryViewerModal from "../components/StoryViewerModal";
+import LiveStreamsBar from "../components/LiveStreamsBar";
+import CreateLiveModal from "../components/CreateLiveModal";
 import EmptyState from "../components/EmptyState";
 import { TextWithHashtags } from "../components/HashtagLink";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -32,6 +35,7 @@ const Home = () => {
   const [newPost, setNewPost] = useState("");
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
+  const [showCreateLive, setShowCreateLive] = useState(false);
   const [selectedStory, setSelectedStory] = useState(null);
   const [viewedStories, setViewedStories] = useState(() => {
     const saved = localStorage.getItem("viewedStories");
@@ -343,13 +347,12 @@ const Home = () => {
 
   return (
     <div className="space-y-6 mt-10">
-      {/* Stories Bar */}
+      {/* Stories and Live Streams Bar */}
       <div
-        className={`rounded-2xl shadow-sm border p-4 overflow-x-auto no-scrollbar ${
-          isDark
+        className={`rounded-2xl shadow-sm border p-4 overflow-x-auto no-scrollbar ${isDark
             ? "bg-slate-800/50 border-slate-700"
             : "bg-white border-gray-200"
-        }`}
+          }`}
       >
         <div className="flex items-center gap-4 min-w-max">
           {/* Create Story Button */}
@@ -374,6 +377,33 @@ const Home = () => {
             </span>
           </button>
 
+          {/* Create Live Button */}
+          <button
+            onClick={() => setShowCreateLive(true)}
+            className="flex flex-col items-center gap-2 group"
+          >
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full p-0.5 border-2 border-dashed border-red-400 group-hover:border-red-500 transition-colors bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20">
+                <div className="w-full h-full rounded-full flex items-center justify-center">
+                  <Video className="h-8 w-8 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
+              <div className="absolute bottom-0 right-0 bg-red-600 text-white rounded-full p-1 border-2 border-white dark:border-slate-800">
+                <Plus className="h-3 w-3" />
+              </div>
+            </div>
+            <span className="text-xs font-medium truncate w-16 text-center text-gray-900 dark:text-white">
+              Ir en directo
+            </span>
+          </button>
+
+          {/* Live Streams */}
+          <LiveStreamsBar />
+
+          {/* Divider */}
+          <div className={`h-16 w-px ${isDark ? "bg-slate-700" : "bg-gray-200"
+            }`}></div>
+
           {/* Stories List */}
           {stories?.results?.map((story) => (
             <button
@@ -382,11 +412,10 @@ const Home = () => {
               className="flex flex-col items-center gap-2 group"
             >
               <div
-                className={`w-16 h-16 rounded-full p-0.5 ${
-                  viewedStories.has(story.id)
+                className={`w-16 h-16 rounded-full p-0.5 ${viewedStories.has(story.id)
                     ? "bg-gray-300 dark:bg-slate-600"
                     : "bg-gradient-to-tr from-yellow-400 to-fuchsia-600"
-                } group-hover:scale-105 transition-transform`}
+                  } group-hover:scale-105 transition-transform`}
               >
                 <div className="w-full h-full rounded-full border-2 border-white dark:border-slate-800 overflow-hidden">
                   <img
@@ -412,6 +441,11 @@ const Home = () => {
         <CreateStoryModal onClose={() => setShowCreateStory(false)} />
       )}
 
+      {/* Create Live Modal */}
+      {showCreateLive && (
+        <CreateLiveModal onClose={() => setShowCreateLive(false)} />
+      )}
+
       {/* Story Viewer Modal */}
       {selectedStory && (
         <StoryViewerModal
@@ -422,11 +456,10 @@ const Home = () => {
 
       {/* Tarjeta de crear publicación */}
       <div
-        className={`rounded-xl shadow-md border p-4 hover:shadow-lg transition-all duration-300 group ${
-          isDark
+        className={`rounded-xl shadow-md border p-4 hover:shadow-lg transition-all duration-300 group ${isDark
             ? "bg-gradient-to-r from-slate-800 via-slate-800/50 to-slate-800 border-slate-700 hover:border-slate-600"
             : "bg-gradient-to-r from-white via-primary-50/20 to-white border-gray-200 hover:border-primary-300"
-        }`}
+          }`}
       >
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -439,11 +472,10 @@ const Home = () => {
           </div>
           <button
             onClick={() => setShowCreatePost(true)}
-            className={`flex-1 text-left px-5 py-3 rounded-full text-sm font-medium group-hover:shadow-inner transition-all ${
-              isDark
+            className={`flex-1 text-left px-5 py-3 rounded-full text-sm font-medium group-hover:shadow-inner transition-all ${isDark
                 ? "bg-gradient-to-r from-slate-700 to-slate-600 text-slate-300 hover:from-slate-600 hover:to-slate-500 hover:text-slate-100"
                 : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 hover:from-primary-50 hover:to-purple-50 hover:text-primary-700"
-            }`}
+              }`}
           >
             💭 ¿Qué estás pensando, {user?.first_name}?
           </button>
@@ -455,11 +487,10 @@ const Home = () => {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="¿Qué estás pensando?"
-              className={`w-full p-4 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 ${
-                isDark
+              className={`w-full p-4 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 ${isDark
                   ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
                   : "bg-gray-50 border-gray-200 text-gray-900"
-              }`}
+                }`}
               rows="4"
               autoFocus
             />
@@ -483,9 +514,8 @@ const Home = () => {
             )}
 
             <div
-              className={`flex justify-between items-center pt-3 border-t ${
-                isDark ? "border-slate-700" : "border-gray-100"
-              }`}
+              className={`flex justify-between items-center pt-3 border-t ${isDark ? "border-slate-700" : "border-gray-100"
+                }`}
             >
               <div className="flex items-center gap-2">
                 <input
@@ -497,11 +527,10 @@ const Home = () => {
                 />
                 <label
                   htmlFor="image-upload"
-                  className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    isDark
+                  className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isDark
                       ? "text-slate-300 hover:text-primary-400 hover:bg-slate-700"
                       : "text-gray-600 hover:text-primary-600 hover:bg-primary-50"
-                  }`}
+                    }`}
                 >
                   <ImageIcon className="h-5 w-5" />
                   <span className="text-sm font-medium">Foto</span>
@@ -510,11 +539,10 @@ const Home = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreatePost(false)}
-                  className={`px-4 py-2 rounded-lg transition-all font-medium ${
-                    isDark
+                  className={`px-4 py-2 rounded-lg transition-all font-medium ${isDark
                       ? "text-slate-300 hover:text-slate-100 hover:bg-slate-700"
                       : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   Cancelar
                 </button>
@@ -540,8 +568,8 @@ const Home = () => {
           const postList = Array.isArray(posts?.results)
             ? posts.results
             : Array.isArray(posts)
-            ? posts
-            : [];
+              ? posts
+              : [];
 
           if (isLoading) {
             return <LoadingSpinner variant="dots" text="Cargando posts..." />;
@@ -562,20 +590,18 @@ const Home = () => {
           return postList.map((post, index) => (
             <div
               key={post.id}
-              className={`rounded-2xl shadow-md border hover:shadow-lg transition-all duration-300 stagger-item overflow-hidden ${
-                isDark
+              className={`rounded-2xl shadow-md border hover:shadow-lg transition-all duration-300 stagger-item overflow-hidden ${isDark
                   ? "bg-gradient-to-br from-slate-800 via-slate-800/50 to-slate-800 border-slate-700 hover:border-slate-600"
                   : "bg-gradient-to-br from-white via-gray-50/50 to-white border-gray-200 hover:border-primary-200"
-              }`}
+                }`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* Post Header con gradiente sutil */}
               <div
-                className={`p-4 flex items-center justify-between ${
-                  isDark
+                className={`p-4 flex items-center justify-between ${isDark
                     ? "bg-gradient-to-r from-transparent via-slate-700/20 to-transparent"
                     : "bg-gradient-to-r from-transparent via-primary-50/20 to-transparent"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <img
@@ -588,9 +614,8 @@ const Home = () => {
                   />
                   <div>
                     <p
-                      className={`font-bold text-sm ${
-                        isDark ? "text-slate-100" : "text-gray-900"
-                      }`}
+                      className={`font-bold text-sm ${isDark ? "text-slate-100" : "text-gray-900"
+                        }`}
                     >
                       {post.author_first_name} {post.author_last_name}
                     </p>
@@ -603,22 +628,20 @@ const Home = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleStartEdit(post)}
-                      className={`p-2 rounded-lg transition-all ${
-                        isDark
+                      className={`p-2 rounded-lg transition-all ${isDark
                           ? "text-slate-400 hover:text-primary-400 hover:bg-slate-700"
                           : "text-gray-500 hover:text-primary-600 hover:bg-primary-50"
-                      }`}
+                        }`}
                       title="Editar publicación"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeletePost(post.id)}
-                      className={`p-2 rounded-lg transition-all ${
-                        isDark
+                      className={`p-2 rounded-lg transition-all ${isDark
                           ? "text-slate-400 hover:text-red-400 hover:bg-red-900/20"
                           : "text-gray-500 hover:text-red-600 hover:bg-red-50"
-                      }`}
+                        }`}
                       title="Eliminar publicación"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -631,31 +654,28 @@ const Home = () => {
               <div className="px-4 pb-4">
                 {editingPost === post.id ? (
                   <div
-                    className={`space-y-3 p-3 rounded-xl border ${
-                      isDark
+                    className={`space-y-3 p-3 rounded-xl border ${isDark
                         ? "bg-slate-800 border-slate-700"
                         : "bg-gray-50 border-gray-200"
-                    }`}
+                      }`}
                   >
                     <textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none transition-all ${
-                        isDark
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none transition-all ${isDark
                           ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
                           : "border-gray-300 bg-white text-gray-800 placeholder-gray-400"
-                      }`}
+                        }`}
                       rows="3"
                       placeholder="¿Qué estás pensando?"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={handleCancelEdit}
-                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-medium ${
-                          isDark
+                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-medium ${isDark
                             ? "text-slate-300 hover:text-slate-100 hover:bg-slate-700"
                             : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         <X className="h-4 w-4" />
                         <span>Cancelar</span>
@@ -679,17 +699,15 @@ const Home = () => {
                 ) : (
                   <>
                     <div
-                      className={`whitespace-pre-wrap leading-relaxed text-sm ${
-                        isDark ? "text-slate-200" : "text-gray-800"
-                      }`}
+                      className={`whitespace-pre-wrap leading-relaxed text-sm ${isDark ? "text-slate-200" : "text-gray-800"
+                        }`}
                     >
                       <TextWithHashtags text={post.content} />
                     </div>
                     {post.image && (
                       <div
-                        className={`mt-3 rounded-xl overflow-hidden border ${
-                          isDark ? "border-slate-700" : "border-gray-200"
-                        }`}
+                        className={`mt-3 rounded-xl overflow-hidden border ${isDark ? "border-slate-700" : "border-gray-200"
+                          }`}
                       >
                         <img
                           src={post.image || "/placeholder.svg"}
@@ -704,22 +722,20 @@ const Home = () => {
 
               {/* Sección de interacciones */}
               <div
-                className={`px-4 py-3 border-t flex items-center justify-between ${
-                  isDark
+                className={`px-4 py-3 border-t flex items-center justify-between ${isDark
                     ? "bg-slate-800/50 border-slate-700"
                     : "bg-gray-50/50 border-gray-100"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleLike(post.id)}
-                    className={`like-button flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
-                      post.is_liked
+                    className={`like-button flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${post.is_liked
                         ? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md liked"
                         : isDark
-                        ? "bg-slate-700 text-slate-300 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/50 border border-slate-600"
-                        : "bg-white text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-300 border border-gray-200"
-                    }`}
+                          ? "bg-slate-700 text-slate-300 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/50 border border-slate-600"
+                          : "bg-white text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-300 border border-gray-200"
+                      }`}
                   >
                     <div
                       style={{
@@ -731,9 +747,8 @@ const Home = () => {
                       }}
                     >
                       <Heart
-                        className={`transition-colors ${
-                          post.is_liked ? "fill-current" : ""
-                        }`}
+                        className={`transition-colors ${post.is_liked ? "fill-current" : ""
+                          }`}
                         strokeWidth={post.is_liked ? 0 : 2}
                         style={{
                           width: "18px",
@@ -745,40 +760,36 @@ const Home = () => {
                   </button>
                   <button
                     onClick={() => toggleComments(post.id)}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
-                      showComments[post.id]
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${showComments[post.id]
                         ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
                         : isDark
-                        ? "bg-slate-700 text-slate-300 hover:bg-blue-900/30 hover:text-blue-400 hover:border-blue-500/50 border border-slate-600"
-                        : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 border border-gray-200"
-                    }`}
+                          ? "bg-slate-700 text-slate-300 hover:bg-blue-900/30 hover:text-blue-400 hover:border-blue-500/50 border border-slate-600"
+                          : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 border border-gray-200"
+                      }`}
                   >
                     <MessageCircle className="h-4 w-4" />
                     <span className="font-medium">{post.comments_count}</span>
                   </button>
                   <button
                     onClick={() => handleSharePost(post.id)}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${
-                      isDark
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all w-14 ${isDark
                         ? "bg-slate-700 text-slate-300 hover:bg-green-900/30 hover:text-green-400 hover:border-green-500/50 border border-slate-600"
                         : "bg-white text-gray-600 hover:bg-green-50 hover:text-green-600 hover:border-green-300 border border-gray-200"
-                    }`}
+                      }`}
                     title="Compartir publicación"
                   >
                     <Share2 className="h-4 w-4" />
                   </button>
                 </div>
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-sm ${
-                    isDark
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-sm ${isDark
                       ? "bg-gradient-to-r from-slate-800 to-slate-700 border-slate-600"
                       : "bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200"
-                  } border`}
+                    } border`}
                 >
                   <svg
-                    className={`h-3.5 w-3.5 ${
-                      isDark ? "text-slate-400" : "text-gray-400"
-                    }`}
+                    className={`h-3.5 w-3.5 ${isDark ? "text-slate-400" : "text-gray-400"
+                      }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -791,9 +802,8 @@ const Home = () => {
                     />
                   </svg>
                   <span
-                    className={`text-xs font-medium ${
-                      isDark ? "text-slate-300" : "text-gray-600"
-                    }`}
+                    className={`text-xs font-medium ${isDark ? "text-slate-300" : "text-gray-600"
+                      }`}
                   >
                     {formatDateShort(post.created_at)} •{" "}
                     {formatTime(post.created_at)}
@@ -820,15 +830,14 @@ const Home = () => {
         const postList = Array.isArray(posts?.results)
           ? posts.results
           : Array.isArray(posts)
-          ? posts
-          : [];
+            ? posts
+            : [];
         return (
           postList.length === 0 && (
             <div className="text-center py-12">
               <p
-                className={`text-lg ${
-                  isDark ? "text-slate-400" : "text-gray-500"
-                }`}
+                className={`text-lg ${isDark ? "text-slate-400" : "text-gray-500"
+                  }`}
               >
                 No hay publicaciones aún
               </p>
@@ -932,9 +941,8 @@ const CommentsSection = ({
 
   return (
     <div
-      className={`border-t ${
-        isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-100 bg-gray-50/30"
-      }`}
+      className={`border-t ${isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-100 bg-gray-50/30"
+        }`}
     >
       <div className="p-4 space-y-4">
         {/* Lista de comentarios */}
@@ -954,9 +962,8 @@ const CommentsSection = ({
                   {/* Nombre y fecha en la misma línea, encima del contenedor */}
                   <div className="flex items-center justify-between mb-1 px-1">
                     <span
-                      className={`font-bold text-sm ${
-                        isDark ? "text-white" : "text-gray-900"
-                      }`}
+                      className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"
+                        }`}
                     >
                       {comment.author_first_name && comment.author_last_name
                         ? `${comment.author_first_name} ${comment.author_last_name}`
@@ -966,17 +973,15 @@ const CommentsSection = ({
                       {formatDateShort(comment.created_at)}
                     </span>
                   </div>
-                  
+
                   {/* Contenedor del comentario solo con el texto */}
                   <div
-                    className={`rounded-2xl px-3 py-2 ${
-                      isDark ? "bg-slate-700" : "bg-white border border-gray-200"
-                    }`}
+                    className={`rounded-2xl px-3 py-2 ${isDark ? "bg-slate-700" : "bg-white border border-gray-200"
+                      }`}
                   >
                     <p
-                      className={`text-sm ${
-                        isDark ? "text-slate-300" : "text-gray-700"
-                      }`}
+                      className={`text-sm ${isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
                     >
                       <TextWithHashtags text={comment.content} />
                     </p>
@@ -984,18 +989,16 @@ const CommentsSection = ({
                   <div className="flex items-center gap-4 mt-1 ml-2">
                     <button
                       onClick={() => handleLikeComment(comment.id)}
-                      className={`text-xs font-medium flex items-center gap-1 transition-colors ${
-                        comment.is_liked
+                      className={`text-xs font-medium flex items-center gap-1 transition-colors ${comment.is_liked
                           ? "text-red-500"
                           : isDark
-                          ? "text-slate-400 hover:text-red-400"
-                          : "text-gray-500 hover:text-red-500"
-                      }`}
+                            ? "text-slate-400 hover:text-red-400"
+                            : "text-gray-500 hover:text-red-500"
+                        }`}
                     >
                       <Heart
-                        className={`h-3 w-3 ${
-                          comment.is_liked ? "fill-current" : ""
-                        }`}
+                        className={`h-3 w-3 ${comment.is_liked ? "fill-current" : ""
+                          }`}
                       />
                       {comment.likes_count > 0 && (
                         <span>{comment.likes_count}</span>
@@ -1032,11 +1035,10 @@ const CommentsSection = ({
                 }
               }}
               placeholder="Escribe un comentario..."
-              className={`w-full pl-4 pr-10 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-                isDark
+              className={`w-full pl-4 pr-10 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${isDark
                   ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
                   : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 border"
-              }`}
+                }`}
             />
             <button
               onClick={() => onCommentSubmit(postId)}

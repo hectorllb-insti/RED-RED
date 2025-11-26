@@ -343,5 +343,5 @@ Revisa frontend/src/components/ para accesibilidad:
 
 ---
 
-**Última actualización**: Noviembre 2024  
+**Última actualización**: Noviembre 2025  
 **Mantenido por**: Equipo RED-RED
