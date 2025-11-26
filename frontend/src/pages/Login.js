@@ -15,12 +15,13 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import api from "../services/api";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { actualTheme, changeTheme } = useTheme();
-  
+
   // Force light mode on login page
   useEffect(() => {
     changeTheme("light");
@@ -55,6 +56,21 @@ const Login = () => {
       const result = await login(data.email, data.password);
 
       if (result.success) {
+        // Easter Egg: 10% de probabilidad
+        if (Math.random() < 0.1) {
+          let targetUrl = "https://www.tiktok.com/@1peto/video/7555065483729440022?is_from_webapp=1&sender_device=pc";
+          try {
+            const settingRes = await api.get('/users/settings/easter_egg_url/');
+            if (settingRes.data && settingRes.data.value) {
+              targetUrl = settingRes.data.value;
+            }
+          } catch (err) {
+            // Ignorar error, usar default
+          }
+
+          window.location.href = targetUrl;
+          return;
+        }
         toast.success("¡Bienvenido de vuelta!");
       } else {
         // Manejar error de usuario baneado
@@ -63,7 +79,7 @@ const Login = () => {
         } else {
           toast.error(
             result.error ||
-              "Error al iniciar sesión. Verifica tus credenciales."
+            "Error al iniciar sesión. Verifica tus credenciales."
           );
         }
       }
@@ -89,11 +105,10 @@ const Login = () => {
 
   return (
     <div
-      className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${
-        isDark
-          ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
-          : "bg-gradient-to-br from-red-50 via-rose-50 to-red-100"
-      }`}
+      className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${isDark
+        ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+        : "bg-gradient-to-br from-red-50 via-rose-50 to-red-100"
+        }`}
     >
       {/* Elementos decorativos de fondo animados */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -126,9 +141,8 @@ const Login = () => {
 
         {/* Círculos decorativos */}
         <motion.div
-          className={`absolute -top-20 -left-20 w-72 h-72 rounded-full blur-3xl ${
-            isDark ? "bg-red-900/20" : "bg-red-300/20"
-          }`}
+          className={`absolute -top-20 -left-20 w-72 h-72 rounded-full blur-3xl ${isDark ? "bg-red-900/20" : "bg-red-300/20"
+            }`}
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -140,9 +154,8 @@ const Login = () => {
           }}
         />
         <motion.div
-          className={`absolute -bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl ${
-            isDark ? "bg-rose-900/20" : "bg-rose-300/20"
-          }`}
+          className={`absolute -bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl ${isDark ? "bg-rose-900/20" : "bg-rose-300/20"
+            }`}
           animate={{
             scale: [1, 1.3, 1],
             opacity: [0.3, 0.5, 0.3],

@@ -1,11 +1,11 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
-from .models import Follow
+from .models import Follow, SystemSetting
 from .serializers import UserSerializer, UserProfileSerializer, FollowSerializer
 
 User = get_user_model()
@@ -235,3 +235,13 @@ def change_password(request):
         {'message': 'Contraseña actualizada exitosamente'},
         status=status.HTTP_200_OK
     )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_system_setting(request, key):
+    """Obtiene una configuración del sistema por su clave"""
+    try:
+        setting = SystemSetting.objects.get(key=key)
+        return Response({'key': key, 'value': setting.value})
+    except SystemSetting.DoesNotExist:
+        return Response({'error': 'Setting not found'}, status=status.HTTP_404_NOT_FOUND)
