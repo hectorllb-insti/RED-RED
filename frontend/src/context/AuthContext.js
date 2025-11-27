@@ -178,12 +178,98 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 🌟 Sistema de Puntos y Gamificación
+  const addPoints = (amount) => {
+    if (!state.user) return;
+    const newPoints = (state.user.points || 0) + amount;
+    const updatedUser = { ...state.user, points: newPoints };
+
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`points_${state.user.id}`, newPoints);
+  };
+
+  const deductPoints = (amount) => {
+    if (!state.user) return false;
+    const currentPoints = state.user.points || 0;
+
+    if (currentPoints < amount) return false;
+
+    const newPoints = currentPoints - amount;
+    const updatedUser = { ...state.user, points: newPoints };
+
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`points_${state.user.id}`, newPoints);
+    return true;
+  };
+
+  const addToInventory = (item) => {
+    if (!state.user) return;
+    const currentInventory = state.user.inventory || [];
+
+    // Evitar duplicados
+    if (currentInventory.find(i => i.id === item.id)) return;
+
+    const newInventory = [...currentInventory, item];
+    const updatedUser = { ...state.user, inventory: newInventory };
+
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`inventory_${state.user.id}`, JSON.stringify(newInventory));
+  };
+
+  const equipItem = (item) => {
+    if (!state.user) return;
+
+    let updates = {};
+    if (item.type === 'frame') {
+      updates = { equippedFrame: item };
+    } else if (item.type === 'effect') {
+      updates = { equippedEffect: item };
+    } else if (item.type === 'badge') {
+      updates = { equippedBadge: item };
+    }
+
+    const updatedUser = { ...state.user, ...updates };
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+
+    localStorage.setItem(`equipped_${state.user.id}`, JSON.stringify({
+      frame: updatedUser.equippedFrame,
+      effect: updatedUser.equippedEffect,
+      badge: updatedUser.equippedBadge
+    }));
+  };
+
+  // Cargar datos de gamificación al iniciar sesión
+  useEffect(() => {
+    if (state.user && state.isAuthenticated) {
+      const savedPoints = parseInt(localStorage.getItem(`points_${state.user.id}`)) || 0;
+      const savedInventory = JSON.parse(localStorage.getItem(`inventory_${state.user.id}`)) || [];
+      const savedEquipped = JSON.parse(localStorage.getItem(`equipped_${state.user.id}`)) || {};
+
+      if (state.user.points !== savedPoints || !state.user.inventory) {
+        dispatch({
+          type: "UPDATE_USER",
+          payload: {
+            points: savedPoints,
+            inventory: savedInventory,
+            equippedFrame: savedEquipped.frame,
+            equippedEffect: savedEquipped.effect,
+            equippedBadge: savedEquipped.badge
+          }
+        });
+      }
+    }
+  }, [state.isAuthenticated, state.user?.id]);
+
   const value = {
     ...state,
     login,
     register,
     logout,
     updateUser,
+    addPoints,
+    deductPoints,
+    addToInventory,
+    equipItem,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
