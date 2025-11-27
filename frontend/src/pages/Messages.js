@@ -115,7 +115,7 @@ const Messages = () => {
   // Mutation para crear chat privado
   const createChatMutation = useMutation(
     async (username) => {
-      const response = await api.post(`/chat/chat/create/${username}/`);
+      const response = await api.post(`/chat/create/${username}/`);
       return response.data;
     },
     {
@@ -205,7 +205,7 @@ const Messages = () => {
 
   useEffect(() => {
     let isInitialConnection = true;
-    
+
     // Verificar si el socket ya está conectado al montar el componente
     if (user) {
       const token = localStorage.getItem("access_token");
@@ -228,10 +228,10 @@ const Messages = () => {
     // Listener para reconexión - mostrar estado y notificación
     const handleReconnecting = (data) => {
       setIsReconnecting(true);
-      const message = selectedChat 
+      const message = selectedChat
         ? `Reconectando al chat con ${selectedChat.other_user?.full_name || 'usuario'}... (${data.attempt}/${data.maxAttempts})`
         : `Reconectando al chat... (${data.attempt}/${data.maxAttempts})`;
-      
+
       toast.loading(message, {
         id: 'reconnecting-toast',
         duration: Infinity,
@@ -242,17 +242,17 @@ const Messages = () => {
     const handleConnect = () => {
       const wasReconnecting = isReconnecting;
       setIsReconnecting(false);
-      
+
       // Solo mostrar toast si estábamos reconectando (no en la conexión inicial)
       if (wasReconnecting && !isInitialConnection) {
         toast.dismiss('reconnecting-toast');
         const message = selectedChat
           ? `Reconectado al chat con ${selectedChat.other_user?.full_name || 'usuario'}`
           : 'Conectado al chat';
-        
+
         toast.success(message);
       }
-      
+
       // Marcar que ya no es la conexión inicial
       isInitialConnection = false;
     };
@@ -385,11 +385,11 @@ const Messages = () => {
         // Pequeño delay para asegurar que la cancelación se complete
         await new Promise(resolve => setTimeout(resolve, 10));
       }
-      
+
       // Crear un nuevo AbortController para esta petición
       const controller = new AbortController();
       loadMessagesAbortController.current = controller;
-      
+
       if (page === 1) {
         setMessages([]);
         setCurrentPage(1);
@@ -402,12 +402,12 @@ const Messages = () => {
         `/chat/chats/${chatId}/messages/?page=${page}`,
         { signal: controller.signal }
       );
-      
+
       // Verificar que esta petición no fue cancelada
       if (controller.signal.aborted) {
         return;
       }
-      
+
       const messagesList = response.data.results || response.data || [];
 
       // Si es la primera página, reemplazar. Si no, agregar al principio
@@ -428,13 +428,13 @@ const Messages = () => {
       }
 
       // No mostrar error si es una cancelación
-      const isCanceled = 
-        error.code === 'ERR_CANCELED' || 
+      const isCanceled =
+        error.code === 'ERR_CANCELED' ||
         error.name === 'CanceledError' ||
         error.name === 'AbortError' ||
         error.message?.includes('cancel') ||
         error.message?.includes('abort');
-      
+
       if (!isCanceled) {
         console.error("Error loading messages:", error);
         toast.error("Error al cargar mensajes");
@@ -451,7 +451,7 @@ const Messages = () => {
 
       // Unirse a la sala del chat
       socketService.joinRoom(selectedChat.id);
-      
+
       // Mostrar notificación de conexión al chat (con ID único para evitar duplicados)
       const chatName = selectedChat.other_user?.full_name || selectedChat.other_user?.username || 'Usuario';
       toast.success(`Conectado al chat con ${chatName}`, {
@@ -475,7 +475,7 @@ const Messages = () => {
                   existingMsg.sender_id === newMessage.sender_id &&
                   Math.abs(
                     new Date(existingMsg.timestamp) -
-                      new Date(newMessage.timestamp)
+                    new Date(newMessage.timestamp)
                   ) < 1000)
               );
             });
@@ -612,47 +612,41 @@ const Messages = () => {
 
   return (
     <div
-      className={`rounded-2xl shadow-md border h-[600px] flex mt-10 overflow-hidden ${
-        isDark
-          ? "bg-gradient-to-br from-slate-900 via-slate-800/30 to-slate-900 border-slate-700"
-          : "bg-gradient-to-br from-white via-gray-50/30 to-white border-gray-200"
-      }`}
+      className={`rounded-2xl shadow-md border h-[600px] flex mt-10 overflow-hidden ${isDark
+        ? "bg-gradient-to-br from-slate-900 via-slate-800/30 to-slate-900 border-slate-700"
+        : "bg-gradient-to-br from-white via-gray-50/30 to-white border-gray-200"
+        }`}
     >
       {/* Sidebar - Lista de conversaciones */}
       <div
-        className={`w-1/3 border-r flex flex-col ${
-          isDark
-            ? "border-slate-700 bg-slate-900/50"
-            : "border-gray-200 bg-white/50"
-        }`}
+        className={`w-1/3 border-r flex flex-col ${isDark
+          ? "border-slate-700 bg-slate-900/50"
+          : "border-gray-200 bg-white/50"
+          }`}
       >
         <div
-          className={`p-4 border-b ${
-            isDark
-              ? "border-slate-700 bg-gradient-to-r from-primary-900/20 to-purple-900/20"
-              : "border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30"
-          }`}
+          className={`p-4 border-b ${isDark
+            ? "border-slate-700 bg-gradient-to-r from-primary-900/20 to-purple-900/20"
+            : "border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30"
+            }`}
         >
           <div className="flex items-center justify-between">
             <h2
-              className={`text-lg font-bold flex items-center gap-2 ${
-                isDark ? "text-slate-100" : "text-gray-900"
-              }`}
+              className={`text-lg font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-gray-900"
+                }`}
             >
               <MessageSquare
-                className={`h-5 w-5 ${
-                  isDark ? "text-primary-400" : "text-primary-600"
-                }`}
+                className={`h-5 w-5 ${isDark ? "text-primary-400" : "text-primary-600"
+                  }`}
               />
               Mensajes
             </h2>
             <button
               onClick={() => setShowCreateChat(!showCreateChat)}
-              className={`p-2 rounded-lg transition-all ${
-                isDark
-                  ? "text-slate-400 hover:text-primary-400 hover:bg-primary-900/30"
-                  : "text-gray-600 hover:text-primary-600 hover:bg-primary-100"
-              }`}
+              className={`p-2 rounded-lg transition-all ${isDark
+                ? "text-slate-400 hover:text-primary-400 hover:bg-primary-900/30"
+                : "text-gray-600 hover:text-primary-600 hover:bg-primary-100"
+                }`}
             >
               {showCreateChat ? (
                 <X className="h-5 w-5" />
@@ -669,11 +663,10 @@ const Messages = () => {
                 placeholder="Buscar usuario..."
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
-                className={`block w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  isDark
-                    ? "border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-400"
-                    : "border-gray-300 bg-white text-gray-900 placeholder-gray-400"
-                }`}
+                className={`block w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${isDark
+                  ? "border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-400"
+                  : "border-gray-300 bg-white text-gray-900 placeholder-gray-400"
+                  }`}
                 autoFocus
               />
               <button
@@ -690,9 +683,8 @@ const Messages = () => {
             <div className="mt-3 relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search
-                  className={`h-4 w-4 ${
-                    isDark ? "text-slate-500" : "text-gray-400"
-                  }`}
+                  className={`h-4 w-4 ${isDark ? "text-slate-500" : "text-gray-400"
+                    }`}
                 />
               </div>
               <input
@@ -700,11 +692,10 @@ const Messages = () => {
                 placeholder="Buscar conversaciones..."
                 value={searchConversation}
                 onChange={(e) => setSearchConversation(e.target.value)}
-                className={`block w-full pl-11 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  isDark
-                    ? "border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-400"
-                    : "border-gray-300 bg-white text-gray-900 placeholder-gray-400"
-                }`}
+                className={`block w-full pl-11 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${isDark
+                  ? "border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-400"
+                  : "border-gray-300 bg-white text-gray-900 placeholder-gray-400"
+                  }`}
               />
             </div>
           )}
@@ -752,19 +743,19 @@ const Messages = () => {
             // Filtrar conversaciones por búsqueda
             const filteredConvs = searchConversation.trim()
               ? convList.filter((conv) => {
-                  const searchLower = searchConversation.toLowerCase();
-                  const fullName =
-                    conv.other_user?.full_name?.toLowerCase() || "";
-                  const username =
-                    conv.other_user?.username?.toLowerCase() || "";
-                  const lastMessage =
-                    conv.last_message?.content?.toLowerCase() || "";
-                  return (
-                    fullName.includes(searchLower) ||
-                    username.includes(searchLower) ||
-                    lastMessage.includes(searchLower)
-                  );
-                })
+                const searchLower = searchConversation.toLowerCase();
+                const fullName =
+                  conv.other_user?.full_name?.toLowerCase() || "";
+                const username =
+                  conv.other_user?.username?.toLowerCase() || "";
+                const lastMessage =
+                  conv.last_message?.content?.toLowerCase() || "";
+                return (
+                  fullName.includes(searchLower) ||
+                  username.includes(searchLower) ||
+                  lastMessage.includes(searchLower)
+                );
+              })
               : convList;
 
             if (filteredConvs.length === 0 && !showCreateChat) {
@@ -806,17 +797,14 @@ const Messages = () => {
                       markAsRead(conversation.id);
                     }
                   }}
-                  className={`w-full p-3 text-left transition-all border-b ${
-                    isDark ? "border-b-slate-800" : "border-b-gray-100"
-                  } ${
-                    isDark ? "hover:bg-slate-800/50" : "hover:bg-primary-50/50"
-                  } ${
-                    isSelected
+                  className={`w-full p-3 text-left transition-all border-b ${isDark ? "border-b-slate-800" : "border-b-gray-100"
+                    } ${isDark ? "hover:bg-slate-800/50" : "hover:bg-primary-50/50"
+                    } ${isSelected
                       ? isDark
                         ? "bg-gradient-to-r from-slate-800 to-slate-700 !border-l-4 !border-l-red-600"
                         : "bg-gradient-to-r from-primary-50 to-purple-50 !border-l-4 !border-l-red-600"
                       : "border-l-4 border-l-transparent"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="relative">
@@ -834,25 +822,23 @@ const Messages = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`font-semibold truncate text-sm ${
-                          isSelected
-                            ? isDark
-                              ? "text-white"
-                              : "text-gray-900"
-                            : "text-gray-900 dark:text-white"
-                        }`}
+                        className={`font-semibold truncate text-sm ${isSelected
+                          ? isDark
+                            ? "text-white"
+                            : "text-gray-900"
+                          : "text-gray-900 dark:text-white"
+                          }`}
                       >
                         {conversation.other_user?.full_name ||
                           "Usuario desconocido"}
                       </p>
                       <p
-                        className={`text-xs truncate ${
-                          isSelected
-                            ? isDark
-                              ? "text-slate-300"
-                              : "text-gray-500"
-                            : "text-gray-500 dark:text-gray-400"
-                        }`}
+                        className={`text-xs truncate ${isSelected
+                          ? isDark
+                            ? "text-slate-300"
+                            : "text-gray-500"
+                          : "text-gray-500 dark:text-gray-400"
+                          }`}
                       >
                         {conversation.last_message?.content || "Sin mensajes"}
                       </p>
@@ -948,14 +934,12 @@ const Messages = () => {
                 return (
                   <div
                     key={messageObj.id || index}
-                    className={`flex ${
-                      isOwnMessage ? "justify-end" : "justify-start"
-                    } mb-3`}
+                    className={`flex ${isOwnMessage ? "justify-end" : "justify-start"
+                      } mb-3`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md ${
-                        isOwnMessage ? "text-right" : "text-left"
-                      }`}
+                      className={`max-w-xs lg:max-w-md ${isOwnMessage ? "text-right" : "text-left"
+                        }`}
                     >
                       {/* Nombre del usuario (solo para mensajes de otros) */}
                       {!isOwnMessage && (
@@ -968,11 +952,23 @@ const Messages = () => {
 
                       {/* Burbuja del mensaje */}
                       <div
-                        className={`inline-block px-4 py-2.5 rounded-2xl shadow-sm ${
-                          isOwnMessage
-                            ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white"
-                            : "bg-white text-gray-900 border border-gray-200 dark:bg-slate-700 dark:text-white dark:border-slate-600"
-                        }`}
+                        className={`inline-block px-4 py-2.5 rounded-2xl shadow-sm ${isOwnMessage
+                          ? user?.equippedEffect?.id === 'effect_red'
+                            ? "bg-gradient-to-r from-red-600 to-red-500 text-white"
+                            : user?.equippedEffect?.id === 'effect_gradient'
+                              ? "bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white"
+                              : user?.equippedEffect?.id === 'effect_glow'
+                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/50"
+                                : user?.equippedEffect?.id === 'effect_neon'
+                                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/50 border-2 border-cyan-400"
+                                  : "bg-gradient-to-r from-primary-600 to-primary-500 text-white"
+                          : isDark
+                            ? "bg-slate-700 text-white border border-slate-600"
+                            : "bg-white text-gray-900 border border-gray-200"
+                          }`}
+                        style={isOwnMessage && user?.equippedEffect?.id === 'effect_glow' ? {
+                          animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        } : {}}
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">
                           {messageContent}
@@ -980,9 +976,8 @@ const Messages = () => {
 
                         {/* Timestamp */}
                         <div
-                          className={`flex items-center justify-end mt-1 ${
-                            isOwnMessage ? "text-primary-100" : "text-gray-500 dark:text-gray-400"
-                          }`}
+                          className={`flex items-center justify-end mt-1 ${isOwnMessage ? "text-primary-100" : "text-gray-500 dark:text-gray-400"
+                            }`}
                         >
                           <p className="text-xs">
                             {new Date(
@@ -1026,19 +1021,16 @@ const Messages = () => {
                     />
 
                     {/* Burbuja del indicador */}
-                    <div className={`px-5 py-3 rounded-2xl shadow-sm border ${
-                      isDark 
-                        ? "bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600" 
-                        : "bg-gradient-to-r from-gray-100 to-gray-200 border-gray-200"
-                    }`}>
+                    <div className={`px-5 py-3 rounded-2xl shadow-sm border ${isDark
+                      ? "bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600"
+                      : "bg-gradient-to-r from-gray-100 to-gray-200 border-gray-200"
+                      }`}>
                       <div className="flex items-center space-x-3">
-                        <span className={`text-sm font-medium ${
-                          isDark ? "text-slate-200" : "text-gray-700"
-                        }`}>
+                        <span className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"
+                          }`}>
                           {typingUsers.length === 1
-                            ? `${
-                                selectedChat.other_user?.full_name || "Usuario"
-                              } está escribiendo`
+                            ? `${selectedChat.other_user?.full_name || "Usuario"
+                            } está escribiendo`
                             : "Varios usuarios están escribiendo"}
                         </span>
 

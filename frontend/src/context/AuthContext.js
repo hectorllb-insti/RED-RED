@@ -169,6 +169,21 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (userData) => {
     dispatch({ type: "UPDATE_USER", payload: userData });
 
+    // Persist inventory and equipped items if they changed
+    if (state.user?.id) {
+      if (userData.inventory !== undefined) {
+        localStorage.setItem(`inventory_${state.user.id}`, JSON.stringify(userData.inventory));
+      }
+      if (userData.equippedFrame !== undefined || userData.equippedEffect !== undefined || userData.equippedBadge !== undefined) {
+        const equipped = {
+          frame: userData.equippedFrame !== undefined ? userData.equippedFrame : state.user.equippedFrame,
+          effect: userData.equippedEffect !== undefined ? userData.equippedEffect : state.user.equippedEffect,
+          badge: userData.equippedBadge !== undefined ? userData.equippedBadge : state.user.equippedBadge
+        };
+        localStorage.setItem(`equipped_${state.user.id}`, JSON.stringify(equipped));
+      }
+    }
+
     // Notificar al WebSocket sobre la actualización del perfil
     if (socketService.isConnected()) {
       socketService.send({

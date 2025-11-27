@@ -279,18 +279,22 @@ function App() {
           <div className="App">
             <AppRoutes />
             <Toaster
-              position="top-right"
+              position="top-center"
               toastOptions={{
-                duration: 4000,
+                duration: 3000,
                 style: {
-                  background: "#171717",
+                  background: "#363636",
                   color: "#fff",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  fontSize: "14px",
-                  fontWeight: "500",
                 },
                 success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: "#10b981",
+                    secondary: "#fff",
+                  },
+                },
+                error: {
+                  duration: 4000,
                   iconTheme: {
                     primary: "#ef4444",
                     secondary: "#fff",

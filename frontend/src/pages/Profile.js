@@ -457,8 +457,8 @@ const Profile = () => {
                 onClick={() => coverPictureInputRef.current?.click()}
                 disabled={updateCoverPictureMutation.isLoading}
                 className={`absolute top-4 right-4 p-2 backdrop-blur-sm rounded-lg text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDark
-                    ? "bg-slate-900/70 hover:bg-slate-900/90"
-                    : "bg-gray-900/60 hover:bg-gray-900/80"
+                  ? "bg-slate-900/70 hover:bg-slate-900/90"
+                  : "bg-gray-900/60 hover:bg-gray-900/80"
                   }`}
                 title="Cambiar imagen de portada"
               >
@@ -477,14 +477,28 @@ const Profile = () => {
           <div className="flex items-start justify-between -mt-16">
             <div className="flex items-end gap-4">
               <div className="relative">
-                <img
-                  className={`h-32 w-32 rounded-xl border-4 shadow-lg ring-2 ${isDark
-                      ? "border-slate-800 ring-slate-700"
-                      : "border-white ring-gray-100"
-                    }`}
-                  src={profileUser.profile_picture || "/default-avatar.png"}
-                  alt={profileUser.full_name}
-                />
+                {/* Equipped Frame Effect */}
+                {profileUser.equippedFrame && (
+                  <div className={`absolute -inset-1 rounded-xl bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 blur-sm animate-pulse ${isDark ? "opacity-60" : "opacity-75"}`} />
+                )}
+                <div className="relative">
+                  <img
+                    className={`h-32 w-32 rounded-xl shadow-lg ${profileUser.equippedFrame
+                      ? "border-4 border-yellow-400 ring-2 ring-yellow-500/50"
+                      : isDark
+                        ? "border-4 border-slate-800 ring-2 ring-slate-700"
+                        : "border-4 border-white ring-2 ring-gray-100"
+                      }`}
+                    src={profileUser.profile_picture || "/default-avatar.png"}
+                    alt={profileUser.full_name}
+                  />
+                  {/* Frame Icon Badge */}
+                  {profileUser.equippedFrame && (
+                    <div className={`absolute -top-2 -left-2 text-2xl rounded-full p-1 shadow-lg ${isDark ? "bg-slate-800" : "bg-white"}`}>
+                      {profileUser.equippedFrame.image}
+                    </div>
+                  )}
+                </div>
                 {isOwnProfile && (
                   <>
                     <input
@@ -510,14 +524,22 @@ const Profile = () => {
                 )}
               </div>
               <div className="pb-1">
-                <h1
-                  className={`text-2xl font-bold mb-1 ${isDark ? "text-slate-100" : "text-gray-900"
-                    }`}
-                >
-                  {profileUser.full_name ||
-                    profileUser.first_name + " " + profileUser.last_name ||
-                    profileUser.username}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1
+                    className={`text-2xl font-bold mb-1 ${isDark ? "text-slate-100" : "text-gray-900"
+                      }`}
+                  >
+                    {profileUser.full_name ||
+                      profileUser.first_name + " " + profileUser.last_name ||
+                      profileUser.username}
+                  </h1>
+                  {/* Equipped Badge */}
+                  {profileUser.equippedBadge && (
+                    <div className="text-2xl mb-1" title={profileUser.equippedBadge.name}>
+                      {profileUser.equippedBadge.image}
+                    </div>
+                  )}
+                </div>
                 <p
                   className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
                     }`}
@@ -532,8 +554,8 @@ const Profile = () => {
                 <button
                   onClick={() => setShowEditProfile(true)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm ${isDark
-                      ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                 >
                   <Settings className="h-4 w-4" />
@@ -544,10 +566,10 @@ const Profile = () => {
                   onClick={handleFollow}
                   disabled={followMutation.isLoading}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all ${profileUser.is_following
-                      ? isDark
-                        ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/30"
+                    ? isDark
+                      ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/30"
                     } disabled:opacity-50`}
                 >
                   {profileUser.is_following ? (
@@ -632,8 +654,8 @@ const Profile = () => {
       >
         <div
           className={`border-b ${isDark
-              ? "border-slate-700 bg-slate-800/50"
-              : "border-gray-200 bg-gray-50/50"
+            ? "border-slate-700 bg-slate-800/50"
+            : "border-gray-200 bg-gray-50/50"
             }`}
         >
           <nav className="flex">
@@ -642,12 +664,12 @@ const Profile = () => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === tab
-                    ? isDark
-                      ? "border-primary-500 text-primary-400 bg-slate-800"
-                      : "border-primary-600 text-primary-600 bg-white"
-                    : isDark
-                      ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  ? isDark
+                    ? "border-primary-500 text-primary-400 bg-slate-800"
+                    : "border-primary-600 text-primary-600 bg-white"
+                  : isDark
+                    ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
               >
                 {tab === "posts" ? "Publicaciones" : "Acerca de"}
@@ -663,8 +685,8 @@ const Profile = () => {
                 <div
                   key={post.id}
                   className={`rounded-2xl shadow-sm border p-5 hover:shadow-md transition-all stagger-item ${isDark
-                      ? "bg-slate-800 border-slate-700"
-                      : "bg-white border-gray-200"
+                    ? "bg-slate-800 border-slate-700"
+                    : "bg-white border-gray-200"
                     }`}
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
@@ -691,12 +713,12 @@ const Profile = () => {
                         onClick={() => !isOwnProfile && handleLike(post.id)}
                         disabled={isOwnProfile}
                         className={`like-button flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all ${post.is_liked
-                            ? isDark
-                              ? "bg-red-900/30 text-red-400 liked"
-                              : "bg-red-50 text-red-600 liked"
-                            : isDark
-                              ? "bg-slate-700 text-slate-300"
-                              : "bg-gray-100 text-gray-700"
+                          ? isDark
+                            ? "bg-red-900/30 text-red-400 liked"
+                            : "bg-red-50 text-red-600 liked"
+                          : isDark
+                            ? "bg-slate-700 text-slate-300"
+                            : "bg-gray-100 text-gray-700"
                           } ${!isOwnProfile
                             ? isDark
                               ? "hover:bg-red-900/30 hover:text-red-400 hover-scale cursor-pointer"
@@ -713,12 +735,12 @@ const Profile = () => {
                       <button
                         onClick={() => toggleComments(post.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm transition-all hover-scale ${showComments[post.id]
-                            ? isDark
-                              ? "bg-primary-900/30 text-primary-400"
-                              : "bg-primary-100 text-primary-700"
-                            : isDark
-                              ? "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          ? isDark
+                            ? "bg-primary-900/30 text-primary-400"
+                            : "bg-primary-100 text-primary-700"
+                          : isDark
+                            ? "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           }`}
                       >
                         <MessageCircle className="h-4 w-4 transition-transform" />
@@ -873,8 +895,8 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
           <button
             onClick={handleRefresh}
             className={`text-sm font-medium ${isDark
-                ? "text-primary-400 hover:text-primary-300"
-                : "text-blue-600 hover:text-blue-800"
+              ? "text-primary-400 hover:text-primary-300"
+              : "text-blue-600 hover:text-blue-800"
               }`}
           >
             Recargar
@@ -903,8 +925,8 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
         <button
           onClick={handleRefresh}
           className={`text-sm font-medium ${isDark
-              ? "text-primary-400 hover:text-primary-300"
-              : "text-blue-600 hover:text-blue-800"
+            ? "text-primary-400 hover:text-primary-300"
+            : "text-blue-600 hover:text-blue-800"
             }`}
         >
           Recargar
@@ -949,7 +971,7 @@ const CommentsDropdown = ({ postId, usePostComments, refreshComments }) => {
                   {formatDateTime(comment.created_at)}
                 </p>
               </div>
-              
+
               {/* Contenedor del comentario solo con el texto */}
               <div
                 className={`rounded-lg p-3 shadow-sm ${isDark ? "bg-slate-800" : "bg-white"
