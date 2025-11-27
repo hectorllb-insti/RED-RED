@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Camera,
+  Dices,
   Hash,
   Home,
   LogOut,
@@ -10,7 +11,9 @@ import {
   MessageCircle,
   Search,
   Settings,
+  ShoppingBag,
   Shield,
+  Trophy,
   User,
   X,
 } from "lucide-react";
@@ -35,6 +38,7 @@ const Layout = ({ children }) => {
     { name: "Tendencias", href: "/trending", icon: Hash },
     { name: "Mensajes", href: "/messages", icon: MessageCircle },
     { name: "Historias", href: "/stories", icon: Camera },
+    { name: "Ruleta", href: "/roulette", icon: Dices },
     { name: "Perfil", href: `/profile/${user?.username}`, icon: User },
   ];
 
@@ -53,11 +57,10 @@ const Layout = ({ children }) => {
 
   return (
     <div
-      className={`min-h-screen relative overflow-hidden ${
-        isDark
-          ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
-          : "bg-gradient-to-br from-rose-50 via-white to-red-50"
-      }`}
+      className={`min-h-screen relative overflow-hidden ${isDark
+        ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+        : "bg-gradient-to-br from-rose-50 via-white to-red-50"
+        }`}
     >
       {/* 🌟 Elementos decorativos de fondo */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -71,11 +74,10 @@ const Layout = ({ children }) => {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className={`absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl ${
-            isDark
-              ? "bg-gradient-to-br from-red-900/20 to-rose-800/20"
-              : "bg-gradient-to-br from-red-200/30 to-rose-300/30"
-          }`}
+          className={`absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl ${isDark
+            ? "bg-gradient-to-br from-red-900/20 to-rose-800/20"
+            : "bg-gradient-to-br from-red-200/30 to-rose-300/30"
+            }`}
         />
         <motion.div
           animate={{
@@ -87,11 +89,10 @@ const Layout = ({ children }) => {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className={`absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl ${
-            isDark
-              ? "bg-gradient-to-br from-rose-900/20 to-red-800/20"
-              : "bg-gradient-to-br from-rose-200/30 to-red-300/30"
-          }`}
+          className={`absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl ${isDark
+            ? "bg-gradient-to-br from-rose-900/20 to-red-800/20"
+            : "bg-gradient-to-br from-rose-200/30 to-red-300/30"
+            }`}
         />
       </div>
 
@@ -100,11 +101,10 @@ const Layout = ({ children }) => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
-        className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-2xl border-b-2 shadow-sm ${
-          isDark
-            ? "bg-slate-900/70 border-slate-700/60"
-            : "bg-white/70 border-gray-300/60"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-2xl border-b-2 shadow-sm ${isDark
+          ? "bg-slate-900/70 border-slate-700/60"
+          : "bg-white/70 border-gray-300/60"
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5">
           <div className="flex justify-between items-center h-12 lg:h-14">
@@ -143,19 +143,17 @@ const Layout = ({ children }) => {
                 >
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Search
-                      className={`h-5 w-5 transition-colors duration-300 ${
-                        isDark
-                          ? "text-slate-400 group-hover:text-red-400"
-                          : "text-gray-600 group-hover:text-red-500"
-                      }`}
+                      className={`h-5 w-5 transition-colors duration-300 ${isDark
+                        ? "text-slate-400 group-hover:text-red-400"
+                        : "text-gray-600 group-hover:text-red-500"
+                        }`}
                     />
                   </div>
                   <div
-                    className={`block w-full pl-12 pr-4 py-3 border-2 rounded-2xl leading-5 backdrop-blur-sm cursor-pointer transition-all duration-300 text-sm font-medium ${
-                      isDark
-                        ? "border-slate-700 group-hover:border-red-500 bg-slate-800/60 text-slate-300"
-                        : "border-gray-200 group-hover:border-red-500 bg-white/60 text-gray-500"
-                    }`}
+                    className={`block w-full pl-12 pr-4 py-3 border-2 rounded-2xl leading-5 backdrop-blur-sm cursor-pointer transition-all duration-300 text-sm font-medium ${isDark
+                      ? "border-slate-700 group-hover:border-red-500 bg-slate-800/60 text-slate-300"
+                      : "border-gray-200 group-hover:border-red-500 bg-white/60 text-gray-500"
+                      }`}
                   >
                     Buscar usuarios, publicaciones...
                   </div>
@@ -172,6 +170,20 @@ const Layout = ({ children }) => {
             <div className="hidden lg:flex items-center gap-3">
               {/* NotificationCenter movido fuera para evitar duplicación */}
 
+              {/* Points Display - Clickable */}
+              <Link to="/roulette">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer transition-colors ${isDark
+                    ? "bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700"
+                    : "bg-yellow-50 border-yellow-200 text-yellow-600 hover:bg-yellow-100"
+                    } font-bold text-sm`}>
+                  <Trophy className="w-4 h-4" />
+                  {user?.points || 0}
+                </motion.div>
+              </Link>
+
               {/* Theme Toggle */}
               <ThemeToggle variant="compact" />
 
@@ -180,11 +192,10 @@ const Layout = ({ children }) => {
                   whileHover={{ scale: 1.1, rotate: 180 }}
                   whileTap={{ scale: 0.9 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className={`p-3 rounded-xl transition-all duration-300 ${
-                    isDark
-                      ? "text-slate-400 hover:text-red-400"
-                      : "text-gray-600 hover:text-red-600"
-                  }`}
+                  className={`p-3 rounded-xl transition-all duration-300 ${isDark
+                    ? "text-slate-400 hover:text-red-400"
+                    : "text-gray-600 hover:text-red-600"
+                    }`}
                   title="Configuración"
                 >
                   <Settings className="h-5 w-5" />
@@ -204,11 +215,10 @@ const Layout = ({ children }) => {
                     online
                   />
                   <span
-                    className={`text-sm font-semibold ${
-                      isDark
-                        ? "bg-gradient-to-r from-slate-200 to-slate-100 bg-clip-text text-transparent"
-                        : "bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent"
-                    }`}
+                    className={`text-sm font-semibold ${isDark
+                      ? "bg-gradient-to-r from-slate-200 to-slate-100 bg-clip-text text-transparent"
+                      : "bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent"
+                      }`}
                   >
                     {user?.full_name}
                   </span>
@@ -220,11 +230,10 @@ const Layout = ({ children }) => {
                 whileTap={{ scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 400 }}
                 onClick={logout}
-                className={`p-3 rounded-xl transition-all duration-300 ml-1 ${
-                  isDark
-                    ? "text-slate-400 hover:text-white hover:bg-gradient-to-br hover:from-red-600 hover:to-rose-700"
-                    : "text-gray-600 hover:text-white hover:bg-gradient-to-br hover:from-red-500 hover:to-rose-600"
-                }`}
+                className={`p-3 rounded-xl transition-all duration-300 ml-1 ${isDark
+                  ? "text-slate-400 hover:text-white hover:bg-gradient-to-br hover:from-red-600 hover:to-rose-700"
+                  : "text-gray-600 hover:text-white hover:bg-gradient-to-br hover:from-red-500 hover:to-rose-600"
+                  }`}
                 title="Cerrar sesión"
               >
                 <LogOut className="h-5 w-5" />
@@ -237,11 +246,10 @@ const Layout = ({ children }) => {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={`p-2 rounded-xl transition-colors ${
-                  isDark
-                    ? "text-slate-400 hover:text-red-400 hover:bg-slate-800"
-                    : "text-gray-600 hover:text-red-600 hover:bg-red-50"
-                }`}
+                className={`p-2 rounded-xl transition-colors ${isDark
+                  ? "text-slate-400 hover:text-red-400 hover:bg-slate-800"
+                  : "text-gray-600 hover:text-red-600 hover:bg-red-50"
+                  }`}
               >
                 {mobileMenuOpen ? (
                   <X className="h-6 w-6" />
@@ -261,24 +269,31 @@ const Layout = ({ children }) => {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className={`lg:hidden border-t backdrop-blur-xl overflow-hidden ${
-                isDark
-                  ? "border-slate-700 bg-slate-900/95"
-                  : "border-gray-200 bg-white/95"
-              }`}
+              className={`lg:hidden border-t backdrop-blur-xl overflow-hidden ${isDark
+                ? "border-slate-700 bg-slate-900/95"
+                : "border-gray-200 bg-white/95"
+                }`}
             >
               <div className="px-4 py-4 space-y-2">
+                {/* Points Display Mobile */}
+                <div className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border mb-4 ${isDark
+                  ? "bg-slate-800 border-slate-700 text-yellow-400"
+                  : "bg-yellow-50 border-yellow-200 text-yellow-600"
+                  } font-bold`}>
+                  <Trophy className="w-5 h-5" />
+                  {user?.points || 0} Puntos Disponibles
+                </div>
+
                 {/* Búsqueda móvil */}
                 <Link to="/search" onClick={() => setMobileMenuOpen(false)}>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <Search className="h-5 w-5 text-gray-400" />
                     </div>
-                    <div className={`block w-full pl-12 pr-4 py-3 border-2 rounded-2xl text-sm font-medium ${
-                      isDark
-                        ? "border-slate-600 bg-slate-800 text-slate-400"
-                        : "border-gray-200 bg-gray-50 text-gray-500"
-                    }`}>
+                    <div className={`block w-full pl-12 pr-4 py-3 border-2 rounded-2xl text-sm font-medium ${isDark
+                      ? "border-slate-600 bg-slate-800 text-slate-400"
+                      : "border-gray-200 bg-gray-50 text-gray-500"
+                      }`}>
                       Buscar...
                     </div>
                   </div>
@@ -293,15 +308,14 @@ const Layout = ({ children }) => {
                       key={item.name}
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                        active
-                          ? isDark
-                            ? "bg-red-900/30 text-red-400"
-                            : "bg-red-50 text-red-700"
-                          : isDark
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${active
+                        ? isDark
+                          ? "bg-red-900/30 text-red-400"
+                          : "bg-red-50 text-red-700"
+                        : isDark
                           ? "text-slate-300 hover:bg-slate-800"
                           : "text-gray-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <Icon
                         className={`h-5 w-5 ${active ? "text-red-600" : ""}`}
@@ -322,20 +336,18 @@ const Layout = ({ children }) => {
                           key={item.name}
                           to={item.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                            active
-                              ? isDark
-                                ? "bg-indigo-900/30 text-indigo-400"
-                                : "bg-indigo-50 text-indigo-700"
-                              : isDark
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${active
+                            ? isDark
+                              ? "bg-indigo-900/30 text-indigo-400"
+                              : "bg-indigo-50 text-indigo-700"
+                            : isDark
                               ? "text-slate-300 hover:bg-slate-800"
                               : "text-gray-600 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           <Icon
-                            className={`h-5 w-5 ${
-                              active ? "text-indigo-600" : ""
-                            }`}
+                            className={`h-5 w-5 ${active ? "text-indigo-600" : ""
+                              }`}
                           />
                           {item.name}
                         </Link>
@@ -350,11 +362,10 @@ const Layout = ({ children }) => {
                 <Link
                   to="/settings"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isDark
-                      ? "text-slate-300 hover:bg-slate-800"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isDark
+                    ? "text-slate-300 hover:bg-slate-800"
+                    : "text-gray-600 hover:bg-gray-50"
+                    }`}
                 >
                   <Settings className="h-5 w-5" />
                   Configuración
@@ -365,11 +376,10 @@ const Layout = ({ children }) => {
                     logout();
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isDark
-                      ? "text-red-400 hover:bg-red-900/30"
-                      : "text-red-600 hover:bg-red-50"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isDark
+                    ? "text-red-400 hover:bg-red-900/30"
+                    : "text-red-600 hover:bg-red-50"
+                    }`}
                 >
                   <LogOut className="h-5 w-5" />
                   Cerrar sesión
@@ -378,7 +388,7 @@ const Layout = ({ children }) => {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.header>
+      </motion.header >
 
       <div className="flex relative z-10">
         {/* 🎨 Sidebar mejorado - Solo escritorio */}
@@ -386,11 +396,10 @@ const Layout = ({ children }) => {
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-          className={`hidden lg:block fixed left-0 top-[4.25rem] h-[calc(100vh-4.25rem)] w-64 xl:w-72 backdrop-blur-2xl border-r-2 shadow-sm ${
-            isDark
-              ? "bg-gradient-to-b from-slate-900/90 to-slate-900/70 border-slate-700/60"
-              : "bg-gradient-to-b from-white/90 to-white/70 border-gray-300/60"
-          }`}
+          className={`hidden lg:block fixed left-0 top-[4.25rem] h-[calc(100vh-4.25rem)] w-64 xl:w-72 backdrop-blur-2xl border-r-2 shadow-sm ${isDark
+            ? "bg-gradient-to-b from-slate-900/90 to-slate-900/70 border-slate-700/60"
+            : "bg-gradient-to-b from-white/90 to-white/70 border-gray-300/60"
+            }`}
         >
           <div className="p-4 pt-8 space-y-3 overflow-y-auto h-full scrollbar-hide">
             {navigation.map((item, index) => {
@@ -411,13 +420,12 @@ const Layout = ({ children }) => {
                 >
                   <Link
                     to={item.href}
-                    className={`group relative flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-semibold transition-all duration-300 overflow-hidden ${
-                      active
-                        ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md"
-                        : isDark
+                    className={`group relative flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-semibold transition-all duration-300 overflow-hidden ${active
+                      ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md"
+                      : isDark
                         ? "text-slate-300 hover:bg-gradient-to-r hover:from-slate-800 hover:to-slate-700 hover:text-red-400"
                         : "text-gray-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 hover:text-red-600"
-                    }`}
+                      }`}
                   >
                     {/* Brillo en hover/active */}
                     {active && (
@@ -436,8 +444,8 @@ const Layout = ({ children }) => {
                       animate={
                         active
                           ? {
-                              scale: [1, 1.08, 1],
-                            }
+                            scale: [1, 1.08, 1],
+                          }
                           : {}
                       }
                       transition={{
@@ -448,11 +456,10 @@ const Layout = ({ children }) => {
                       className="relative z-10"
                     >
                       <Icon
-                        className={`h-5 w-5 transition-all duration-300 ${
-                          active
-                            ? "text-white"
-                            : "group-hover:scale-110 group-hover:text-red-600"
-                        }`}
+                        className={`h-5 w-5 transition-all duration-300 ${active
+                          ? "text-white"
+                          : "group-hover:scale-110 group-hover:text-red-600"
+                          }`}
                       />
                     </motion.div>
                     <span
@@ -496,11 +503,10 @@ const Layout = ({ children }) => {
                     >
                       <Link
                         to={item.href}
-                        className={`group relative flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-semibold transition-all duration-300 overflow-hidden ${
-                          active
-                            ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
-                            : "text-gray-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-600"
-                        }`}
+                        className={`group relative flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-semibold transition-all duration-300 overflow-hidden ${active
+                          ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+                          : "text-gray-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-600"
+                          }`}
                       >
                         {active && (
                           <motion.div
@@ -518,8 +524,8 @@ const Layout = ({ children }) => {
                           animate={
                             active
                               ? {
-                                  scale: [1, 1.08, 1],
-                                }
+                                scale: [1, 1.08, 1],
+                              }
                               : {}
                           }
                           transition={{
@@ -530,17 +536,15 @@ const Layout = ({ children }) => {
                           className="relative z-10"
                         >
                           <Icon
-                            className={`h-5 w-5 transition-all duration-300 ${
-                              active
-                                ? "text-white"
-                                : "group-hover:scale-110 group-hover:text-indigo-600"
-                            }`}
+                            className={`h-5 w-5 transition-all duration-300 ${active
+                              ? "text-white"
+                              : "group-hover:scale-110 group-hover:text-indigo-600"
+                              }`}
                           />
                         </motion.div>
                         <span
-                          className={`relative z-10 ${
-                            active ? "text-white" : ""
-                          }`}
+                          className={`relative z-10 ${active ? "text-white" : ""
+                            }`}
                         >
                           {item.name}
                         </span>
@@ -574,7 +578,7 @@ const Layout = ({ children }) => {
           </motion.div>
         </main>
       </div>
-    </div>
+    </div >
   );
 };
 
