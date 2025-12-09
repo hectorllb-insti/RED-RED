@@ -56,7 +56,7 @@ pipeline {
             steps {
                 echo 'Instalando dependencias raíz del proyecto...'
                 sh '''
-                    npm ci --prefer-offline --no-audit
+                    npm install
                 '''
             }
         }
@@ -66,6 +66,7 @@ pipeline {
                 echo 'Instalando dependencias del frontend...'
                 dir("${FRONTEND_DIR}") {
                     sh '''
+                        npm install
                         npm ci --prefer-offline --no-audit
                     '''
                 }
