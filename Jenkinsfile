@@ -1,18 +1,24 @@
 // Definición del Pipeline Declarativo
 pipeline {
-    agent any
+    // CAMBIO CLAVE: Usamos un contenedor Docker de Python como agente.
+    // Esto asegura que 'pip' y 'python' estén disponibles y que el usuario 'jenkins' tenga permisos.
+    agent {
+        docker {
+            image 'python:3.10-slim'
+            // Se asume que Docker está instalado en el host y el plugin Docker está en Jenkins.
+            // Si el 'pip install' falla por permisos, descomenta la siguiente línea:
+            // args '-u 1000:1000' 
+        }
+    }
 
-    // Define las herramientas si las necesitas (ej. Python 3.10)
-    // Si ya tienes Python instalado en el contenedor Docker, puedes omitir este bloque.
-    // tools {
-    //     python 'Python 3.10'
-    // }
+    // Ya no es necesaria la sección 'tools' ni los comentarios, ya que Docker maneja el entorno.
     
     stages {
         
         stage('Checkout') {
             steps {
                 echo "Clonando el repositorio ${env.JOB_NAME}..."
+                // El SCM se configura en el Job (Paso 7), esta instrucción lo ejecuta.
                 checkout scm 
             }
         }
@@ -20,39 +26,34 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo "Instalando dependencias de Python desde requirements.txt..."
-                // Intentar instalar Python y pip usando apt (común en Debian/Ubuntu, que usa el contenedor Jenkins base)
-                sh 'apt-get update && apt-get install -y python3 python3-pip'
-                
-                // Usar el pip recién instalado
-                sh 'pip3 install -r requirements.txt' 
+                // Ahora 'pip' funcionará dentro del contenedor 'python:3.10-slim'.
+                sh 'pip install -r requirements.txt' 
             }
         }
 
         stage('Test') {
             steps {
-                // Ejecuta las pruebas. Aquí debes usar el comando de tu framework de prueba (pytest o unittest)
                 echo "Ejecutando pruebas unitarias de Python..."
-                // **AJUSTAR ESTA LÍNEA** si usas otro comando de prueba
+                // Se ejecuta pytest dentro del contenedor Python.
                 sh 'pytest' 
             }
         }
         
         stage('Archive & Report') {
             steps {
-                // Si generas reportes de cobertura (ej. con pytest-cov), los archivas
-                archiveArtifacts artifacts: 'build/*.whl, htmlcov/**' // Ajustar rutas según tu proyecto
-                // Opcional: Si usas JUnitXML (pytest --junitxml=report.xml), puedes publicarlos
-                // junit 'report.xml' 
+                // Publica resultados de prueba (si usas JunitXML) y archiva artefactos.
+                // Si no tienes estos archivos, este paso podría fallar pero es bueno dejarlo.
+                archiveArtifacts artifacts: 'build/*.whl, htmlcov/**' 
+                // Opcional: junit 'report.xml' 
                 echo "Artefactos y reportes archivados."
             }
         }
         
         stage('Deploy') {
             steps {
-                // SIMULACIÓN: Aquí iría la lógica para enviar el artefacto al servidor
+                // SIMULACIÓN: Aquí iría el despliegue real
                 echo "Despliegue iniciado..."
                 sh 'echo "Aplicación Python desplegada con éxito en entorno de Staging/Testing."'
-                // sh 'scp mi_app.tar.gz user@servidor:/ruta/de/despliegue'
             }
         }
     }
