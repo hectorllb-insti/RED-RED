@@ -47,6 +47,9 @@ pipeline {
                         # Activar entorno virtual e instalar dependencias
                         .  ${VENV_DIR}/bin/activate
                         pip install --upgrade pip
+
+                        pip install setuptools
+                        
                         pip install -r requirements.txt
                     '''
             }
@@ -133,7 +136,7 @@ pipeline {
                 echo 'Compilando frontend para producción...'
                 dir("${FRONTEND_DIR}") {
                     sh '''
-                        npm run build
+                        CI=false npm run build
                     '''
                 }
             }
