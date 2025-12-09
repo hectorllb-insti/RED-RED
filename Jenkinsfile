@@ -19,9 +19,12 @@ pipeline {
         
         stage('Install Dependencies') {
             steps {
-                // Instala las dependencias listadas en el archivo requirements.txt
                 echo "Instalando dependencias de Python desde requirements.txt..."
-                sh 'pip install -r requirements.txt' 
+                // Intentar instalar Python y pip usando apt (común en Debian/Ubuntu, que usa el contenedor Jenkins base)
+                sh 'apt-get update && apt-get install -y python3 python3-pip'
+                
+                // Usar el pip recién instalado
+                sh 'pip3 install -r requirements.txt' 
             }
         }
 
