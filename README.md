@@ -497,6 +497,6 @@ Si te gusta el proyecto, ¡dale una ⭐ en GitHub!
 
 ---
 
-<sub>Última actualización: Diciembre 2025 | Made with ❤️ by DAM2 Frameworks Team</sub>
+<sub>Última actualización: Noviembre 2025 | Made with ❤️ by DAM2 Frameworks Team</sub>
 
 </div>
