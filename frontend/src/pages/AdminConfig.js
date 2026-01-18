@@ -5,10 +5,13 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 
 const AdminConfig = () => {
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -111,31 +114,31 @@ const AdminConfig = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 ${isDark ? "bg-slate-900" : "bg-gray-50"}`}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
             Configuración del Sitio
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className={`mt-2 text-sm ${isDark ? "text-slate-400" : "text-gray-600"}`}>
             Configura los límites, permisos y características del sitio
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Información General */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className={`rounded-xl shadow-sm border p-6 mb-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
             <div className="flex items-center gap-2 mb-6">
-              <Settings className="h-5 w-5 text-gray-700" />
-              <h2 className="text-lg font-semibold text-gray-900">
+              <Settings className={`h-5 w-5 ${isDark ? "text-slate-300" : "text-gray-700"}`} />
+              <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                 Información General
               </h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                   Nombre del Sitio
                 </label>
                 <input
@@ -143,7 +146,7 @@ const AdminConfig = () => {
                   name="site_name"
                   value={formData.site_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400" : "bg-white border-gray-300 text-gray-900"}`}
                   placeholder="Mi Red Social"
                 />
               </div>
@@ -151,14 +154,14 @@ const AdminConfig = () => {
           </div>
 
           {/* Límites de Contenido */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          <div className={`rounded-xl shadow-sm border p-6 mb-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+            <h2 className={`text-lg font-semibold mb-6 ${isDark ? "text-white" : "text-gray-900"}`}>
               Límites de Contenido
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="flex flex-col">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                   Longitud Máx. de Post
                 </label>
                 <input
@@ -168,13 +171,13 @@ const AdminConfig = () => {
                   onChange={handleChange}
                   min="100"
                   max="10000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100" : "bg-white border-gray-300 text-gray-900"}`}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Longitud Máx. de Comentario
+              <div className="flex flex-col">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
+                  Longitud Max. Comentario
                 </label>
                 <input
                   type="number"
@@ -183,12 +186,12 @@ const AdminConfig = () => {
                   onChange={handleChange}
                   min="50"
                   max="5000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100" : "bg-white border-gray-300 text-gray-900"}`}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="flex flex-col">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                   Longitud Máx. de Bio
                 </label>
                 <input
@@ -198,15 +201,15 @@ const AdminConfig = () => {
                   onChange={handleChange}
                   min="50"
                   max="1000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark ? "bg-slate-700 border-slate-600 text-slate-100" : "bg-white border-gray-300 text-gray-900"}`}
                 />
               </div>
             </div>
           </div>
 
           {/* Permisos y Características */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          <div className={`rounded-xl shadow-sm border p-6 mb-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+            <h2 className={`text-lg font-semibold mb-6 ${isDark ? "text-white" : "text-gray-900"}`}>
               Permisos y Características
             </h2>
 
@@ -214,10 +217,10 @@ const AdminConfig = () => {
               {/* Registration */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-700"}`}>
                     Permitir Registro
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los nuevos usuarios pueden crear cuentas
                   </p>
                 </div>
@@ -236,10 +239,10 @@ const AdminConfig = () => {
               {/* Post Creation */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-700"}`}>
                     Permitir Creación de Posts
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los usuarios pueden crear nuevos posts
                   </p>
                 </div>
@@ -258,10 +261,10 @@ const AdminConfig = () => {
               {/* Comments */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Permitir Comentarios
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los usuarios pueden comentar en posts
                   </p>
                 </div>
@@ -280,10 +283,10 @@ const AdminConfig = () => {
               {/* Likes */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Permitir Likes
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los usuarios pueden dar likes a posts y comentarios
                   </p>
                 </div>
@@ -302,10 +305,10 @@ const AdminConfig = () => {
               {/* Follows */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Permitir Seguir Usuarios
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los usuarios pueden seguir a otros usuarios
                   </p>
                 </div>
@@ -324,10 +327,10 @@ const AdminConfig = () => {
               {/* Email Verification */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Requerir Verificación de Email
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los usuarios deben verificar su email
                   </p>
                 </div>
@@ -346,10 +349,10 @@ const AdminConfig = () => {
               {/* Notifications */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Habilitar Notificaciones
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Sistema de notificaciones activo
                   </p>
                 </div>
@@ -368,10 +371,10 @@ const AdminConfig = () => {
               {/* Stories */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Habilitar Historias
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     Los usuarios pueden crear historias
                   </p>
                 </div>
@@ -390,18 +393,18 @@ const AdminConfig = () => {
           </div>
 
           {/* Modo Mantenimiento */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          <div className={`rounded-xl shadow-sm border p-6 mb-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+            <h2 className={`text-lg font-semibold mb-6 ${isDark ? "text-white" : "text-gray-900"}`}>
               Modo Mantenimiento
             </h2>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-gray-700"}`}>
                     Activar Modo Mantenimiento
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                     El sitio mostrará una página de mantenimiento
                   </p>
                 </div>
@@ -419,7 +422,7 @@ const AdminConfig = () => {
 
               {formData.maintenance_mode && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                     Mensaje de Mantenimiento
                   </label>
                   <textarea
@@ -427,7 +430,7 @@ const AdminConfig = () => {
                     value={formData.maintenance_message}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none ${isDark ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400" : "bg-white border-gray-300 text-gray-900"}`}
                     placeholder="Estamos realizando mejoras. Volveremos pronto..."
                   />
                 </div>

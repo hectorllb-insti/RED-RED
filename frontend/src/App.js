@@ -31,6 +31,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogs from "./pages/AdminLogs";
 import AdminUsers from "./pages/AdminUsers";
 
+// Game Pages
+import Roulette from "./pages/Roulette";
+
 // Componentes
 import Layout from "./components/Layout";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -201,6 +204,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <Layout>
                 <TrendingPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/roulette"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Roulette />
               </Layout>
             </ProtectedRoute>
           }
