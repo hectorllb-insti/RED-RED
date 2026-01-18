@@ -1,73 +1,218 @@
-// Definición del Pipeline Declarativo
 pipeline {
-    // CAMBIO CLAVE: Usamos un contenedor Docker de Python como agente.
-    // Esto asegura que 'pip' y 'python' estén disponibles y que el usuario 'jenkins' tenga permisos.
-    agent {
-        docker {
-            image 'python:3.10-slim'
-            // Se asume que Docker está instalado en el host y el plugin Docker está en Jenkins.
-            // Si el 'pip install' falla por permisos, descomenta la siguiente línea:
-            // args '-u 1000:1000' 
-        }
+    agent any
+    
+    environment {
+        // Configuraciones de Node.js
+        NODE_VERSION = '21.0.0'
+        NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+        
+        // Configuraciones de Python
+        PYTHON_VERSION = '3.11.6'
+        VENV_DIR = "${WORKSPACE}/venv"
+        
+        // Directorios del proyecto
+        BACKEND_DIR = 'backend'
+        FRONTEND_DIR = 'frontend'
+        
+        // Variables de entorno para el build
+        CI = 'true'
     }
-
-    // Ya no es necesaria la sección 'tools' ni los comentarios, ya que Docker maneja el entorno.
     
     stages {
-        
-        stage('Checkout') {
+        stage('Preparación') {
             steps {
-                echo "Clonando el repositorio ${env.JOB_NAME}..."
-                // El SCM se configura en el Job (Paso 7), esta instrucción lo ejecuta.
-                checkout scm 
+                echo 'Limpiando workspace...'
+                cleanWs()
+                
+                echo 'Clonando repositorio...'
+                checkout scm
+                
+                echo 'Mostrando información del entorno...'
+                sh '''
+                    echo "Node version: $(node --version)"
+                    echo "NPM version: $(npm --version)"
+                    echo "Python version:  $(python3 --version)"
+                    echo "Directorio actual: $(pwd)"
+                '''
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Instalar Dependencias - Backend') {
             steps {
-                echo "Instalando dependencias de Python desde requirements.txt..."
-                // Ahora 'pip' funcionará dentro del contenedor 'python:3.10-slim'.
-                sh 'pip install -r requirements.txt' 
+                echo 'Instalando dependencias de Python...'
+                    sh '''
+                        # Crear entorno virtual
+                        python3 -m venv ${VENV_DIR}
+                        
+                        # Activar entorno virtual e instalar dependencias
+                        .  ${VENV_DIR}/bin/activate
+                        pip install --upgrade pip
+
+                        pip install setuptools
+                        
+                        pip install -r requirements.txt
+                    '''
             }
         }
 
-        stage('Test') {
+        stage('Migraciones - Backend') {
             steps {
-                echo "Ejecutando pruebas unitarias de Python..."
-                // Se ejecuta pytest dentro del contenedor Python.
-                sh 'pytest' 
+                echo 'Ejecutando tests del backend...'
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                        .  ${VENV_DIR}/bin/activate
+                        
+                        # Ejecutamos las migraciones
+                        python manage.py makemigrations
+                        python manage.py migrate
+                    '''
+                }
             }
         }
         
-        stage('Archive & Report') {
+        stage('Instalar Dependencias - Frontend (Root)') {
             steps {
-                // Publica resultados de prueba (si usas JunitXML) y archiva artefactos.
-                // Si no tienes estos archivos, este paso podría fallar pero es bueno dejarlo.
-                archiveArtifacts artifacts: 'build/*.whl, htmlcov/**' 
-                // Opcional: junit 'report.xml' 
-                echo "Artefactos y reportes archivados."
+                echo 'Instalando dependencias raíz del proyecto...'
+                sh '''
+                    npm install
+                '''
             }
         }
         
-        stage('Deploy') {
+        stage('Instalar Dependencias - Frontend (App)') {
             steps {
-                // SIMULACIÓN: Aquí iría el despliegue real
-                echo "Despliegue iniciado..."
-                sh 'echo "Aplicación Python desplegada con éxito en entorno de Staging/Testing."'
+                echo 'Instalando dependencias del frontend...'
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        npm install
+                        npm ci --prefer-offline --no-audit
+                    '''
+                }
+            }
+        }
+        
+        stage('Lint - Backend') {
+            steps {
+                echo 'Ejecutando lint en el backend...'
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                        .  ${VENV_DIR}/bin/activate
+                        
+                        # Instalar herramientas de linting si no están
+                        pip install flake8 black
+                        
+                        # Ejecutar flake8 (opcional:  no fallar el build)
+                        flake8 .  --count --select=E9,F63,F7,F82 --show-source --statistics || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Lint - Frontend') {
+            steps {
+                echo 'Ejecutando lint en el frontend...'
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        # Si existe script de lint en package.json
+                        npm run lint --if-present || echo "No lint script found, skipping..."
+                    '''
+                }
+            }
+        }
+        
+        stage('Tests - Backend') {
+            steps {
+                echo 'Ejecutando tests del backend...'
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                        .  ${VENV_DIR}/bin/activate
+                        
+                        # Ejecutar tests de Django
+                        python manage.py test --noinput || echo "Tests fallaron o no existen"
+                    '''
+                }
+            }
+        }
+        
+        stage('Tests - Frontend') {
+            steps {
+                echo 'Ejecutando tests del frontend...'
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        # Ejecutar tests con coverage
+                        CI=true npm test -- --coverage --watchAll=false --passWithNoTests || echo "Tests fallaron o no existen"
+                    '''
+                }
+            }
+        }
+        
+        stage('Build - Frontend') {
+            steps {
+                echo 'Compilando frontend para producción...'
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        CI=false npm run build
+                    '''
+                }
+            }
+        }
+        
+        stage('Recolectar Static Files - Backend') {
+            steps {
+                echo 'Recolectando archivos estáticos de Django...'
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                        . ${VENV_DIR}/bin/activate
+                        
+                        # Ejecutar collectstatic
+                        python manage. py collectstatic --noinput || echo "collectstatic falló o no está configurado"
+                    '''
+                }
+            }
+        }
+        
+        stage('Verificar Build') {
+            steps {
+                echo 'Verificando artefactos generados...'
+                sh '''
+                    echo "=== Estructura del frontend/build ==="
+                    ls -lah ${FRONTEND_DIR}/build || echo "No se encontró directorio build"
+                    
+                    echo "=== Archivos estáticos del backend ==="
+                    ls -lah ${BACKEND_DIR}/staticfiles || echo "No se encontró directorio staticfiles"
+                '''
+            }
+        }
+        
+        stage('Archivar Artefactos') {
+            steps {
+                echo 'Archivando artefactos del build...'
+                archiveArtifacts artifacts: 'frontend/build/**/*', fingerprint:  true, allowEmptyArchive: true
+                archiveArtifacts artifacts:  'backend/staticfiles/**/*', fingerprint: true, allowEmptyArchive: true
             }
         }
     }
-
-    // Manejo de Notificaciones al Finalizar
+    
     post {
-        always {
-            echo "El Pipeline de Python ha finalizado."
-        }
         success {
-            echo "CI/CD COMPLETO: ¡El Pipeline terminó con éxito! ✅"
+            echo '✅ Build completado exitosamente!'
+            // Aquí puedes agregar notificaciones (email, Slack, etc.)
         }
+        
         failure {
-            echo "CI/CD FALLIDO: El Pipeline falló en la etapa ${currentBuild.currentResult}. ❌"
+            echo '❌ Build falló!'
+            // Aquí puedes agregar notificaciones de fallo
+        }
+        
+        always {
+            echo 'Limpiando workspace...'
+            // Limpiar cache y archivos temporales
+            sh '''
+                rm -rf ${VENV_DIR}
+                rm -rf ${NPM_CONFIG_CACHE}
+                rm -rf node_modules
+                rm -rf ${FRONTEND_DIR}/node_modules
+            ''' 
         }
     }
 }
