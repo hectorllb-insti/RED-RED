@@ -16,7 +16,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS', 
-    default='127.0.0.1,localhost,172.16.7.176,0.0.0.0,.onrender.com',
+    default='127.0.0.1,localhost,172.16.7.176,0.0.0.0,.pythonanywhere.com,.vercel.app',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
