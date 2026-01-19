@@ -1,6 +1,5 @@
 from datetime import timedelta
 from pathlib import Path
-import dj_database_url
 import os
 from decouple import config
 
@@ -87,23 +86,13 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database configuration
 # Usando SQLite para desarrollo (más compatible que djongo)
 # Para producción se puede cambiar a MongoDB o PostgreSQL
-if os.environ.get('DATABASE_URL'):
-    # Producción en Render con PostgreSQL
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Desarrollo local con SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 # Configuración alternativa para MongoDB (comentada por ahora)
 # DATABASES = {
