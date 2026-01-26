@@ -1,12 +1,17 @@
-import { Bell, Lock, Save, Shield, User } from "lucide-react";
+import { Bell, Lock, Palette, Save, Shield, User } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import DeleteAccountButtonSimple from "../components/DeleteAccountButtonSimple";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 
 const Settings = () => {
   const { user } = useAuth();
+  const { theme, changeTheme, actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -52,10 +57,15 @@ const Settings = () => {
   const { isLoading } = useQuery(
     "user-settings",
     async () => {
-      const response = await api.get("/users/settings/");
-      return response.data;
+      // TODO: Implementar endpoint /users/settings/ en el backend
+      // Por ahora, solo cargamos los datos del perfil del usuario
+      return {
+        privacy: {},
+        notifications: {},
+      };
     },
     {
+      enabled: false, // Deshabilitado hasta implementar el endpoint
       onSuccess: (data) => {
         if (data.privacy) {
           setPrivacySettings({ ...privacySettings, ...data.privacy });
@@ -73,7 +83,11 @@ const Settings = () => {
   // Mutation para actualizar configuración de privacidad
   const updatePrivacyMutation = useMutation(
     async (settings) => {
-      const response = await api.put("/users/privacy-settings/", settings);
+      // TODO: Implementar endpoint /users/privacy-settings/ en el backend
+      // Por ahora guardamos is_private en el perfil
+      const response = await api.put("/users/profile/", {
+        is_private: settings.profile_visibility === "private",
+      });
       return response.data;
     },
     {
@@ -81,8 +95,13 @@ const Settings = () => {
         queryClient.invalidateQueries("user-settings");
         toast.success("Configuración de privacidad actualizada");
       },
-      onError: () => {
-        toast.error("Error al actualizar la configuración de privacidad");
+      onError: (error) => {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          "Error al actualizar la configuración de privacidad";
+        toast.error(errorMessage);
+        console.error("Error detallado:", error.response?.data);
       },
     }
   );
@@ -99,8 +118,14 @@ const Settings = () => {
         queryClient.invalidateQueries("user-settings");
         toast.success("Perfil actualizado");
       },
-      onError: () => {
-        toast.error("Error al actualizar el perfil");
+      onError: (error) => {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          JSON.stringify(error.response?.data) ||
+          "Error al actualizar el perfil";
+        toast.error(errorMessage);
+        console.error("Error detallado:", error.response?.data);
       },
     }
   );
@@ -108,19 +133,22 @@ const Settings = () => {
   // Mutation para actualizar notificaciones
   const updateNotificationsMutation = useMutation(
     async (notifications) => {
-      const response = await api.put(
-        "/users/notification-settings/",
-        notifications
-      );
-      return response.data;
+      // TODO: Implementar endpoint /users/notification-settings/ en el backend
+      // Por ahora solo simulamos el guardado
+      return { success: true };
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries("user-settings");
-        toast.success("Configuración de notificaciones actualizada");
+        toast.success("Configuración de notificaciones guardada (local)");
       },
-      onError: () => {
-        toast.error("Error al actualizar las notificaciones");
+      onError: (error) => {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          "Error al actualizar las notificaciones";
+        toast.error(errorMessage);
+        console.error("Error detallado:", error.response?.data);
       },
     }
   );
@@ -204,61 +232,110 @@ const Settings = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="max-w-4xl mx-auto mt-10">
+      <div
+        className={`rounded-xl shadow-md border ${isDark
+            ? "bg-slate-800 border-slate-700"
+            : "bg-white border-gray-200"
+          }`}
+      >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-          <p className="text-gray-600 mt-1">
+        <div
+          className={`p-5 border-b ${isDark
+              ? "border-slate-700 bg-gradient-to-r from-slate-700/30 to-slate-600/30"
+              : "border-gray-200 bg-gradient-to-r from-primary-50/30 to-purple-50/30"
+            }`}
+        >
+          <h1
+            className={`text-xl font-bold ${isDark ? "text-slate-100" : "text-gray-900"
+              }`}
+          >
+            Configuración
+          </h1>
+          <p
+            className={`text-sm mt-0.5 ${isDark ? "text-slate-400" : "text-gray-600"
+              }`}
+          >
             Administra tu cuenta y configuraciones de privacidad
           </p>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div
+          className={`flex border-b ${isDark
+              ? "border-slate-700 bg-slate-800/50"
+              : "border-gray-200 bg-gray-50/50"
+            }`}
+        >
           <button
             onClick={() => setActiveTab("profile")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === "profile"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${activeTab === "profile"
+                ? isDark
+                  ? "border-primary-500 text-primary-400 bg-slate-800"
+                  : "border-primary-600 text-primary-600 bg-white"
+                : isDark
+                  ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              }`}
           >
-            <User className="h-4 w-4 inline mr-2" />
+            <User className="h-3.5 w-3.5 inline mr-1.5" />
             Perfil
           </button>
           <button
             onClick={() => setActiveTab("privacy")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === "privacy"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${activeTab === "privacy"
+                ? isDark
+                  ? "border-primary-500 text-primary-400 bg-slate-800"
+                  : "border-primary-600 text-primary-600 bg-white"
+                : isDark
+                  ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              }`}
           >
-            <Shield className="h-4 w-4 inline mr-2" />
+            <Shield className="h-3.5 w-3.5 inline mr-1.5" />
             Privacidad
           </button>
           <button
             onClick={() => setActiveTab("notifications")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === "notifications"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${activeTab === "notifications"
+                ? isDark
+                  ? "border-primary-500 text-primary-400 bg-slate-800"
+                  : "border-primary-600 text-primary-600 bg-white"
+                : isDark
+                  ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              }`}
           >
-            <Bell className="h-4 w-4 inline mr-2" />
+            <Bell className="h-3.5 w-3.5 inline mr-1.5" />
             Notificaciones
           </button>
           <button
             onClick={() => setActiveTab("security")}
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === "security"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${activeTab === "security"
+                ? isDark
+                  ? "border-primary-500 text-primary-400 bg-slate-800"
+                  : "border-primary-600 text-primary-600 bg-white"
+                : isDark
+                  ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              }`}
           >
-            <Lock className="h-4 w-4 inline mr-2" />
+            <Lock className="h-3.5 w-3.5 inline mr-1.5" />
             Seguridad
+          </button>
+          <button
+            onClick={() => setActiveTab("appearance")}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-all ${activeTab === "appearance"
+                ? isDark
+                  ? "border-primary-500 text-primary-400 bg-slate-800"
+                  : "border-primary-600 text-primary-600 bg-white"
+                : isDark
+                  ? "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-700/50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            <Palette className="h-3.5 w-3.5 inline mr-1.5" />
+            Apariencia
           </button>
         </div>
 
@@ -268,12 +345,18 @@ const Settings = () => {
           {activeTab === "profile" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3
+                  className={`text-lg font-medium mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                    }`}
+                >
                   Información del Perfil
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
+                    >
                       Nombre
                     </label>
                     <input
@@ -285,11 +368,17 @@ const Settings = () => {
                           first_name: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                          ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                          : "bg-white border-gray-300 text-gray-900"
+                        }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
+                    >
                       Apellido
                     </label>
                     <input
@@ -301,13 +390,19 @@ const Settings = () => {
                           last_name: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                          ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                          : "bg-white border-gray-300 text-gray-900"
+                        }`}
                     />
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                      }`}
+                  >
                     Biografía
                   </label>
                   <textarea
@@ -319,14 +414,20 @@ const Settings = () => {
                       })
                     }
                     rows="3"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                        ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                        : "bg-white border-gray-300 text-gray-900"
+                      }`}
                     placeholder="Cuéntanos algo sobre ti..."
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
+                    >
                       Ubicación
                     </label>
                     <input
@@ -338,12 +439,18 @@ const Settings = () => {
                           location: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                          ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                          : "bg-white border-gray-300 text-gray-900"
+                        }`}
                       placeholder="Ciudad, País"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
+                    >
                       Sitio Web
                     </label>
                     <input
@@ -355,7 +462,10 @@ const Settings = () => {
                           website: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                          ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                          : "bg-white border-gray-300 text-gray-900"
+                        }`}
                       placeholder="https://..."
                     />
                   </div>
@@ -383,13 +493,19 @@ const Settings = () => {
           {activeTab === "privacy" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3
+                  className={`text-lg font-medium mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                    }`}
+                >
                   Configuración de Privacidad
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                        }`}
+                    >
                       Visibilidad del Perfil
                     </label>
                     <select
@@ -400,7 +516,10 @@ const Settings = () => {
                           profile_visibility: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                          ? "bg-slate-700 border-slate-600 text-slate-100"
+                          : "bg-white border-gray-300 text-gray-900"
+                        }`}
                     >
                       <option value="public">
                         Público - Visible para todos
@@ -415,10 +534,16 @@ const Settings = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p
+                          className={`font-medium ${isDark ? "text-slate-200" : "text-gray-900"
+                            }`}
+                        >
                           Permitir solicitudes de amistad
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p
+                          className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
+                            }`}
+                        >
                           Otros usuarios pueden enviarte solicitudes para
                           seguirte
                         </p>
@@ -435,16 +560,25 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p
+                          className={`font-medium ${isDark ? "text-slate-200" : "text-gray-900"
+                            }`}
+                        >
                           Mostrar email
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p
+                          className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
+                            }`}
+                        >
                           Tu dirección de email será visible en tu perfil
                         </p>
                       </div>
@@ -460,16 +594,25 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p
+                          className={`font-medium ${isDark ? "text-slate-200" : "text-gray-900"
+                            }`}
+                        >
                           Mensajes de desconocidos
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p
+                          className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
+                            }`}
+                        >
                           Personas que no sigues pueden enviarte mensajes
                         </p>
                       </div>
@@ -487,16 +630,25 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p
+                          className={`font-medium ${isDark ? "text-slate-200" : "text-gray-900"
+                            }`}
+                        >
                           Estado en línea
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p
+                          className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
+                            }`}
+                        >
                           Otros usuarios pueden ver cuando estás activo
                         </p>
                       </div>
@@ -512,7 +664,10 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
                   </div>
@@ -540,17 +695,26 @@ const Settings = () => {
           {activeTab === "notifications" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3
+                  className={`text-lg font-medium mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                    }`}
+                >
                   Configuración de Notificaciones
                 </h3>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p
+                        className={`font-medium ${isDark ? "text-slate-200" : "text-gray-900"
+                          }`}
+                      >
                         Notificaciones por email
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p
+                        className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
+                          }`}
+                      >
                         Recibir notificaciones en tu correo electrónico
                       </p>
                     </div>
@@ -566,16 +730,25 @@ const Settings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div
+                        className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                          }`}
+                      ></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p
+                        className={`font-medium ${isDark ? "text-slate-200" : "text-gray-900"
+                          }`}
+                      >
                         Notificaciones push
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p
+                        className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"
+                          }`}
+                      >
                         Recibir notificaciones en tiempo real en el navegador
                       </p>
                     </div>
@@ -591,19 +764,33 @@ const Settings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div
+                        className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                          }`}
+                      ></div>
                     </label>
                   </div>
 
-                  <hr className="my-4" />
+                  <hr
+                    className={`my-4 ${isDark ? "border-slate-700" : "border-gray-200"
+                      }`}
+                  />
 
-                  <p className="font-medium text-gray-900 mb-2">
+                  <p
+                    className={`font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-900"
+                      }`}
+                  >
                     Tipos de notificaciones
                   </p>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">Likes en mis posts</span>
+                      <span
+                        className={`${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
+                        Likes en mis posts
+                      </span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -616,12 +803,20 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">Comentarios</span>
+                      <span
+                        className={`${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
+                        Comentarios
+                      </span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -634,12 +829,20 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">Nuevos seguidores</span>
+                      <span
+                        className={`${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
+                        Nuevos seguidores
+                      </span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -652,12 +855,20 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-700">Mensajes privados</span>
+                      <span
+                        className={`${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
+                        Mensajes privados
+                      </span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -670,7 +881,10 @@ const Settings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <div
+                          className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 ${isDark ? "bg-slate-600" : "bg-gray-200"
+                            }`}
+                        ></div>
                       </label>
                     </div>
                   </div>
@@ -698,23 +912,38 @@ const Settings = () => {
           {activeTab === "security" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3
+                  className={`text-lg font-medium mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                    }`}
+                >
                   Seguridad de la Cuenta
                 </h3>
 
                 {/* Cambiar Contraseña */}
-                <div className="border border-gray-200 rounded-lg p-6 mb-6">
-                  <h4 className="font-medium text-gray-900 mb-2">
+                <div
+                  className={`border rounded-lg p-6 mb-6 ${isDark ? "border-slate-700" : "border-gray-200"
+                    }`}
+                >
+                  <h4
+                    className={`font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-900"
+                      }`}
+                  >
                     Cambiar Contraseña
                   </h4>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p
+                    className={`text-sm mb-4 ${isDark ? "text-slate-400" : "text-gray-500"
+                      }`}
+                  >
                     Actualiza tu contraseña regularmente para mantener tu cuenta
                     segura
                   </p>
 
                   <form onSubmit={handlePasswordChange} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label
+                        className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
                         Contraseña Actual
                       </label>
                       <input
@@ -726,11 +955,15 @@ const Settings = () => {
                             current_password: e.target.value,
                           })
                         }
-                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          passwordErrors.current_password
+                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                            ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                            : "bg-white border-gray-300 text-gray-900"
+                          } ${passwordErrors.current_password
                             ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
+                            : isDark
+                              ? "border-slate-600"
+                              : "border-gray-300"
+                          }`}
                         placeholder="Ingresa tu contraseña actual"
                       />
                       {passwordErrors.current_password && (
@@ -741,7 +974,10 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label
+                        className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
                         Nueva Contraseña
                       </label>
                       <input
@@ -753,11 +989,15 @@ const Settings = () => {
                             new_password: e.target.value,
                           })
                         }
-                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          passwordErrors.new_password
+                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                            ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                            : "bg-white border-gray-300 text-gray-900"
+                          } ${passwordErrors.new_password
                             ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
+                            : isDark
+                              ? "border-slate-600"
+                              : "border-gray-300"
+                          }`}
                         placeholder="Mínimo 8 caracteres"
                       />
                       {passwordErrors.new_password && (
@@ -768,7 +1008,10 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label
+                        className={`block text-sm font-medium mb-2 ${isDark ? "text-slate-300" : "text-gray-700"
+                          }`}
+                      >
                         Confirmar Nueva Contraseña
                       </label>
                       <input
@@ -780,11 +1023,15 @@ const Settings = () => {
                             confirm_password: e.target.value,
                           })
                         }
-                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          passwordErrors.confirm_password
+                        className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDark
+                            ? "bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
+                            : "bg-white border-gray-300 text-gray-900"
+                          } ${passwordErrors.confirm_password
                             ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
+                            : isDark
+                              ? "border-slate-600"
+                              : "border-gray-300"
+                          }`}
                         placeholder="Repite la nueva contraseña"
                       />
                       {passwordErrors.confirm_password && (
@@ -821,35 +1068,142 @@ const Settings = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">
+                  <div
+                    className={`border rounded-lg p-4 ${isDark ? "border-slate-700" : "border-gray-200"
+                      }`}
+                  >
+                    <h4
+                      className={`font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-900"
+                        }`}
+                    >
                       Autenticación de Dos Factores
                     </h4>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p
+                      className={`text-sm mb-4 ${isDark ? "text-slate-400" : "text-gray-500"
+                        }`}
+                    >
                       Agrega una capa extra de seguridad a tu cuenta
                     </p>
                     <button
                       disabled
-                      className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
+                      className={`px-4 py-2 rounded-lg cursor-not-allowed ${isDark
+                          ? "bg-slate-700 text-slate-500"
+                          : "bg-gray-300 text-gray-500"
+                        }`}
                     >
                       Próximamente
                     </button>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">
+                  <div
+                    className={`border rounded-lg p-4 ${isDark ? "border-slate-700" : "border-gray-200"
+                      }`}
+                  >
+                    <h4
+                      className={`font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-900"
+                        }`}
+                    >
                       Sesiones Activas
                     </h4>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p
+                      className={`text-sm mb-4 ${isDark ? "text-slate-400" : "text-gray-500"
+                        }`}
+                    >
                       Revisa y cierra sesiones en otros dispositivos
                     </p>
                     <button
                       disabled
-                      className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
+                      className={`px-4 py-2 rounded-lg cursor-not-allowed ${isDark
+                          ? "bg-slate-700 text-slate-500"
+                          : "bg-gray-300 text-gray-500"
+                        }`}
                     >
                       Próximamente
                     </button>
                   </div>
+                </div>
+
+                {/* Zona de Peligro - Eliminar Cuenta */}
+                <div className="mt-8">
+                  <DeleteAccountButtonSimple />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Appearance Tab */}
+          {activeTab === "appearance" && (
+            <div className="space-y-6">
+              <div>
+                <h3
+                  className={`text-lg font-medium mb-4 ${isDark ? "text-slate-100" : "text-gray-900"
+                    }`}
+                >
+                  Apariencia y Personalización
+                </h3>
+
+                {/* Tema */}
+                <div
+                  className={`border rounded-lg p-6 mb-6 ${isDark ? "border-slate-700" : "border-gray-200"
+                    }`}
+                >
+                  <h4
+                    className={`font-medium mb-2 ${isDark ? "text-slate-200" : "text-gray-900"
+                      }`}
+                  >
+                    Tema de Interfaz
+                  </h4>
+                  <p
+                    className={`text-sm mb-4 ${isDark ? "text-slate-400" : "text-gray-500"
+                      }`}
+                  >
+                    Elige el tema de la interfaz que más te guste. El modo
+                    automático se adapta a la configuración de tu sistema.
+                  </p>
+
+                  <div className="flex justify-center py-4">
+                    <ThemeToggle variant="segmented" showLabel={true} />
+                  </div>
+
+                  <div
+                    className={`mt-6 p-4 rounded-lg border ${isDark
+                        ? "bg-slate-800/50 border-blue-900/50"
+                        : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+                      }`}
+                  >
+                    <p
+                      className={`text-sm ${isDark ? "text-blue-300" : "text-blue-800"
+                        }`}
+                    >
+                      <strong>✨ Consejos:</strong>
+                    </p>
+                    <ul
+                      className={`text-sm mt-2 space-y-1 list-disc list-inside ${isDark ? "text-blue-400" : "text-blue-700"
+                        }`}
+                    >
+                      <li>
+                        <strong>Claro:</strong> Ideal para ambientes bien
+                        iluminados
+                      </li>
+                      <li>
+                        <strong>Oscuro:</strong> Reduce el cansancio visual en
+                        ambientes con poca luz
+                      </li>
+                      <li>
+                        <strong>Automático:</strong> Cambia según la hora del
+                        día y configuración del sistema
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Próximamente - Otras personalizaciones */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-800">
+                    <strong>Próximamente:</strong> Personalización de colores de
+                    acento, fuentes, tamaño de texto y más opciones de
+                    visualización.
+                  </p>
                 </div>
               </div>
             </div>

@@ -1,11 +1,13 @@
 import axios from "axios";
 import { tokenManager } from "./tokenManager";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
 // Configuración de axios
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000, // 30 segundos
   headers: {
     "Content-Type": "application/json",
   },
@@ -30,6 +32,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Manejar usuario baneado (403 con mensaje de baneo)
+    if (error.response?.status === 403) {
+      const errorData = error.response?.data;
+      if (errorData?.detail && errorData.detail.includes("suspendida")) {
+        tokenManager.clearTokens();
+        window.location.href = "/login?banned=true";
+        return Promise.reject(error);
+      }
+    }
+
     if (error.response?.status === 401) {
       const refreshToken = tokenManager.getRefreshToken();
       if (refreshToken) {

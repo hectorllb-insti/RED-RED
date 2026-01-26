@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
+import { useTheme } from "../context/ThemeContext";
 import { authService } from "../services/auth";
 import socketService from "../services/socket";
 import { tokenManager } from "../services/tokenManager";
@@ -44,12 +45,22 @@ const authReducer = (state, action) => {
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const { changeTheme } = useTheme();
 
   useEffect(() => {
     const initAuth = async () => {
       if (authService.isAuthenticated()) {
         try {
           const user = await authService.getCurrentUser();
+
+          // Verificar si el usuario está baneado
+          if (user.is_banned) {
+            authService.logout();
+            dispatch({ type: "LOGOUT" });
+            window.location.href = "/login?banned=true";
+            return;
+          }
+
           dispatch({ type: "LOGIN_SUCCESS", payload: user });
 
           // Conectar WebSocket
@@ -84,7 +95,17 @@ export const AuthProvider = ({ children }) => {
 
       if (error.response?.data) {
         const data = error.response.data;
-        if (data.detail) {
+
+        // Manejar error de usuario baneado
+        if (
+          data.detail &&
+          typeof data.detail === "string" &&
+          data.detail.includes("suspendida")
+        ) {
+          errorMessage = data.detail;
+        } else if (data.is_banned) {
+          errorMessage = `Tu cuenta ha sido suspendida. Razón: ${data.ban_reason}`;
+        } else if (data.detail) {
           errorMessage = "Credenciales inválidas";
         } else if (data.message) {
           errorMessage = data.message;
@@ -136,11 +157,108 @@ export const AuthProvider = ({ children }) => {
     authService.logout();
     socketService.disconnect();
     dispatch({ type: "LOGOUT" });
+    // Reset theme to light mode on logout
+    changeTheme("light");
+    // Also clear any persisted theme preference
+    localStorage.setItem("theme", "light");
+    // Ensure root class is updated
+    const root = window.document.documentElement;
+    root.classList.remove("dark");
   };
 
   const updateUser = (userData) => {
     dispatch({ type: "UPDATE_USER", payload: userData });
+
+    // Notificar al WebSocket sobre la actualización del perfil
+    if (socketService.isConnected()) {
+      socketService.send({
+        type: "profile_updated",
+        user_data: userData,
+      });
+    }
   };
+
+  // 🌟 Sistema de Puntos y Gamificación
+  const addPoints = (amount) => {
+    if (!state.user) return;
+    const newPoints = (state.user.points || 0) + amount;
+    const updatedUser = { ...state.user, points: newPoints };
+
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`points_${state.user.id}`, newPoints);
+  };
+
+  const deductPoints = (amount) => {
+    if (!state.user) return false;
+    const currentPoints = state.user.points || 0;
+
+    if (currentPoints < amount) return false;
+
+    const newPoints = currentPoints - amount;
+    const updatedUser = { ...state.user, points: newPoints };
+
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`points_${state.user.id}`, newPoints);
+    return true;
+  };
+
+  const addToInventory = (item) => {
+    if (!state.user) return;
+    const currentInventory = state.user.inventory || [];
+
+    // Evitar duplicados
+    if (currentInventory.find(i => i.id === item.id)) return;
+
+    const newInventory = [...currentInventory, item];
+    const updatedUser = { ...state.user, inventory: newInventory };
+
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`inventory_${state.user.id}`, JSON.stringify(newInventory));
+  };
+
+  const equipItem = (item) => {
+    if (!state.user) return;
+
+    let updates = {};
+    if (item.type === 'frame') {
+      updates = { equippedFrame: item };
+    } else if (item.type === 'effect') {
+      updates = { equippedEffect: item };
+    } else if (item.type === 'badge') {
+      updates = { equippedBadge: item };
+    }
+
+    const updatedUser = { ...state.user, ...updates };
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+
+    localStorage.setItem(`equipped_${state.user.id}`, JSON.stringify({
+      frame: updatedUser.equippedFrame,
+      effect: updatedUser.equippedEffect,
+      badge: updatedUser.equippedBadge
+    }));
+  };
+
+  // Cargar datos de gamificación al iniciar sesión
+  useEffect(() => {
+    if (state.user && state.isAuthenticated) {
+      const savedPoints = parseInt(localStorage.getItem(`points_${state.user.id}`)) || 0;
+      const savedInventory = JSON.parse(localStorage.getItem(`inventory_${state.user.id}`)) || [];
+      const savedEquipped = JSON.parse(localStorage.getItem(`equipped_${state.user.id}`)) || {};
+
+      if (state.user.points !== savedPoints || !state.user.inventory) {
+        dispatch({
+          type: "UPDATE_USER",
+          payload: {
+            points: savedPoints,
+            inventory: savedInventory,
+            equippedFrame: savedEquipped.frame,
+            equippedEffect: savedEquipped.effect,
+            equippedBadge: savedEquipped.badge
+          }
+        });
+      }
+    }
+  }, [state.isAuthenticated, state.user?.id]);
 
   const value = {
     ...state,
@@ -148,6 +266,10 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    addPoints,
+    deductPoints,
+    addToInventory,
+    equipItem,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

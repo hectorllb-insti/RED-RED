@@ -13,13 +13,15 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from apps.chat.middleware import JwtAuthMiddlewareStack
 import apps.chat.routing
 import notifications.routing
+import live.routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 # Combinar todas las rutas WebSocket
 websocket_patterns = (
     apps.chat.routing.websocket_urlpatterns +
-    notifications.routing.websocket_urlpatterns
+    notifications.routing.websocket_urlpatterns +
+    live.routing.websocket_urlpatterns
 )
 
 application = ProtocolTypeRouter({

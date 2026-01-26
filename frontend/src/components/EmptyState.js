@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useTheme } from "../context/ThemeContext";
 
 // 🎨 EmptyState moderno y atractivo
 
@@ -9,6 +10,9 @@ const EmptyState = ({
   actionLabel,
   onAction,
 }) => {
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -28,11 +32,28 @@ const EmptyState = ({
           className="relative mb-6"
         >
           {/* Círculo de fondo con gradiente */}
-          <div className="absolute inset-0 bg-gradient-to-br from-red-100 to-rose-100 rounded-full blur-2xl opacity-60" />
+          <div
+            className={`absolute inset-0 rounded-full blur-2xl opacity-60 ${
+              isDark
+                ? "bg-gradient-to-br from-red-900/40 to-rose-900/40"
+                : "bg-gradient-to-br from-red-100 to-rose-100"
+            }`}
+          />
 
           {/* Ícono */}
-          <div className="relative bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-3xl">
-            <Icon className="w-16 h-16 text-red-600" strokeWidth={1.5} />
+          <div
+            className={`relative p-6 rounded-3xl ${
+              isDark
+                ? "bg-gradient-to-br from-red-900/30 to-rose-900/30"
+                : "bg-gradient-to-br from-red-50 to-rose-50"
+            }`}
+          >
+            <Icon
+              className={`w-16 h-16 ${
+                isDark ? "text-red-400" : "text-red-600"
+              }`}
+              strokeWidth={1.5}
+            />
           </div>
         </motion.div>
       )}
@@ -42,7 +63,9 @@ const EmptyState = ({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="text-2xl font-bold text-gray-900 mb-2"
+        className={`text-2xl font-bold mb-2 ${
+          isDark ? "text-slate-100" : "text-gray-900"
+        }`}
       >
         {title}
       </motion.h3>
@@ -53,7 +76,9 @@ const EmptyState = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="text-base text-gray-500 mb-8 max-w-md"
+          className={`text-base mb-8 max-w-md ${
+            isDark ? "text-slate-400" : "text-gray-500"
+          }`}
         >
           {description}
         </motion.p>

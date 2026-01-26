@@ -1,10 +1,13 @@
-from rest_framework import generics, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, status, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from .models import Post, Like, Comment, SharedPost
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+from .models import Post, Like, Comment, CommentLike, SharedPost, Hashtag, PostHashtag
 from .serializers import (
     PostSerializer, PostCreateSerializer, CommentSerializer,
     SharePostSerializer, SharedPostSerializer
@@ -28,15 +31,19 @@ class PostListCreateView(generics.ListCreateAPIView):
         if author_id:
             try:
                 author_id = int(author_id)
-                return Post.objects.filter(author_id=author_id)
+                return Post.objects.filter(author_id=author_id).order_by('-created_at')
             except (ValueError, TypeError):
                 return Post.objects.none()
         
-        # Mostrar posts del usuario y de usuarios que sigue
-        following_users = Follow.objects.filter(follower=self.request.user).values_list('following', flat=True)
+        # Obtener usuarios que sigue el usuario actual
+        following_ids = Follow.objects.filter(
+            follower=self.request.user
+        ).values_list('following_id', flat=True)
+        
+        # Mostrar solo posts de usuarios que sigue (SIN incluir sus propias publicaciones)
         return Post.objects.filter(
-            author__in=list(following_users) + [self.request.user.id]
-        )
+            author_id__in=following_ids
+        ).select_related('author').order_by('-created_at')
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -48,6 +55,23 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ['PUT', 'PATCH']:
             return PostCreateSerializer
         return PostSerializer
+    
+    def perform_update(self, serializer):
+        """Actualizar post y reprocesar hashtags"""
+        from .hashtags import process_hashtags_for_post
+        
+        post = serializer.save()
+        # Reprocesar hashtags cuando se actualiza el contenido
+        process_hashtags_for_post(post)
+        return post
+    
+    def perform_destroy(self, instance):
+        """Eliminar post y decrementar contadores de hashtags"""
+        from .hashtags import remove_hashtags_from_post
+        
+        # Eliminar hashtags asociados
+        remove_hashtags_from_post(instance)
+        instance.delete()
 
 
 class UserPostsView(generics.ListAPIView):
@@ -74,9 +98,105 @@ def like_post(request, post_id):
     else:
         like.delete()
         return Response(
-            {'message': 'Post unliked', 'liked': False}, 
+            {'message': 'Comment unliked', 'liked': False}, 
             status=status.HTTP_200_OK
         )
+
+
+class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para listar y buscar hashtags
+    - list: Lista todos los hashtags ordenados por uso
+    - retrieve: Detalle de un hashtag por slug
+    - trending: Top hashtags de las últimas 24 horas
+    - posts: Posts asociados a un hashtag
+    """
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        queryset = Hashtag.objects.all()
+        
+        # Filtro por búsqueda
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        
+        return queryset.order_by('-usage_count', '-updated_at')
+    
+    def list(self, request, *args, **kwargs):
+        """Lista de hashtags con paginación"""
+        queryset = self.get_queryset()[:50]  # Limitar a top 50
+        
+        data = [
+            {
+                'id': hashtag.id,
+                'name': hashtag.name,
+                'slug': hashtag.slug,
+                'usage_count': hashtag.usage_count,
+                'created_at': hashtag.created_at,
+                'updated_at': hashtag.updated_at
+            }
+            for hashtag in queryset
+        ]
+        
+        return Response(data)
+    
+    def retrieve(self, request, slug=None, *args, **kwargs):
+        """Detalle de un hashtag específico"""
+        hashtag = get_object_or_404(Hashtag, slug=slug)
+        
+        return Response({
+            'id': hashtag.id,
+            'name': hashtag.name,
+            'slug': hashtag.slug,
+            'usage_count': hashtag.usage_count,
+            'created_at': hashtag.created_at,
+            'updated_at': hashtag.updated_at
+        })
+    
+    @action(detail=False, methods=['get'])
+    def trending(self, request):
+        """Top hashtags de las últimas 24 horas"""
+        yesterday = timezone.now() - timedelta(days=1)
+        
+        # Hashtags usados en las últimas 24 horas
+        trending_hashtags = Hashtag.objects.filter(
+            posts__created_at__gte=yesterday
+        ).annotate(
+            recent_count=Count('posts', filter=Q(posts__created_at__gte=yesterday))
+        ).order_by('-recent_count', '-usage_count')[:10]
+        
+        data = [
+            {
+                'id': hashtag.id,
+                'name': hashtag.name,
+                'slug': hashtag.slug,
+                'usage_count': hashtag.usage_count,
+                'recent_count': hashtag.recent_count,
+                'created_at': hashtag.created_at
+            }
+            for hashtag in trending_hashtags
+        ]
+        
+        return Response(data)
+    
+    @action(detail=True, methods=['get'])
+    def posts(self, request, slug=None):
+        """Posts asociados a un hashtag"""
+        hashtag = get_object_or_404(Hashtag, slug=slug)
+        
+        # Obtener posts asociados al hashtag
+        post_ids = PostHashtag.objects.filter(
+            hashtag=hashtag
+        ).values_list('post_id', flat=True)
+        
+        posts = Post.objects.filter(
+            id__in=post_ids
+        ).select_related('author').order_by('-created_at')
+        
+        serializer = PostSerializer(posts, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
@@ -84,7 +204,7 @@ def like_post(request, post_id):
 def comment_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     
-    serializer = CommentSerializer(data=request.data)
+    serializer = CommentSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         serializer.save(author=request.user, post=post)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -97,7 +217,7 @@ def comment_post(request, post_id):
 def post_comments(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     comments = Comment.objects.filter(post=post)
-    serializer = CommentSerializer(comments, many=True)
+    serializer = CommentSerializer(comments, many=True, context={'request': request})
     return Response(serializer.data)
 
 
@@ -149,3 +269,47 @@ def shared_posts_list(request):
     shared_posts = SharedPost.objects.filter(shared_with=request.user)
     serializer = SharedPostSerializer(shared_posts, many=True)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_comment(request, comment_id):
+    """Dar o quitar like a un comentario"""
+    from notifications.models import Notification
+    
+    comment = get_object_or_404(Comment, id=comment_id)
+    like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
+    
+    if created:
+        # Crear notificación solo si el like es de otro usuario
+        if comment.author != request.user:
+            Notification.objects.create(
+                recipient=comment.author,
+                sender=request.user,
+                notification_type='like',
+                title=f'{request.user.get_full_name()} le dio me gusta a tu comentario',
+                message=f'En la publicación: "{comment.post.content[:50]}..."',
+                related_comment_id=comment.id,
+                related_post_id=comment.post.id
+            )
+        
+        return Response(
+            {'message': 'Comment liked', 'liked': True}, 
+            status=status.HTTP_201_CREATED
+        )
+    else:
+        like.delete()
+        
+        # Eliminar la notificación si existe
+        if comment.author != request.user:
+            Notification.objects.filter(
+                recipient=comment.author,
+                sender=request.user,
+                notification_type='like',
+                related_comment_id=comment.id
+            ).delete()
+        
+        return Response(
+            {'message': 'Comment unliked', 'liked': False}, 
+            status=status.HTTP_200_OK
+        )

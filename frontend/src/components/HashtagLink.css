@@ -1,0 +1,29 @@
+.hashtag-link {
+  color: #1da1f2;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.hashtag-link:hover {
+  color: #0d8bd9;
+  background-color: rgba(29, 161, 242, 0.1);
+  text-decoration: none;
+}
+
+.hashtag-link:active {
+  background-color: rgba(29, 161, 242, 0.2);
+}
+
+/* Tema oscuro */
+.dark-mode .hashtag-link {
+  color: #1da1f2;
+}
+
+.dark-mode .hashtag-link:hover {
+  color: #4ab3f4;
+  background-color: rgba(29, 161, 242, 0.15);
+}

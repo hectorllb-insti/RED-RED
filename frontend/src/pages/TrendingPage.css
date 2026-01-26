@@ -1,0 +1,274 @@
+.trending-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.trending-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.trending-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0 0 8px 0;
+}
+
+.trending-header p {
+  font-size: 16px;
+  color: #657786;
+}
+
+.search-section {
+  margin-bottom: 24px;
+}
+
+.search-box {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 16px 48px 16px 20px;
+  font-size: 16px;
+  border: 2px solid #e1e8ed;
+  border-radius: 30px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #1da1f2;
+  box-shadow: 0 0 0 3px rgba(29, 161, 242, 0.1);
+}
+
+.search-spinner {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f0f0f0;
+  border-top-color: #1da1f2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.tab {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  background: white;
+  color: #657786;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab:hover {
+  background: #f7f9fa;
+  color: #14171a;
+}
+
+.tab.active {
+  background: #1da1f2;
+  color: white;
+}
+
+.hashtags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.hashtag-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.hashtag-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+.hashtag-rank {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #1da1f2, #0d8bd9);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hashtag-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #14171a;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.hashtag-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat {
+  font-size: 14px;
+  color: #657786;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat.recent {
+  color: #e0245e;
+  font-weight: 600;
+}
+
+.stat.total {
+  color: #657786;
+}
+
+.loading-container,
+.no-results {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  grid-column: 1 / -1;
+}
+
+.loading-container .spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #1da1f2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-container p,
+.no-results p {
+  font-size: 16px;
+  color: #657786;
+}
+
+/* Tema oscuro */
+.dark-mode .trending-page {
+  color: #e7e9ea;
+}
+
+.dark-mode .trending-header h1 {
+  color: #e7e9ea;
+}
+
+.dark-mode .trending-header p {
+  color: #8b98a5;
+}
+
+.dark-mode .search-input {
+  background: #192734;
+  border-color: #38444d;
+  color: #e7e9ea;
+}
+
+.dark-mode .search-input:focus {
+  border-color: #1da1f2;
+}
+
+.dark-mode .tab {
+  background: #192734;
+  color: #8b98a5;
+}
+
+.dark-mode .tab:hover {
+  background: #22303c;
+  color: #e7e9ea;
+}
+
+.dark-mode .tab.active {
+  background: #1da1f2;
+  color: white;
+}
+
+.dark-mode .hashtag-card,
+.dark-mode .loading-container,
+.dark-mode .no-results {
+  background: #192734;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .hashtag-name {
+  color: #e7e9ea;
+}
+
+.dark-mode .stat {
+  color: #8b98a5;
+}
+
+.dark-mode .stat.recent {
+  color: #f91880;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hashtags-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .trending-page {
+    padding: 16px;
+  }
+
+  .trending-header h1 {
+    font-size: 28px;
+  }
+
+  .hashtags-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}

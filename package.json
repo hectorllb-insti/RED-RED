@@ -55,5 +55,9 @@
   "bugs": {
     "url": "https://github.com/hectorllb-insti/RED-RED/issues"
   },
-  "homepage": "https://github.com/hectorllb-insti/RED-RED#readme"
+  "homepage": "https://github.com/hectorllb-insti/RED-RED#readme",
+  "dependencies": {
+    "framer-motion": "^12.23.24",
+    "react-scripts": "^5.0.1"
+  }
 }

@@ -33,7 +33,7 @@ class ChatRoomListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return ChatRoom.objects.filter(
             participants=self.request.user
-        ).order_by('-updated_at')
+        ).distinct().order_by('-updated_at')
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
@@ -78,15 +78,15 @@ def mark_messages_read(request, chat_room_id):
         read_by__user=request.user
     )
     
+    count = unread_messages.count()
+    
     for message in unread_messages:
         MessageRead.objects.get_or_create(
             message=message,
             user=request.user
         )
     
-    return Response({
-        'message': f'{unread_messages.count()} mensajes marcados como leídos'
-    })
+    return Response({'message': f'{count} mensajes marcados como leídos'})
 
 
 @api_view(['POST'])
@@ -100,7 +100,7 @@ def create_private_chat(request, username):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Buscar chat existente entre estos dos usuarios
+    # Buscar chat existente entre estos dos usuarios de manera más robusta
     existing_chat = ChatRoom.objects.filter(
         participants=request.user
     ).filter(
@@ -112,13 +112,9 @@ def create_private_chat(request, username):
     ).first()
     
     if existing_chat:
-        serializer = ChatRoomSerializer(
-            existing_chat,
-            context={'request': request}
-        )
+        serializer = ChatRoomSerializer(existing_chat, context={'request': request})
         return Response(serializer.data)
     
-    # Crear nuevo chat
     chat_room = ChatRoom.objects.create()
     chat_room.participants.set([request.user, other_user])
     

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 const LoadingSpinner = ({
   variant = "spinner",
@@ -8,6 +9,8 @@ const LoadingSpinner = ({
   fullScreen = false,
   className = "",
 }) => {
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
   const sizeClasses = {
     sm: "h-4 w-4",
     md: "h-8 w-8",
@@ -23,17 +26,25 @@ const LoadingSpinner = ({
   };
 
   const containerClass = fullScreen
-    ? "flex items-center justify-center min-h-screen bg-gray-50"
+    ? `flex items-center justify-center min-h-screen ${
+        isDark ? "bg-slate-900" : "bg-gray-50"
+      }`
     : `flex flex-col items-center justify-center gap-3 ${className}`;
 
   if (variant === "spinner") {
     return (
       <div className={containerClass}>
         <Loader2
-          className={`${sizeClasses[size]} text-primary-600 animate-spin`}
+          className={`${sizeClasses[size]} ${
+            isDark ? "text-primary-400" : "text-primary-600"
+          } animate-spin`}
         />
         {text && (
-          <p className={`${textSizes[size]} text-gray-600 font-medium`}>
+          <p
+            className={`${textSizes[size]} font-medium ${
+              isDark ? "text-slate-300" : "text-gray-600"
+            }`}
+          >
             {text}
           </p>
         )}
@@ -48,7 +59,9 @@ const LoadingSpinner = ({
           {[0, 1, 2].map((index) => (
             <motion.div
               key={index}
-              className="w-3 h-3 bg-primary-600 rounded-full"
+              className={`w-3 h-3 rounded-full ${
+                isDark ? "bg-primary-400" : "bg-primary-600"
+              }`}
               animate={{
                 y: [0, -10, 0],
                 opacity: [0.5, 1, 0.5],
@@ -63,7 +76,11 @@ const LoadingSpinner = ({
           ))}
         </div>
         {text && (
-          <p className={`${textSizes[size]} text-gray-600 font-medium`}>
+          <p
+            className={`${textSizes[size]} font-medium ${
+              isDark ? "text-slate-300" : "text-gray-600"
+            }`}
+          >
             {text}
           </p>
         )}
@@ -75,7 +92,9 @@ const LoadingSpinner = ({
     return (
       <div className={containerClass}>
         <motion.div
-          className={`${sizeClasses[size]} bg-primary-600 rounded-full`}
+          className={`${sizeClasses[size]} rounded-full ${
+            isDark ? "bg-primary-400" : "bg-primary-600"
+          }`}
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.7, 1, 0.7],
@@ -87,7 +106,11 @@ const LoadingSpinner = ({
           }}
         />
         {text && (
-          <p className={`${textSizes[size]} text-gray-600 font-medium`}>
+          <p
+            className={`${textSizes[size]} font-medium ${
+              isDark ? "text-slate-300" : "text-gray-600"
+            }`}
+          >
             {text}
           </p>
         )}
@@ -101,7 +124,9 @@ const LoadingSpinner = ({
         {[...Array(3)].map((_, index) => (
           <motion.div
             key={index}
-            className="h-20 bg-gray-200 rounded-xl"
+            className={`h-20 rounded-xl ${
+              isDark ? "bg-slate-700" : "bg-gray-200"
+            }`}
             animate={{
               opacity: [0.5, 0.8, 0.5],
             }}
@@ -121,7 +146,11 @@ const LoadingSpinner = ({
   return (
     <div className={containerClass}>
       <div
-        className={`${sizeClasses[size]} border-4 border-gray-200 border-t-primary-600 rounded-full animate-spin`}
+        className={`${sizeClasses[size]} border-4 rounded-full animate-spin ${
+          isDark
+            ? "border-slate-700 border-t-primary-400"
+            : "border-gray-200 border-t-primary-600"
+        }`}
       />
     </div>
   );

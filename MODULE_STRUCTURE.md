@@ -1,238 +1,238 @@
-# Backend Module Structure
+# Estructura de Módulos del Backend
 
-## Overview
+## Descripción General
 
-This document provides a comprehensive overview of the backend module structure, imports, and dependencies for the RED-RED social network application.
+Este documento proporciona una descripción completa de la estructura de módulos del backend, importaciones y dependencias para la aplicación de red social RED-RED.
 
-## Directory Structure
+## Estructura de Directorios
 
 ```
 backend/
-├── apps/                           # Django applications
+├── apps/                           # Aplicaciones Django
 │   ├── __init__.py
-│   ├── authentication/             # User authentication
+│   ├── authentication/             # Autenticación de usuarios
 │   │   ├── __init__.py
-│   │   ├── apps.py                # App configuration
-│   │   ├── serializers.py         # JWT and registration serializers
-│   │   ├── urls.py                # Authentication endpoints
-│   │   └── views.py               # Register and token views
+│   │   ├── apps.py                # Configuración de la app
+│   │   ├── serializers.py         # Serializadores JWT y registro
+│   │   ├── urls.py                # Endpoints de autenticación
+│   │   └── views.py               # Vistas de registro y tokens
 │   │
-│   ├── users/                      # User profiles and relationships
+│   ├── users/                      # Perfiles de usuario y relaciones
 │   │   ├── __init__.py
-│   │   ├── admin.py               # Admin interface for User and Follow
-│   │   ├── apps.py                # App configuration
-│   │   ├── models.py              # User and Follow models
-│   │   ├── serializers.py         # User serializers
-│   │   ├── urls.py                # User endpoints
-│   │   └── views.py               # User CRUD and follow operations
+│   │   ├── admin.py               # Interfaz admin para User y Follow
+│   │   ├── apps.py                # Configuración de la app
+│   │   ├── models.py              # Modelos User y Follow
+│   │   ├── serializers.py         # Serializadores de usuario
+│   │   ├── urls.py                # Endpoints de usuario
+│   │   └── views.py               # Operaciones CRUD y seguimiento
 │   │
-│   ├── posts/                      # Social posts functionality
+│   ├── posts/                      # Funcionalidad de publicaciones sociales
 │   │   ├── __init__.py
-│   │   ├── admin.py               # Admin interface for Post, Like, Comment
-│   │   ├── apps.py                # App configuration
-│   │   ├── models.py              # Post, Like, and Comment models
-│   │   ├── serializers.py         # Post serializers
-│   │   ├── urls.py                # Post endpoints
-│   │   └── views.py               # Post CRUD, like, and comment operations
+│   │   ├── admin.py               # Interfaz admin para Post, Like, Comment
+│   │   ├── apps.py                # Configuración de la app
+│   │   ├── models.py              # Modelos Post, Like y Comment
+│   │   ├── serializers.py         # Serializadores de publicaciones
+│   │   ├── urls.py                # Endpoints de publicaciones
+│   │   └── views.py               # Operaciones CRUD, likes y comentarios
 │   │
-│   ├── stories/                    # 24-hour stories feature
+│   ├── stories/                    # Función de historias de 24 horas
 │   │   ├── __init__.py
-│   │   ├── admin.py               # Admin interface for Story and StoryView
-│   │   ├── apps.py                # App configuration
-│   │   ├── models.py              # Story and StoryView models
-│   │   ├── serializers.py         # Story serializers
-│   │   ├── urls.py                # Story endpoints
-│   │   └── views.py               # Story CRUD and view tracking
+│   │   ├── admin.py               # Interfaz admin para Story y StoryView
+│   │   ├── apps.py                # Configuración de la app
+│   │   ├── models.py              # Modelos Story y StoryView
+│   │   ├── serializers.py         # Serializadores de historias
+│   │   ├── urls.py                # Endpoints de historias
+│   │   └── views.py               # CRUD de historias y seguimiento de vistas
 │   │
-│   └── messages/                   # Real-time messaging
+│   └── messages/                   # Mensajería en tiempo real
 │       ├── __init__.py
-│       ├── admin.py               # Admin interface for ChatRoom, Message, MessageRead
-│       ├── apps.py                # App configuration
-│       ├── consumers.py           # WebSocket consumers for real-time chat
-│       ├── models.py              # ChatRoom, Message, and MessageRead models
-│       ├── routing.py             # WebSocket URL routing
-│       ├── serializers.py         # Message serializers
-│       ├── urls.py                # Message HTTP endpoints
-│       └── views.py               # Chat room and message operations
+│       ├── admin.py               # Interfaz admin para ChatRoom, Message, MessageRead
+│       ├── apps.py                # Configuración de la app
+│       ├── consumers.py           # Consumidores WebSocket para chat en tiempo real
+│       ├── models.py              # Modelos ChatRoom, Message y MessageRead
+│       ├── routing.py             # Enrutamiento de URLs WebSocket
+│       ├── serializers.py         # Serializadores de mensajes
+│       ├── urls.py                # Endpoints HTTP de mensajes
+│       └── views.py               # Operaciones de salas de chat y mensajes
 │
-├── config/                         # Django project configuration
+├── config/                         # Configuración del proyecto Django
 │   ├── __init__.py
-│   ├── asgi.py                    # ASGI configuration for WebSockets
-│   ├── settings.py                # Project settings
-│   ├── urls.py                    # Main URL configuration
-│   └── wsgi.py                    # WSGI configuration for HTTP
+│   ├── asgi.py                    # Configuración ASGI para WebSockets
+│   ├── settings.py                # Configuración del proyecto
+│   ├── urls.py                    # Configuración principal de URLs
+│   └── wsgi.py                    # Configuración WSGI para HTTP
 │
-├── .env.example                    # Environment variables template
-└── manage.py                       # Django management script
+├── .env.example                    # Plantilla de variables de entorno
+└── manage.py                       # Script de gestión de Django
 ```
 
-## Module Dependencies
+## Dependencias de Módulos
 
-### Authentication App
+### App de Autenticación
 
-**Dependencies:**
-- `rest_framework` - For API views and serializers
-- `rest_framework_simplejwt` - For JWT token generation
-- `django.contrib.auth` - For user model and password validation
+**Dependencias:**
+- `rest_framework` - Para vistas API y serializadores
+- `rest_framework_simplejwt` - Para generación de tokens JWT
+- `django.contrib.auth` - Para modelo de usuario y validación de contraseñas
 
-**Purpose:** Handles user registration and authentication using JWT tokens.
+**Propósito:** Gestiona el registro de usuarios y la autenticación usando tokens JWT.
 
-**Key Components:**
-- `RegisterSerializer` - Validates and creates new user accounts
-- `CustomTokenObtainPairSerializer` - Customizes JWT token payload
-- `RegisterView` - Creates new user accounts
-- `CustomTokenObtainPairView` - Generates JWT tokens for login
+**Componentes Clave:**
+- `RegisterSerializer` - Valida y crea nuevas cuentas de usuario
+- `CustomTokenObtainPairSerializer` - Personaliza el payload del token JWT
+- `RegisterView` - Crea nuevas cuentas de usuario
+- `CustomTokenObtainPairView` - Genera tokens JWT para el inicio de sesión
 
-### Users App
+### App de Usuarios
 
-**Dependencies:**
-- `django.contrib.auth.models.AbstractUser` - Base user model
-- `rest_framework` - For API views and serializers
+**Dependencias:**
+- `django.contrib.auth.models.AbstractUser` - Modelo base de usuario
+- `rest_framework` - Para vistas API y serializadores
 
-**Purpose:** Manages user profiles, relationships, and social connections.
+**Propósito:** Gestiona perfiles de usuario, relaciones y conexiones sociales.
 
-**Models:**
-- `User` (extends AbstractUser) - User profile with social features
-  - Fields: email, bio, profile_picture, cover_picture, location, website, is_private
-  - Methods: get_followers_count(), get_following_count()
-- `Follow` - Follower/following relationships
-  - Fields: follower, following, created_at
-  - Unique constraint: (follower, following)
+**Modelos:**
+- `User` (extiende AbstractUser) - Perfil de usuario con características sociales
+  - Campos: email, bio, profile_picture, cover_picture, location, website, is_private
+  - Métodos: get_followers_count(), get_following_count()
+- `Follow` - Relaciones de seguidor/seguido
+  - Campos: follower, following, created_at
+  - Restricción única: (follower, following)
 
-**Key Features:**
-- User profile management
-- Follow/unfollow functionality
-- Follower and following lists
-- Profile privacy settings
+**Características Clave:**
+- Gestión de perfiles de usuario
+- Funcionalidad de seguir/dejar de seguir
+- Listas de seguidores y seguidos
+- Configuración de privacidad del perfil
 
-### Posts App
+### App de Publicaciones
 
-**Dependencies:**
-- `django.contrib.auth.get_user_model()` - For user references
-- `apps.users.models.Follow` - To filter posts by followed users
+**Dependencias:**
+- `django.contrib.auth.get_user_model()` - Para referencias de usuario
+- `apps.users.models.Follow` - Para filtrar publicaciones de usuarios seguidos
 
-**Purpose:** Handles social media posts with likes and comments.
+**Propósito:** Gestiona publicaciones de redes sociales con likes y comentarios.
 
-**Models:**
-- `Post` - User posts
-  - Fields: author, content, image, created_at, updated_at
-  - Methods: get_likes_count(), get_comments_count()
-- `Like` - Post likes
-  - Fields: user, post, created_at
-  - Unique constraint: (user, post)
-- `Comment` - Post comments
-  - Fields: author, post, content, created_at, updated_at
+**Modelos:**
+- `Post` - Publicaciones de usuario
+  - Campos: author, content, image, created_at, updated_at
+  - Métodos: get_likes_count(), get_comments_count()
+- `Like` - Likes de publicaciones
+  - Campos: user, post, created_at
+  - Restricción única: (user, post)
+- `Comment` - Comentarios de publicaciones
+  - Campos: author, post, content, created_at, updated_at
 
-**Key Features:**
-- Create, read, update, delete posts
-- Like/unlike posts
-- Comment on posts
-- Feed shows posts from followed users
+**Características Clave:**
+- Crear, leer, actualizar, eliminar publicaciones
+- Dar/quitar like a publicaciones
+- Comentar publicaciones
+- Feed muestra publicaciones de usuarios seguidos
 
-### Stories App
+### App de Historias
 
-**Dependencies:**
-- `django.contrib.auth.get_user_model()` - For user references
-- `django.utils.timezone` - For expiration handling
-- `apps.users.models.Follow` - To filter stories by followed users
+**Dependencias:**
+- `django.contrib.auth.get_user_model()` - Para referencias de usuario
+- `django.utils.timezone` - Para gestión de expiración
+- `apps.users.models.Follow` - Para filtrar historias de usuarios seguidos
 
-**Purpose:** Implements Instagram-style 24-hour stories.
+**Propósito:** Implementa historias de 24 horas estilo Instagram.
 
-**Models:**
-- `Story` - User stories
-  - Fields: author, content, image, video, background_color, created_at, expires_at
-  - Properties: is_expired
-  - Methods: get_views_count()
-  - Auto-expiration: 24 hours from creation
-- `StoryView` - Story view tracking
-  - Fields: user, story, viewed_at
-  - Unique constraint: (user, story)
+**Modelos:**
+- `Story` - Historias de usuario
+  - Campos: author, content, image, video, background_color, created_at, expires_at
+  - Propiedades: is_expired
+  - Métodos: get_views_count()
+  - Auto-expiración: 24 horas desde la creación
+- `StoryView` - Seguimiento de vistas de historias
+  - Campos: user, story, viewed_at
+  - Restricción única: (user, story)
 
-**Key Features:**
-- Create stories with text, images, or videos
-- Stories auto-expire after 24 hours
-- View tracking (who viewed each story)
-- Feed shows stories from followed users
+**Características Clave:**
+- Crear historias con texto, imágenes o videos
+- Las historias expiran automáticamente después de 24 horas
+- Seguimiento de vistas (quién vio cada historia)
+- Feed muestra historias de usuarios seguidos
 
-### Messages App
+### App de Mensajes
 
-**Dependencies:**
-- `channels` - For WebSocket support
-- `channels_redis` - For channel layer backend
-- `django.contrib.auth.get_user_model()` - For user references
+**Dependencias:**
+- `channels` - Para soporte WebSocket
+- `channels_redis` - Para backend de capa de canales
+- `django.contrib.auth.get_user_model()` - Para referencias de usuario
 
-**Purpose:** Real-time chat functionality with private and group messaging.
+**Propósito:** Funcionalidad de chat en tiempo real con mensajería privada y grupal.
 
-**Models:**
-- `ChatRoom` - Chat room container
-  - Fields: participants (ManyToMany), created_at, updated_at
-  - Property: room_name
-- `Message` - Individual messages
-  - Fields: chat_room, sender, content, image, is_read, created_at, updated_at
-- `MessageRead` - Read receipts
-  - Fields: message, user, read_at
-  - Unique constraint: (message, user)
+**Modelos:**
+- `ChatRoom` - Contenedor de sala de chat
+  - Campos: participants (ManyToMany), created_at, updated_at
+  - Propiedad: room_name
+- `Message` - Mensajes individuales
+  - Campos: chat_room, sender, content, image, is_read, created_at, updated_at
+- `MessageRead` - Confirmaciones de lectura
+  - Campos: message, user, read_at
+  - Restricción única: (message, user)
 
-**Key Features:**
-- Private one-on-one chats
-- Group messaging support
-- Real-time message delivery via WebSockets
-- Read receipts
-- Typing indicators
-- Message history
+**Características Clave:**
+- Chats privados uno a uno
+- Soporte de mensajería grupal
+- Entrega de mensajes en tiempo real vía WebSockets
+- Confirmaciones de lectura
+- Indicadores de escritura
+- Historial de mensajes
 
-**WebSocket Consumer:**
-- `ChatConsumer` - Handles WebSocket connections
-  - Methods: connect(), disconnect(), receive()
-  - Message types: message, typing
-  - Real-time message broadcasting
+**Consumidor WebSocket:**
+- `ChatConsumer` - Gestiona conexiones WebSocket
+  - Métodos: connect(), disconnect(), receive()
+  - Tipos de mensaje: message, typing
+  - Difusión de mensajes en tiempo real
 
-## Import Dependencies
+## Dependencias de Importación
 
-### Cross-App Imports
+### Importaciones Entre Apps
 
-The following cross-app imports exist and are properly structured:
+Las siguientes importaciones entre apps existen y están correctamente estructuradas:
 
 1. **posts → users**
    ```python
    from apps.users.models import Follow
    ```
-   Used to filter posts by followed users.
+   Usado para filtrar publicaciones de usuarios seguidos.
 
 2. **stories → users**
    ```python
    from apps.users.models import Follow
    ```
-   Used to filter stories by followed users.
+   Usado para filtrar historias de usuarios seguidos.
 
-These imports are safe and do not create circular dependencies.
+Estas importaciones son seguras y no crean dependencias circulares.
 
-### External Dependencies
+### Dependencias Externas
 
-All apps depend on:
-- `django` - Core Django framework (4.2.11 LTS)
+Todas las apps dependen de:
+- `django` - Framework Django principal (4.2.11 LTS)
 - `rest_framework` - Django REST Framework (3.14.0)
-- `rest_framework_simplejwt` - JWT authentication (5.3.0)
+- `rest_framework_simplejwt` - Autenticación JWT (5.3.0)
 
-Additional dependencies:
-- `channels` - WebSocket support (4.0.0)
-- `channels-redis` - Redis channel layer (4.2.0)
-- `redis` - Redis client (5.0.1)
-- `corsheaders` - CORS headers (4.3.1)
-- `djongo` - MongoDB backend (1.3.6)
-- `pymongo` - MongoDB driver (3.12.3)
-- `Pillow` - Image processing (10.2.0)
-- `python-decouple` - Environment variables (3.8)
-- `daphne` - ASGI server (4.0.0)
+Dependencias adicionales:
+- `channels` - Soporte WebSocket (4.0.0)
+- `channels-redis` - Capa de canales Redis (4.2.0)
+- `redis` - Cliente Redis (5.0.1)
+- `corsheaders` - Cabeceras CORS (4.3.1)
+- `djongo` - Backend MongoDB (1.3.6)
+- `pymongo` - Driver MongoDB (3.12.3)
+- `Pillow` - Procesamiento de imágenes (10.2.0)
+- `python-decouple` - Variables de entorno (3.8)
+- `daphne` - Servidor ASGI (4.0.0)
 
-## Configuration
+## Configuración
 
-### Settings Modules
+### Módulos de Configuración
 
 **INSTALLED_APPS:**
 ```python
 DJANGO_APPS = [
-    'daphne',                          # ASGI server (must be first)
+    'daphne',                          # Servidor ASGI (debe ser primero)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -242,25 +242,25 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    'rest_framework',                  # REST API framework
-    'rest_framework_simplejwt',        # JWT authentication
-    'corsheaders',                     # CORS headers
-    'channels',                        # WebSocket support
+    'rest_framework',                  # Framework REST API
+    'rest_framework_simplejwt',        # Autenticación JWT
+    'corsheaders',                     # Cabeceras CORS
+    'channels',                        # Soporte WebSocket
 ]
 
 LOCAL_APPS = [
-    'apps.authentication',             # User authentication
-    'apps.users',                      # User profiles
-    'apps.posts',                      # Social posts
-    'apps.stories',                    # 24-hour stories
-    'apps.messages',                   # Real-time messaging
+    'apps.authentication',             # Autenticación de usuarios
+    'apps.users',                      # Perfiles de usuario
+    'apps.posts',                      # Publicaciones sociales
+    'apps.stories',                    # Historias de 24 horas
+    'apps.messages',                   # Mensajería en tiempo real
 ]
 ```
 
 **MIDDLEWARE:**
 ```python
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # CORS (must be first)
+    'corsheaders.middleware.CorsMiddleware',  # CORS (debe ser primero)
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -271,9 +271,9 @@ MIDDLEWARE = [
 ]
 ```
 
-### URL Configuration
+### Configuración de URLs
 
-**Main URLs (config/urls.py):**
+**URLs Principales (config/urls.py):**
 ```python
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -285,9 +285,9 @@ urlpatterns = [
 ]
 ```
 
-### ASGI Configuration
+### Configuración ASGI
 
-**WebSocket Routing (config/asgi.py):**
+**Enrutamiento WebSocket (config/asgi.py):**
 ```python
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
@@ -299,139 +299,139 @@ application = ProtocolTypeRouter({
 })
 ```
 
-## Database Schema
+## Esquema de Base de Datos
 
-### User Model (Custom)
-- Extends `AbstractUser`
-- Custom fields for social features
-- Profile pictures and cover images
-- Privacy settings
+### Modelo de Usuario (Personalizado)
+- Extiende `AbstractUser`
+- Campos personalizados para características sociales
+- Fotos de perfil y portada
+- Configuración de privacidad
 
-### Relationships
-- User ←→ Follow (follower/following)
-- User → Post (author)
-- User → Like (user likes)
-- User → Comment (author)
-- User → Story (author)
-- User → StoryView (viewer)
-- User → ChatRoom (participants, many-to-many)
-- User → Message (sender)
-- User → MessageRead (reader)
+### Relaciones
+- User ←→ Follow (seguidor/seguido)
+- User → Post (autor)
+- User → Like (likes de usuario)
+- User → Comment (autor)
+- User → Story (autor)
+- User → StoryView (espectador)
+- User → ChatRoom (participantes, muchos a muchos)
+- User → Message (remitente)
+- User → MessageRead (lector)
 
-## API Endpoints
+## Endpoints de la API
 
-### Authentication
-- `POST /api/auth/register/` - Register new user
-- `POST /api/auth/login/` - Login and get JWT tokens
-- `POST /api/auth/token/refresh/` - Refresh access token
+### Autenticación
+- `POST /api/auth/register/` - Registrar nuevo usuario
+- `POST /api/auth/login/` - Iniciar sesión y obtener tokens JWT
+- `POST /api/auth/token/refresh/` - Refrescar token de acceso
 
-### Users
-- `GET /api/users/profile/` - Get current user profile
-- `PUT /api/users/profile/` - Update current user profile
-- `GET /api/users/users/` - List all users
-- `GET /api/users/users/<username>/` - Get specific user
-- `POST /api/users/follow/<username>/` - Follow user
-- `DELETE /api/users/unfollow/<username>/` - Unfollow user
-- `GET /api/users/<username>/followers/` - Get user's followers
-- `GET /api/users/<username>/following/` - Get user's following
+### Usuarios
+- `GET /api/users/profile/` - Obtener perfil del usuario actual
+- `PUT /api/users/profile/` - Actualizar perfil del usuario actual
+- `GET /api/users/users/` - Listar todos los usuarios
+- `GET /api/users/users/<username>/` - Obtener usuario específico
+- `POST /api/users/follow/<username>/` - Seguir usuario
+- `DELETE /api/users/unfollow/<username>/` - Dejar de seguir usuario
+- `GET /api/users/<username>/followers/` - Obtener seguidores del usuario
+- `GET /api/users/<username>/following/` - Obtener seguidos del usuario
 
-### Posts
-- `GET /api/posts/` - List posts (feed)
-- `POST /api/posts/` - Create new post
-- `GET /api/posts/<id>/` - Get specific post
-- `PUT /api/posts/<id>/` - Update post
-- `DELETE /api/posts/<id>/` - Delete post
-- `GET /api/posts/user/<username>/` - Get user's posts
-- `POST /api/posts/<id>/like/` - Like/unlike post
-- `POST /api/posts/<id>/comment/` - Comment on post
-- `GET /api/posts/<id>/comments/` - Get post comments
+### Publicaciones
+- `GET /api/posts/` - Listar publicaciones (feed)
+- `POST /api/posts/` - Crear nueva publicación
+- `GET /api/posts/<id>/` - Obtener publicación específica
+- `PUT /api/posts/<id>/` - Actualizar publicación
+- `DELETE /api/posts/<id>/` - Eliminar publicación
+- `GET /api/posts/user/<username>/` - Obtener publicaciones del usuario
+- `POST /api/posts/<id>/like/` - Dar/quitar like a publicación
+- `POST /api/posts/<id>/comment/` - Comentar publicación
+- `GET /api/posts/<id>/comments/` - Obtener comentarios de publicación
 
-### Stories
-- `GET /api/stories/` - List active stories (feed)
-- `POST /api/stories/` - Create new story
-- `GET /api/stories/user/<username>/` - Get user's stories
-- `POST /api/stories/<id>/view/` - Mark story as viewed
-- `GET /api/stories/<id>/viewers/` - Get story viewers (author only)
+### Historias
+- `GET /api/stories/` - Listar historias activas (feed)
+- `POST /api/stories/` - Crear nueva historia
+- `GET /api/stories/user/<username>/` - Obtener historias del usuario
+- `POST /api/stories/<id>/view/` - Marcar historia como vista
+- `GET /api/stories/<id>/viewers/` - Obtener espectadores de historia (solo autor)
 
-### Messages
-- `GET /api/messages/chats/` - List chat rooms
-- `POST /api/messages/chats/` - Create chat room
-- `GET /api/messages/chats/<id>/` - Get chat room details
-- `GET /api/messages/chats/<id>/messages/` - Get chat messages
-- `POST /api/messages/chats/<id>/read/` - Mark messages as read
-- `POST /api/messages/chat/create/<username>/` - Create private chat
+### Mensajes
+- `GET /api/messages/chats/` - Listar salas de chat
+- `POST /api/messages/chats/` - Crear sala de chat
+- `GET /api/messages/chats/<id>/` - Obtener detalles de sala de chat
+- `GET /api/messages/chats/<id>/messages/` - Obtener mensajes del chat
+- `POST /api/messages/chats/<id>/read/` - Marcar mensajes como leídos
+- `POST /api/messages/chat/create/<username>/` - Crear chat privado
 
 ### WebSockets
-- `ws://host/ws/chat/<room_name>/` - Connect to chat room
+- `ws://host/ws/chat/<room_name>/` - Conectar a sala de chat
 
-## Module Testing
+## Pruebas de Módulos
 
-Each module can be tested independently:
+Cada módulo puede ser probado independientemente:
 
-1. **Unit Tests**: Test models, serializers, and views
-2. **Integration Tests**: Test API endpoints
-3. **WebSocket Tests**: Test real-time messaging
+1. **Pruebas Unitarias**: Probar modelos, serializadores y vistas
+2. **Pruebas de Integración**: Probar endpoints de la API
+3. **Pruebas WebSocket**: Probar mensajería en tiempo real
 
-See `TESTING_GUIDE.md` for detailed testing instructions.
+Ver `TESTING_GUIDE.md` para instrucciones detalladas de pruebas.
 
-## Module Maintenance
+## Mantenimiento de Módulos
 
-### Adding New Apps
+### Añadir Nuevas Apps
 
-1. Create app structure:
+1. Crear estructura de la app:
    ```bash
    cd backend/apps
    python ../manage.py startapp newapp
    ```
 
-2. Add to `INSTALLED_APPS` in settings.py
-3. Create models, views, serializers, urls
-4. Create admin.py for model registration
-5. Include URLs in main config/urls.py
+2. Añadir a `INSTALLED_APPS` en settings.py
+3. Crear modelos, vistas, serializadores, urls
+4. Crear admin.py para registro de modelos
+5. Incluir URLs en config/urls.py principal
 
-### Modifying Existing Apps
+### Modificar Apps Existentes
 
-1. Update models (create migrations)
-2. Update serializers
-3. Update views
-4. Update admin interface
-5. Update tests
-6. Document changes
+1. Actualizar modelos (crear migraciones)
+2. Actualizar serializadores
+3. Actualizar vistas
+4. Actualizar interfaz de administración
+5. Actualizar pruebas
+6. Documentar cambios
 
-## Security Considerations
+## Consideraciones de Seguridad
 
-- JWT tokens for authentication
-- CSRF protection enabled
-- CORS configured for frontend
-- User privacy settings
-- Read receipts for messages
-- Profile visibility controls
+- Tokens JWT para autenticación
+- Protección CSRF habilitada
+- CORS configurado para el frontend
+- Configuración de privacidad de usuario
+- Confirmaciones de lectura para mensajes
+- Controles de visibilidad de perfil
 
-## Performance Considerations
+## Consideraciones de Rendimiento
 
-- Database indexes on foreign keys
-- Pagination on list endpoints (20 items per page)
-- Story auto-expiration via database
-- Redis for channel layer (WebSocket performance)
-- Image optimization with Pillow
+- Índices de base de datos en claves foráneas
+- Paginación en endpoints de lista (20 elementos por página)
+- Auto-expiración de historias vía base de datos
+- Redis para capa de canales (rendimiento WebSocket)
+- Optimización de imágenes con Pillow
 
-## Future Improvements
+## Mejoras Futuras
 
-Potential enhancements:
-1. Migrate to PostgreSQL for better Django ORM support
-2. Add full-text search for posts and users
-3. Implement caching with Redis
-4. Add push notifications
-5. Implement media compression
-6. Add content moderation
-7. Implement rate limiting
-8. Add activity logging
-9. Implement data analytics
-10. Add email notifications
+Mejoras potenciales:
+1. Migrar a PostgreSQL para mejor soporte del ORM de Django
+2. Añadir búsqueda de texto completo para publicaciones y usuarios
+3. Implementar caché con Redis
+4. Añadir notificaciones push
+5. Implementar compresión de medios
+6. Añadir moderación de contenido
+7. Implementar limitación de tasa
+8. Añadir registro de actividad
+9. Implementar análisis de datos
+10. Añadir notificaciones por correo electrónico
 
 ---
 
-For more information, see:
-- `BACKEND_FIXES.md` - Details on fixes applied
-- `TESTING_GUIDE.md` - Testing procedures
-- `README.md` - General project information
+Para más información, ver:
+- `BACKEND_FIXES.md` - Detalles sobre correcciones aplicadas
+- `TESTING_GUIDE.md` - Procedimientos de pruebas
+- `README.md` - Información general del proyecto

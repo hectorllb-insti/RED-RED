@@ -1,703 +1,502 @@
-# 🌐 RED-RED Social Network
-
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://djangoproject.com/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-green.svg)](https://www.mongodb.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-Una aplicación de red social moderna y completa desarrollada con Django (backend), React (frontend) y MongoDB (base de datos). Incluye funcionalidades en tiempo real mediante WebSockets para una experiencia de usuario fluida y contemporánea.
-
-![](main_screenshot.png)
-
-## 📋 Tabla de Contenidos
-
-- [🚀 Características](#-características)
-- [🏗️ Arquitectura](#️-arquitectura)
-- [🔧 Configuración del Entorno de Desarrollo](#-configuración-del-entorno-de-desarrollo)
-- [📦 Instalación](#-instalación)
-- [🏃‍♂️ Ejecución](#️-ejecución)
-- [📚 API Documentation](#-api-documentation)
-- [🧪 Testing](#-testing)
-- [🚀 Despliegue](#-despliegue)
-- [👥 Contribución](#-contribución)
-
-## 🚀 Características
-
-### 👤 Gestión de Usuarios
-
-- ✅ Registro y autenticación con JWT
-- ✅ Perfiles personalizables con foto y portada
-- ✅ Sistema de seguimiento entre usuarios
-- ✅ Configuración de privacidad
-
-### 📝 Publicaciones
-
-- ✅ Crear, editar y eliminar publicaciones
-- ✅ Sistema de likes y comentarios
-- ✅ Subida de imágenes
-- ✅ Feed personalizado basado en seguimientos
-
-### 📖 Historias
-
-- ✅ Contenido temporal (24 horas)
-- ✅ Visualización en formato carrusel
-- ✅ Eliminación automática por TTL
-
-### 💬 Mensajería
-
-- ✅ Chat en tiempo real con WebSockets
-- ✅ Conversaciones privadas 1:1
-- ✅ Historial de mensajes persistente
-- ✅ Estado de conexión en tiempo real
-
-## 🏗️ Arquitectura
-
-### Stack Tecnológico
-
-#### Backend
-
-- **Framework**: Django 4.2.11 LTS + Django REST Framework 3.14.0
-- **Autenticación**: JWT (djangorestframework-simplejwt 5.3.0)
-- **WebSockets**: Django Channels 4.0.0 + Redis 5.0.1
-- **Base de Datos**: MongoDB 7.0+ con djongo 1.3.6
-- **CORS**: django-cors-headers 4.3.1
-
-#### Frontend
-
-- **Framework**: React 18.2.0
-- **Routing**: React Router DOM 6.8.1
-- **Estado**: Context API + React Query 3.39.3
-- **UI**: Tailwind CSS 3.2.7 + Lucide React (iconos)
-- **HTTP Client**: Axios 1.3.4
-- **WebSockets**: Socket.io-client 4.6.1
-- **Formularios**: React Hook Form 7.43.5
-
-#### Base de Datos
-
-- **Principal**: MongoDB 7.0+ (Documentos NoSQL)
-- **Cache/Sessions**: Redis 7.0+ (Para WebSockets y cache)
-
-#### Estructura del Proyecto
-
-```
-RED-RED/
-├── backend/
-│   ├── config/
-│   ├── apps/
-│   │   ├── authentication/
-│   │   ├── posts/
-│   │   ├── stories/
-│   │   ├── messages/
-│   │   └── users/
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   └── utils/
-│   └── package.json
-└── database/
-    └── init_scripts/
-```
-
-#### Guía de Archivos Principales
-
-- 🫚 Raíz del Proyecto
-
-  - [requirements.txt](requirements.txt) -> Dependencias del Proyecto
-
-  - [package.json](package.json) -> Dependencias y scripts de Node.js/React
-  - [install.bat](install.bat) -> Script de instalación automática
-  - [start.bat](start.bat) -> Script para lanzar el proyecto
-
-- 🔑 Archivos ".env"
-
-  - Variables de entorno sensibles: Contiene configuración crítica como claves secretas de Django, credenciales de base de datos, tokens de API y configuraciones específicas del entorno (desarrollo/producción). Siempre deben de ser declaradas por la persona que ejecute el proyecto.
-
-- 🧩 Back-End
-
-  - [manage.py](backend/manage.py) -> Ejecuta el servidor Django y realiza comandos de gestión
-
-  - [settings.py](backend/config/settings.py) -> Configuración principal de Django (BD, apps, middleware)
-  - [urls.py](backend/config/urls.py) -> Enrutamiento principal del backend
-
-- ⚛️ Front-End
-
-  - [index.js](frontend/src/index.js) -> Punto de entrada de React
-  - [App.js](frontend/src/App.js) -> Componente raíz del Frontend
-  - [api.js](frontend/src/services/api.js) -> Configura la conexión base con el backend (URL, headers, interceptores de token)
-  - [auth.js](frontend/src/services/auth.js) -> Maneja toda la autenticación: login, registro, refresh tokens, verificar sesión.
-  - [socket.js](frontend/src/services/socket.js) -> Gestiona WebSockets para funcionalidades en tiempo real como mensajes y notificaciones
-
-  - [Home.js](frontend/src/pages/Home.js) -> Página principal / feed de publicaciones
-  - [Register.js](frontend/src/pages/Register.js) -> Pantalla de inicio de sesión
-  - [Login.js](frontend/src/pages/Login.js) -> Pantalla de registro de usuarios
-
-- 🗄️ Databases
-
-  - Todavía por desarrollar, principalmente se implementará la gestión de MongoDB: instalación, variables de entorno, estructura de colecciones (users, posts, messages, stories), índices de optimización y scripts de backup/restauración.
-
-## 🔧 Configuración del Entorno de Desarrollo
-
-### 📋 Requisitos Previos
-
-#### Software Requerido
-
-| Herramienta | Versión Mínima | Versión Recomendada | Descarga                                                      |
-| ----------- | -------------- | ------------------- | ------------------------------------------------------------- |
-| **Python**  | 3.11.0         | 3.11.6+             | [python.org](https://www.python.org/downloads/)               |
-| **Node.js** | 18.0.0         | 20.9.0+ LTS         | [nodejs.org](https://nodejs.org/)                             |
-| **MongoDB** | 6.0            | 7.0.2+              | [mongodb.com](https://www.mongodb.com/try/download/community) |
-| **Redis**   | 6.0            | 7.2.0+              | [redis.io](https://redis.io/download)                         |
-| **Git**     | 2.30           | 2.42.0+             | [git-scm.com](https://git-scm.com/)                           |
-
-#### IDEs y Editores Recomendados
-
-##### Visual Studio Code (Recomendado)
-
-- **Versión**: 1.83.0+
-- **Extensiones Esenciales**:
-  ```
-  - Python (ms-python.python)
-  - Django (batisteo.vscode-django)
-  - ES7+ React/Redux/React-Native snippets (dsznajder.es7-react-js-snippets)
-  - Tailwind CSS IntelliSense (bradlc.vscode-tailwindcss)
-  - MongoDB for VS Code (mongodb.mongodb-vscode)
-  - Thunder Client (rangav.vscode-thunder-client) - Para testing API
-  - GitLens (eamodio.gitlens)
-  - Error Lens (usernamehw.errorlens)
-  - Prettier (esbenp.prettier-vscode)
-  - ESLint (dbaeumer.vscode-eslint)
-  ```
-
-##### PyCharm Professional (Alternativa)
-
-- **Versión**: 2023.2+
-- **Plugins**: Django, JavaScript, React, MongoDB Plugin
-
-#### Herramientas de Desarrollo
-
-##### Testing de APIs
-
-- **Postman** (Recomendado): [getpostman.com](https://www.postman.com/)
-- **Insomnia** (Alternativa): [insomnia.rest](https://insomnia.rest/)
-- **Thunder Client** (VS Code): Extensión integrada
-
-##### Gestión de Base de Datos
-
-- **MongoDB Compass** (GUI): [mongodb.com/products/compass](https://www.mongodb.com/products/compass)
-- **Studio 3T** (Profesional): [studio3t.com](https://studio3t.com/)
-
-##### Gestión de Redis
-
-- **Redis Desktop Manager**: [redisdesktop.com](https://redisdesktop.com/)
-- **Redis CLI**: Incluido con Redis
-
-### 🛠️ Configuración del IDE (Visual Studio Code)
-
-#### 1. Configuración del Workspace
-
-Crear `.vscode/settings.json` en la raíz del proyecto:
-
-```json
-{
-  "python.defaultInterpreterPath": "./backend/venv/Scripts/python",
-  "python.linting.enabled": true,
-  "python.linting.pylintEnabled": false,
-  "python.linting.flake8Enabled": true,
-  "python.formatting.provider": "black",
-  "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": ["./backend/tests"],
-  "emmet.includeLanguages": {
-    "javascript": "javascriptreact"
-  },
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.organizeImports": true
-  },
-  "files.associations": {
-    "*.html": "html"
-  },
-  "tailwindCSS.includeLanguages": {
-    "javascript": "javascript",
-    "html": "html"
-  }
-}
-```
-
-#### 2. Configuración de Debugging
-
-Crear `.vscode/launch.json`:
-
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Django Backend",
-      "type": "python",
-      "request": "launch",
-      "program": "${workspaceFolder}/backend/manage.py",
-      "args": ["runserver"],
-      "django": true,
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/backend"
-    },
-    {
-      "name": "React Frontend",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/frontend/node_modules/.bin/react-scripts",
-      "args": ["start"],
-      "cwd": "${workspaceFolder}/frontend",
-      "console": "integratedTerminal"
-    }
-  ]
-}
-```
-
-### 🐍 Configuración Python/Django
-
-#### 1. Entorno Virtual
-
-```bash
-# Crear entorno virtual
-cd backend
-python -m venv venv
-
-# Activar (Windows)
-venv\Scripts\activate
-
-# Activar (macOS/Linux)
-source venv/bin/activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-```
-
-#### 2. Variables de Entorno
-
-Crear `backend/.env`:
-
-```env
-# Django
-SECRET_KEY=tu-clave-secreta-muy-larga-y-segura-aqui
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-
-# Base de datos
-DB_NAME=red_red_db
-DB_HOST=mongodb://localhost:27017
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# CORS
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-```
-
-### ⚛️ Configuración React/Node.js
-
-#### 1. Gestión de Paquetes
-
-- **npm** (incluido con Node.js)
-- **Yarn** (Opcional): `npm install -g yarn`
-
-#### 2. Variables de Entorno Frontend
-
-Crear `frontend/.env`:
-
-```env
-REACT_APP_API_URL=http://localhost:8000/api
-REACT_APP_WS_URL=ws://localhost:8000
-GENERATE_SOURCEMAP=false
-```
-
-### 🗄️ Configuración de Base de Datos
-
-#### MongoDB
-
-1. **Instalar MongoDB Community Server**
-2. **Configurar como servicio** (recomendado)
-3. **Crear directorio de datos**: `C:\data\db` (Windows) o `/data/db` (macOS/Linux)
-4. **Iniciar servicio**:
-
-   ```bash
-   # Windows (como administrador)
-   net start MongoDB
-
-   # macOS
-   brew services start mongodb-community
-
-   # Linux (systemd)
-   sudo systemctl start mongod
-   ```
-
-#### Redis
-
-1. **Windows**: Descargar desde [GitHub Releases](https://github.com/microsoftarchive/redis/releases)
-2. **macOS**: `brew install redis`
-3. **Linux**: `sudo apt-get install redis-server`
-
-### 🔄 Workflow de Desarrollo
-
-#### Git Hooks Recomendados
-
-Crear `.githooks/pre-commit`:
-
-```bash
-#!/bin/sh
-# Ejecutar tests antes del commit
-cd backend && python manage.py test --no-input
-cd ../frontend && npm test -- --coverage --no-watch
-```
-
-#### Scripts de Desarrollo
-
-Crear `package.json` en la raíz:
-
-```json
-{
-  "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && python manage.py runserver",
-    "dev:frontend": "cd frontend && npm start",
-    "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
-    "test:backend": "cd backend && python manage.py test",
-    "test:frontend": "cd frontend && npm test",
-    "lint": "concurrently \"npm run lint:backend\" \"npm run lint:frontend\"",
-    "lint:backend": "cd backend && flake8",
-    "lint:frontend": "cd frontend && npm run lint"
-  }
-}
-```
-
-## 📦 Instalación
-
-### 🚀 Instalación Rápida (Automatizada)
-
-#### Windows
-
-```bash
-# Ejecutar script de instalación
-install.bat
-
-# Iniciar aplicación
-start.bat
-```
-
-#### macOS/Linux
-
-```bash
-# Dar permisos de ejecución
-chmod +x install.sh
-
-# Ejecutar script de instalación
-./install.sh
-
-# Iniciar aplicación
-./start.sh
-```
-
-### 🔧 Instalación Manual
-
-#### 1. Clonar Repositorio
-
-```bash
-git clone https://github.com/hectorllb-insti/RED-RED.git
-cd RED-RED
-```
-
-#### 2. Configurar Backend
-
-```bash
-cd backend
-
-# Crear y activar entorno virtual
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # macOS/Linux
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Configurar variables de entorno
-copy .env.example .env  # Windows
-# cp .env.example .env  # macOS/Linux
-
-# Ejecutar migraciones
-python manage.py makemigrations
-python manage.py migrate
-
-# Crear superusuario (opcional)
-python manage.py createsuperuser
-```
-
-#### 3. Configurar Frontend
-
-```bash
-cd ../frontend
-
-# Instalar dependencias
-npm install
-
-# Configurar variables de entorno
-copy .env.example .env  # Windows
-# cp .env.example .env  # macOS/Linux
-```
-
-#### 4. Configurar Base de Datos
-
-```bash
-# Iniciar MongoDB
-net start MongoDB  # Windows
-# brew services start mongodb-community  # macOS
-# sudo systemctl start mongod  # Linux
-
-# Iniciar Redis
-redis-server  # Todas las plataformas
-```
-
-## 🏃‍♂️ Ejecución
-
-### Desarrollo Local
-
-#### Opción 1: Scripts Automatizados
-
-```bash
-# Windows
-start.bat
-
-# macOS/Linux
-./start.sh
-```
-
-#### Opción 2: Manual (Terminales Separadas)
-
-```bash
-# Terminal 1 - Backend Django
-cd backend
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # macOS/Linux
-python manage.py runserver
-
-# Terminal 2 - Frontend React
-cd frontend
-npm start
-
-# Terminal 3 - WebSocket Server (Opcional)
-cd backend
-python manage.py runserver --settings=config.settings_websocket
-```
-
-### URLs de Acceso
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000/api
-- **Admin Django**: http://localhost:8000/admin
-- **API Documentation**: http://localhost:8000/api/docs
-
-## 📚 API Documentation
-
-### Autenticación
-
-| Método | Endpoint              | Descripción         | Auth |
-| ------ | --------------------- | ------------------- | ---- |
-| `POST` | `/api/auth/register/` | Registro de usuario | ❌   |
-| `POST` | `/api/auth/login/`    | Login de usuario    | ❌   |
-| `POST` | `/api/auth/refresh/`  | Renovar token       | ❌   |
-| `POST` | `/api/auth/logout/`   | Cerrar sesión       | ✅   |
-
-### Usuarios
-
-| Método | Endpoint                  | Descripción            | Auth |
-| ------ | ------------------------- | ---------------------- | ---- |
-| `GET`  | `/api/users/profile/`     | Perfil actual          | ✅   |
-| `PUT`  | `/api/users/profile/`     | Actualizar perfil      | ✅   |
-| `GET`  | `/api/users/{id}/`        | Ver perfil público     | ✅   |
-| `POST` | `/api/users/{id}/follow/` | Seguir/Dejar de seguir | ✅   |
-
-### Publicaciones
-
-| Método   | Endpoint                | Descripción                 | Auth |
-| -------- | ----------------------- | --------------------------- | ---- |
-| `GET`    | `/api/posts/`           | Listar publicaciones (feed) | ✅   |
-| `POST`   | `/api/posts/`           | Crear publicación           | ✅   |
-| `GET`    | `/api/posts/{id}/`      | Ver publicación             | ✅   |
-| `PUT`    | `/api/posts/{id}/`      | Editar publicación          | ✅   |
-| `DELETE` | `/api/posts/{id}/`      | Eliminar publicación        | ✅   |
-| `POST`   | `/api/posts/{id}/like/` | Like/Unlike                 | ✅   |
-
-### Historias
-
-| Método   | Endpoint             | Descripción           | Auth |
-| -------- | -------------------- | --------------------- | ---- |
-| `GET`    | `/api/stories/`      | Ver historias activas | ✅   |
-| `POST`   | `/api/stories/`      | Crear historia        | ✅   |
-| `DELETE` | `/api/stories/{id}/` | Eliminar historia     | ✅   |
-
-### Mensajes
-
-| Método | Endpoint                                     | Descripción              | Auth |
-| ------ | -------------------------------------------- | ------------------------ | ---- |
-| `GET`  | `/api/messages/conversations/`               | Listar conversaciones    | ✅   |
-| `POST` | `/api/messages/conversations/`               | Crear conversación       | ✅   |
-| `GET`  | `/api/messages/conversations/{id}/messages/` | Mensajes de conversación | ✅   |
-
-### WebSockets
-
-| Evento            | Descripción           |
-| ----------------- | --------------------- |
-| `join_room`       | Unirse a sala de chat |
-| `send_message`    | Enviar mensaje        |
-| `receive_message` | Recibir mensaje       |
-| `user_online`     | Usuario conectado     |
-| `user_offline`    | Usuario desconectado  |
-
-## 🧪 Testing
-
-### Backend (Django)
-
-```bash
-cd backend
-
-# Ejecutar todos los tests
-python manage.py test
-
-# Tests con cobertura
-pip install coverage
-coverage run --source='.' manage.py test
-coverage report
-coverage html  # Genera reporte HTML
-
-# Tests específicos
-python manage.py test apps.users.tests
-python manage.py test apps.posts.tests.test_models
-```
-
-### Frontend (React)
-
-```bash
-cd frontend
-
-# Ejecutar todos los tests
-npm test
-
-# Tests con cobertura
-npm test -- --coverage --no-watch
-
-# Tests específicos
-npm test -- --testNamePattern="Login"
-
-# Tests de integración
-npm run test:integration
-```
-
-### Testing de APIs
-
-Importar colección de Postman desde `docs/RED-RED.postman_collection.json`
-
-## 🚀 Despliegue
-
-### Desarrollo (Docker)
-
-```bash
-# Construir y ejecutar
-docker-compose up --build
-
-# En modo background
-docker-compose up -d
-```
-
-### Producción
-
-#### Variables de Entorno Producción
-
-```env
-DEBUG=False
-SECRET_KEY=tu-clave-super-secreta-de-produccion
-ALLOWED_HOSTS=tudominio.com,www.tudominio.com
-DB_HOST=mongodb://usuario:password@host:27017/red_red_db
-REDIS_URL=redis://redis-host:6379
-```
-
-#### Despliegue Backend
-
-- **Heroku**: Usar `Procfile` incluido
-- **DigitalOcean**: App Platform compatible
-- **AWS**: EC2 + RDS/DocumentDB + ElastiCache
-
-#### Despliegue Frontend
-
-- **Netlify**: Build automático desde Git
-- **Vercel**: Optimizado para React
-- **AWS S3**: Hosting estático
-
-## 👥 Contribución
-
-### Estándares de Código
-
-#### Python/Django
-
-- **Estilo**: PEP 8 + Black formatter
-- **Docstrings**: Google style
-- **Type hints**: Obligatorio para funciones públicas
-
-#### JavaScript/React
-
-- **Estilo**: ESLint + Prettier
-- **Componentes**: Functional components + Hooks
-- **PropTypes**: Obligatorio
-
-### Flujo de Trabajo Git
-
-1. **Fork** el repositorio
-2. **Clone** tu fork: `git clone https://github.com/tu-usuario/RED-RED.git`
-3. **Crear rama**: `git checkout -b feature/nueva-funcionalidad`
-4. **Commit**: `git commit -m "feat: agregar nueva funcionalidad"`
-5. **Push**: `git push origin feature/nueva-funcionalidad`
-6. **Pull Request** al repositorio principal
-
-### Convenciones de Commits
-
-```
-feat: nueva funcionalidad
-fix: corrección de bug
-docs: cambios en documentación
-style: formato, sin cambios de código
-refactor: refactoring de código
-test: agregar o modificar tests
-chore: tareas de mantenimiento
-```
-
-### Estructura de Branches
-
-- `main`: Código de producción
-- `develop`: Desarrollo activo
-- `feature/*`: Nuevas funcionalidades
-- `bugfix/*`: Corrección de bugs
-- `hotfix/*`: Correcciones urgentes
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
-
-## 📞 Soporte
-
-- **Documentación**: [Wiki del proyecto](https://github.com/hectorllb-insti/RED-RED/wiki)
-- **Issues**: [GitHub Issues](https://github.com/hectorllb-insti/RED-RED/issues)
-- **Discusiones**: [GitHub Discussions](https://github.com/hectorllb-insti/RED-RED/discussions)
-
-## 🙏 Agradecimientos
-
-- [Django](https://djangoproject.com/) por el framework backend
-- [React](https://reactjs.org/) por la biblioteca frontend
-- [MongoDB](https://www.mongodb.com/) por la base de datos
-- [Tailwind CSS](https://tailwindcss.com/) por el framework CSS
-- Comunidad open source por las increíbles herramientas
+<div align="center">
+
+# 🔴 RED-RED Social Network 🔴
+
+### *La Red Social de Nueva Generación*
+
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-4.2-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.2-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Redis](https://img.shields.io/badge/Redis-5.0-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![WebSocket](https://img.shields.io/badge/WebSocket-Channels-green?logo=socketdotio)](https://channels.readthedocs.io/)
+[![JWT](https://img.shields.io/badge/JWT-Auth-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
+
+![GitHub Stars](https://img.shields.io/github/stars/hectorllb-insti/RED-RED?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/hectorllb-insti/RED-RED?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/hectorllb-insti/RED-RED)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr/hectorllb-insti/RED-RED)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/hectorllb-insti/RED-RED)
+
+[✨ Características](#-características-principales) •
+[🚀 Instalación](#-instalación-rápida) •
+[🏗️ Arquitectura](#️-arquitectura-del-proyecto) •
+[🔄 Flujo](#-flujo-de-datos) •
+[📁 Estructura](#-estructura-del-proyecto) •
+[🤝 Contribuir](#-cómo-contribuir) •
+[📚 Glosario](#-glosario-técnico)
 
 ---
 
-**RED-RED Social Network** - Desarrollado con ❤️ por el equipo de DAM2 Frameworks
+</div>
+
+## 📖 Sobre el Proyecto
+
+**RED-RED** es una plataforma de red social moderna y completa, construida con las últimas tecnologías web. Ofrece una experiencia de usuario fluida y en tiempo real, con características similares a las principales redes sociales actuales.
+
+### ✨ Características Principales
+
+#### 🎯 Core Features
+- ✅ **Autenticación JWT** - Sistema seguro
+- 👤 **Perfiles Personalizados** - Avatar & Bio
+- 📝 **Publicaciones Completas** - Texto e imágenes
+- ❤️ **Sistema de Likes** - Interacciones sociales
+- 💬 **Comentarios** - Conversaciones anidadas
+- 🔄 **Sistema de Seguimiento** - Follow/Unfollow
+
+#### 🚀 Advanced Features
+- 📸 **Stories de 24h** - Contenido temporal
+- 💬 **Chat en Tiempo Real** - WebSockets
+- 🔔 **Notificaciones Push** - Instantáneas
+- 🔍 **Búsqueda de Usuarios** - Exploración
+- 🎨 **Interfaz Moderna** - UI/UX Premium
+- 📱 **Responsive Design** - Mobile First
+
+---
+
+## 🛠️ Stack Tecnológico
+
+<div align="center">
+
+### Backend
+![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/Django_REST-ff1709?style=for-the-badge&logo=django&logoColor=white)
+![Channels](https://img.shields.io/badge/Channels-4.0-green?style=for-the-badge)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+
+### Frontend
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+![React Router](https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router&logoColor=white)
+
+### Herramientas & DevOps
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
+![NPM](https://img.shields.io/badge/NPM-CB3837?style=for-the-badge&logo=npm&logoColor=white)
+![Pip](https://img.shields.io/badge/Pip-3776AB?style=for-the-badge&logo=pypi&logoColor=white)
+![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white)
+
+</div>
+
+---
+
+## 🖥️ Interfaz Gráfica
+
+<div align="center">
+
+### Vista Previa de la Aplicación
+
+<!-- Aquí puedes agregar capturas de pantalla de tu proyecto -->
+![RED-RED Preview](./main-screenshot.png)
+
+</div>
+
+---
+
+## 🚀 Instalación Rápida
+
+### 📋 Prerrequisitos
+
+```bash
+- Python 3.11+
+- Node.js 18.0+
+- npm 9.0+
+- Redis Server
+```
+
+### 🔧 Instalación Automática
+
+#### Windows
+```bash
+# Ejecutar el script de instalación
+.\install.bat
+```
+
+#### Linux/MacOS
+```bash
+# Dar permisos y ejecutar
+chmod +x install.sh
+./install.sh
+```
+
+### ⚙️ Instalación Manual
+
+<details>
+<summary><b>📦 Backend Setup</b></summary>
+
+```bash
+# 1. Navegar al directorio backend
+cd backend
+
+# 2. Crear entorno virtual
+python -m venv venv
+
+# 3. Activar entorno virtual
+# Windows
+venv\Scripts\activate
+# Linux/MacOS
+source venv/bin/activate
+
+# 4. Instalar dependencias
+pip install -r requirements.txt
+
+# 5. Realizar migraciones
+python manage.py makemigrations
+python manage.py migrate
+
+# 6. Crear superusuario (opcional)
+python manage.py createsuperuser
+
+# 7. Iniciar servidor
+python manage.py runserver
+```
+
+</details>
+
+<details>
+<summary><b>🎨 Frontend Setup</b></summary>
+
+```bash
+# 1. Navegar al directorio frontend
+cd frontend
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar servidor de desarrollo
+npm start
+```
+
+</details>
+
+### 🚀 Iniciar Aplicación
+
+```bash
+# Opción 1: Desde la raíz (ambos servidores)
+npm run dev
+
+# Opción 2: Scripts individuales
+start.bat  # Windows
+```
+
+**Acceder a:**
+- 🌐 Frontend: `http://localhost:3000`
+- ⚙️ Backend API: `http://localhost:8000`
+- 🔧 Admin Panel: `http://localhost:8000/admin`
+
+---
+
+## 🏗️ Arquitectura del Proyecto
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🎨 Frontend - React"
+        A[React App] --> B[React Router]
+        B --> C[Pages]
+        C --> D[Components]
+        D --> E[UI Components]
+        A --> F[Context API]
+        F --> G[Auth Context]
+    end
+    
+    subgraph "⚙️ Backend - Django"
+        H[Django Server] --> I[REST Framework]
+        I --> J[JWT Auth]
+        H --> K[Channels/WebSocket]
+        K --> L[Redis]
+    end
+    
+    subgraph "🗄️ Base de Datos"
+        M[(SQLite/PostgreSQL)]
+        N[(Redis Cache)]
+    end
+    
+    A -->|HTTP/REST| I
+    A -->|WebSocket| K
+    I --> M
+    K --> N
+    
+    style A fill:#61DAFB,stroke:#333,stroke-width:2px,color:#000
+    style H fill:#092E20,stroke:#333,stroke-width:2px,color:#fff
+    style M fill:#003B57,stroke:#333,stroke-width:2px,color:#fff
+    style N fill:#DC382D,stroke:#333,stroke-width:2px,color:#fff
+```
+
+</div>
+
+---
+
+## 🔄 Flujo de Datos
+
+### 📡 Flujo HTTP (REST API)
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 Usuario
+    participant F as 🎨 Frontend
+    participant B as ⚙️ Backend
+    participant DB as 🗄️ Database
+    
+    U->>F: 1️⃣ Acción (Ej: Crear Post)
+    F->>F: 2️⃣ Validación Local
+    F->>B: 3️⃣ HTTP Request + JWT Token
+    B->>B: 4️⃣ Verificar Token
+    B->>B: 5️⃣ Procesar Lógica
+    B->>DB: 6️⃣ Guardar Datos
+    DB-->>B: 7️⃣ Confirmación
+    B-->>F: 8️⃣ JSON Response
+    F->>F: 9️⃣ Actualizar Estado
+    F-->>U: 🔟 Mostrar Resultado
+```
+
+### ⚡ Flujo WebSocket (Tiempo Real)
+
+```mermaid
+sequenceDiagram
+    participant U1 as 👤 Usuario 1
+    participant F1 as 🎨 Frontend 1
+    participant WS as 🔌 WebSocket Server
+    participant R as 🔴 Redis
+    participant F2 as 🎨 Frontend 2
+    participant U2 as 👤 Usuario 2
+    
+    U1->>F1: 1️⃣ Enviar Mensaje
+    F1->>WS: 2️⃣ WS: Send Message
+    WS->>R: 3️⃣ Publicar en Canal
+    R->>WS: 4️⃣ Distribuir a Suscriptores
+    WS->>F2: 5️⃣ WS: Receive Message
+    F2-->>U2: 6️⃣ Notificación Instantánea
+```
+
+### 🔐 Flujo de Autenticación
+
+```mermaid
+graph LR
+    A[📝 Login Form] --> B{Validar}
+    B -->|✅ Válido| C[POST /api/auth/login/]
+    C --> D[Backend Verifica]
+    D -->|✅ OK| E[Generar JWT Tokens]
+    E --> F[Access Token + Refresh Token]
+    F --> G[Guardar en LocalStorage]
+    G --> H[Redirect a Dashboard]
+    D -->|❌ Error| I[Mostrar Error]
+    B -->|❌ Inválido| I
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+RED-RED/
+│
+├── 🐍 backend/                      # Django Backend
+│   ├── apps/                        # Aplicaciones Django
+│   │   ├── authentication/          # 🔐 Sistema de autenticación JWT
+│   │   ├── users/                   # 👤 Gestión de perfiles y seguidores
+│   │   ├── posts/                   # 📝 Publicaciones, likes y comentarios
+│   │   ├── stories/                 # 📸 Historias temporales (24h)
+│   │   └── chat/                    # 💬 Mensajería en tiempo real
+│   │
+│   ├── config/                      # ⚙️ Configuración Django
+│   │   ├── settings.py              # Configuración principal
+│   │   ├── urls.py                  # Rutas globales
+│   │   ├── asgi.py                  # Servidor WebSocket
+│   │   └── wsgi.py                  # Servidor HTTP
+│   │
+│   ├── notifications/               # 🔔 Sistema de notificaciones
+│   ├── media/                       # 📁 Archivos subidos (imágenes)
+│   ├── db.sqlite3                   # 🗄️ Base de datos
+│   └── manage.py                    # 🎯 CLI Django
+│
+├── ⚛️ frontend/                     # React Frontend
+│   ├── src/
+│   │   ├── components/              # 🧩 Componentes reutilizables
+│   │   │   ├── Layout.js            # Estructura principal
+│   │   │   ├── PostCard.js          # Tarjeta de publicación
+│   │   │   ├── Avatar.js            # Componente de avatar
+│   │   │   └── ui/                  # Componentes UI base
+│   │   │
+│   │   ├── pages/                   # 📄 Páginas con rutas
+│   │   │   ├── Home.js              # Feed principal
+│   │   │   ├── Profile.js           # Perfil de usuario
+│   │   │   ├── Messages.js          # Chat
+│   │   │   ├── Login.js             # Autenticación
+│   │   │   └── Settings.js          # Configuración
+│   │   │
+│   │   ├── services/                # 🌍 Servicios HTTP
+│   │   │   ├── api.js               # Cliente Axios
+│   │   │   └── tokenManager.js      # Gestión JWT
+│   │   │
+│   │   ├── context/                 # 🔄 Estado global
+│   │   │   └── AuthContext.js       # Contexto de autenticación
+│   │   │
+│   │   ├── hooks/                   # 🪝 Custom Hooks
+│   │   ├── utils/                   # 🛠️ Utilidades
+│   │   └── styles/                  # 🎨 Estilos globales
+│   │
+│   └── public/                      # 📦 Recursos estáticos
+│
+├── 🗂️ database/                     # Base de Datos
+│   └── README.md                    # Documentación de BD
+│
+├── �📚 Documentación
+│   ├── API_DOCUMENTATION.md         # Documentación API REST
+│   ├── STRUCTURE.md                 # Estructura detallada
+│   ├── MODULE_STRUCTURE.md          # Estructura de módulos
+│   ├── SECURITY_REPORT.md           # Reporte de seguridad
+│   └── SETUP.md                     # Guía de instalación
+│
+└── 🔧 Configuración
+    ├── package.json                 # Dependencias Node.js
+    ├── requirements.txt             # Dependencias Python
+    ├── install.bat / .sh            # Scripts de instalación
+    └── start.bat                    # Script de inicio
+```
+
+---
+
+## 🤝 Cómo Contribuir
+
+¡Las contribuciones son bienvenidas y apreciadas! 🎉
+
+### 📝 Proceso de Contribución
+
+1. **Fork el proyecto** 🍴
+   ```bash
+   # Hacer fork desde GitHub
+   ```
+
+2. **Clonar tu fork** 📥
+   ```bash
+   git clone https://github.com/tu-usuario/RED-RED.git
+   cd RED-RED
+   ```
+
+3. **Crear una rama** 🌿
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+
+4. **Hacer cambios y commit** 💾
+   ```bash
+   git add .
+   git commit -m "Add: Amazing Feature"
+   ```
+
+5. **Push a tu fork** 🚀
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+
+6. **Abrir Pull Request** 🔃
+   - Ir a GitHub y crear un Pull Request
+   - Describir los cambios realizados
+   - Esperar revisión
+
+### 💡 Guías de Contribución
+
+- 📖 Seguir el estilo de código existente
+- ✅ Añadir tests para nuevas funcionalidades
+- 📝 Actualizar documentación si es necesario
+- 🔍 Asegurar que todos los tests pasen
+- 🎨 Mantener UI/UX consistente
+
+---
+
+## 📚 Glosario Técnico
+
+### 🔐 JWT (JSON Web Token)
+Sistema de autenticación basado en tokens que permite mantener sesiones seguras sin necesidad de cookies. El token contiene información encriptada del usuario.
+
+### ⚡ WebSocket
+Protocolo de comunicación bidireccional en tiempo real entre cliente y servidor. Permite chat y notificaciones instantáneas sin necesidad de refrescar la página.
+
+### 🔄 REST API
+Arquitectura de servicios web que utiliza HTTP para realizar operaciones CRUD (Create, Read, Update, Delete) sobre recursos mediante endpoints.
+
+### 🎨 React Context
+Sistema de gestión de estado global en React que permite compartir datos entre componentes sin necesidad de pasar props manualmente en cada nivel.
+
+### 🔴 Redis
+Base de datos en memoria ultra-rápida utilizada para caché y como broker de mensajes para WebSockets. Almacena datos temporales y sesiones.
+
+### 📦 Serializer
+Componente de Django REST Framework que convierte modelos de Python a JSON y viceversa, validando y transformando datos para la API.
+
+### 🛡️ CORS (Cross-Origin Resource Sharing)
+Mecanismo de seguridad que permite o restringe peticiones HTTP entre diferentes dominios. Necesario para que Frontend y Backend se comuniquen.
+
+---
+
+## 🤖 Herramientas de Desarrollo
+
+### Code Review Agent
+
+RED-RED incluye un **agente de revisión de código** personalizado de GitHub Copilot que ayuda a mantener la calidad, seguridad y mejores prácticas del código.
+
+#### 🎯 Capacidades del Agente
+
+- **📋 Revisión de Código**: Análisis exhaustivo de cambios, identificación de errores lógicos
+- **🔒 Seguridad**: Detección de vulnerabilidades (SQL injection, XSS, CSRF, autenticación)
+- **♻️ Refactorización**: Identificación de code smells y mejoras arquitectónicas
+- **✨ Calidad**: Evaluación de legibilidad, tests, mantenibilidad y accesibilidad
+
+#### 💡 Cómo Usar
+
+En tus Pull Requests:
+```
+@copilot /review usando code-review-agent
+```
+
+En GitHub Copilot Chat:
+```
+@workspace /agent code-review-agent revisa este código
+```
+
+📚 **Documentación completa**: [.github/agents/README.md](.github/agents/README.md)
+
+---
+
+<div align="center">
+
+## 💝 Creado con Amor
+
+Este proyecto ha sido desarrollado con **dedicación** y **pasión** por:
+
+### 👨‍💻 Grupo de 2º DAM - Frameworks
+**Ciclo Superior de Desarrollo de Aplicaciones Multiplataforma**
+
+---
+
+### 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+
+```
+MIT License - Copyright (c) 2025 RED-RED Team
+```
+
+---
+
+### 🌟 Agradecimientos
+
+Gracias a todos los que han contribuido a hacer de **RED-RED** una realidad.
+
+Si te gusta el proyecto, ¡dale una ⭐ en GitHub!
+
+---
+
+**[⬆️ Volver arriba](#-red-red-social-network-)**
+
+---
+
+<sub>Última actualización: Noviembre 2025 | Made with ❤️ by DAM2 Frameworks Team</sub>
+
+</div>

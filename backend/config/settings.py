@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 import os
 from decouple import config
@@ -6,12 +7,17 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+SECRET_KEY = config(
+    'SECRET_KEY', default='django-insecure-change-me-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS', 
+    default='127.0.0.1,localhost,172.16.7.176,0.0.0.0,.pythonanywhere.com,.vercel.app',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # Application definition
 DJANGO_APPS = [
@@ -37,7 +43,9 @@ LOCAL_APPS = [
     'apps.posts',
     'apps.stories',
     'apps.chat',
+    'apps.administration',
     'notifications',
+    'live',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -45,6 +53,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -77,6 +86,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database configuration
 # Usando SQLite para desarrollo (más compatible que djongo)
 # Para producción se puede cambiar a MongoDB o PostgreSQL
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -112,18 +122,21 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'es-es'
-TIME_ZONE = 'Europe/Madrid'
+LANGUAGE_CODE = config('LANGUAGE_CODE', default='es-es')
+TIME_ZONE = config('TIME_ZONE', default='Europe/Madrid')
 USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = config('STATIC_URL', default='/static/')
+STATIC_ROOT = BASE_DIR / config('STATIC_ROOT', default='staticfiles')
+
+# Configuración de Whitenoise para producción
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = config('MEDIA_URL', default='/media/')
+MEDIA_ROOT = BASE_DIR / config('MEDIA_ROOT', default='media')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -138,40 +151,126 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        'apps.users.middleware.IsNotBanned',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    'PAGE_SIZE': config('PAGE_SIZE', default=20, cast=int)
 }
 
 # JWT Settings
-from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_TOKEN_LIFETIME', default=60, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_LIFETIME', default=7, cast=int)),
+    'ROTATE_REFRESH_TOKENS': config('JWT_ROTATE_REFRESH_TOKENS', default=True, cast=bool),
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+if DEBUG:
+    # Desarrollo: permite localhost
+    CORS_ALLOWED_ORIGINS = config(
+        'CORS_ALLOWED_ORIGINS',
+        default='http://localhost:3000,http://127.0.0.1:3000',
+        cast=lambda v: [s.strip() for s in v.split(',')]
+    )
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    # Producción: solo dominios específicos
+    CORS_ALLOWED_ORIGINS = config(
+        'CORS_ALLOWED_ORIGINS',
+        cast=lambda v: [s.strip() for s in v.split(',')]
+    )
+    CORS_ALLOW_ALL_ORIGINS = False
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# Permitir credenciales en CORS
+CORS_ALLOW_CREDENTIALS = True
 
-# Channels - Configuración para desarrollo (en memoria)
+# Channels - Configuración para desarrollo
+# Usando InMemoryChannelLayer porque Redis 3.x no soporta BZPOPMIN
+# Para producción, actualiza Redis a 5.0+ y usa RedisChannelLayer
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 
-# Para producción con Redis (comentado)
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
+# ====================================
+# SECURITY SETTINGS
+# ====================================
+# Configuraciones de seguridad adicionales para producción
+# En producción (Render), activar HTTPS
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
+
+# ====================================
+# FILE UPLOAD SETTINGS
+# ====================================
+# Límites de tamaño de archivo (en MB)
+MAX_PROFILE_IMAGE_SIZE = config('MAX_PROFILE_IMAGE_SIZE', default=5, cast=int)
+MAX_COVER_IMAGE_SIZE = config('MAX_COVER_IMAGE_SIZE', default=10, cast=int)
+MAX_POST_IMAGE_SIZE = config('MAX_POST_IMAGE_SIZE', default=10, cast=int)
+
+# Formatos de imagen permitidos
+ALLOWED_IMAGE_FORMATS = config(
+    'ALLOWED_IMAGE_FORMATS',
+    default='image/jpeg,image/png,image/jpg,image/webp,image/gif',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
+# ====================================
+# LOGGING CONFIGURATION
+# ====================================
+LOG_LEVEL = config('LOG_LEVEL', default='INFO')
+LOG_DIR = BASE_DIR / config('LOG_DIR', default='logs')
+
+# Crear directorio de logs si no existe
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'django.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': LOG_LEVEL,
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+    },
+}

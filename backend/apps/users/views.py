@@ -1,11 +1,11 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
-from .models import Follow
+from .models import Follow, SystemSetting
 from .serializers import UserSerializer, UserProfileSerializer, FollowSerializer
 
 User = get_user_model()
@@ -17,6 +17,21 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Filtrar campos no permitidos
+        allowed_fields = ['first_name', 'last_name', 'bio', 'location', 'website', 
+                         'date_of_birth', 'is_private', 'profile_picture', 'cover_picture', 'email']
+        filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = self.get_serializer(instance, data=filtered_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
 
 
 class UserDetailView(generics.RetrieveAPIView):
@@ -34,6 +49,7 @@ class UserDetailByIdView(generics.RetrieveAPIView):
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         # Excluir el usuario actual de los resultados
@@ -47,6 +63,28 @@ class UserListView(generics.ListAPIView):
                 Q(last_name__icontains=search) |
                 Q(email__icontains=search)
             )
+        return queryset
+
+
+class SuggestedUsersView(generics.ListAPIView):
+    """
+    Muestra usuarios sugeridos para seguir.
+    Excluye al usuario actual y a los usuarios que ya sigue.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        # Obtener IDs de usuarios que ya sigue el usuario actual
+        following_ids = Follow.objects.filter(
+            follower=self.request.user
+        ).values_list('following_id', flat=True)
+        
+        # Excluir el usuario actual y los que ya sigue
+        queryset = User.objects.exclude(
+            id__in=list(following_ids) + [self.request.user.id]
+        ).order_by('-created_at')[:20]  # Limitar a 20 sugerencias
+        
         return queryset
 
 
@@ -116,3 +154,94 @@ def user_following(request, username):
     following = Follow.objects.filter(follower=user)
     serializer = FollowSerializer(following, many=True)
     return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """
+    Elimina la cuenta del usuario autenticado y todos sus datos relacionados.
+    Esta acción es irreversible.
+    """
+    user = request.user
+    
+    # Confirmar que el usuario proporcionó su contraseña para mayor seguridad
+    password = request.data.get('password')
+    
+    if not password:
+        return Response(
+            {'error': 'Debes proporcionar tu contraseña para confirmar la eliminación de la cuenta'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verificar que la contraseña sea correcta
+    if not user.check_password(password):
+        return Response(
+            {'error': 'Contraseña incorrecta'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Guardar el username para el mensaje de respuesta
+    username = user.username
+    
+    # Eliminar el usuario (cascade eliminará todos los datos relacionados)
+    user.delete()
+    
+    return Response(
+        {
+            'message': f'La cuenta de {username} ha sido eliminada exitosamente',
+            'deleted': True
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """
+    Cambia la contraseña del usuario autenticado
+    """
+    user = request.user
+    
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response(
+            {'error': 'Se requieren ambas contraseñas'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verificar que la contraseña actual sea correcta
+    if not user.check_password(current_password):
+        return Response(
+            {'error': 'La contraseña actual es incorrecta'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Validar longitud de la nueva contraseña
+    if len(new_password) < 8:
+        return Response(
+            {'error': 'La nueva contraseña debe tener al menos 8 caracteres'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Cambiar la contraseña
+    user.set_password(new_password)
+    user.save()
+    
+    return Response(
+        {'message': 'Contraseña actualizada exitosamente'},
+        status=status.HTTP_200_OK
+    )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_system_setting(request, key):
+    """Obtiene una configuración del sistema por su clave"""
+    try:
+        setting = SystemSetting.objects.get(key=key)
+        return Response({'key': key, 'value': setting.value})
+    except SystemSetting.DoesNotExist:
+        return Response({'error': 'Setting not found'}, status=status.HTTP_404_NOT_FOUND)
