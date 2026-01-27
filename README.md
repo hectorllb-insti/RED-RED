@@ -91,7 +91,7 @@
 ### Vista Previa de la Aplicación
 
 <!-- Aquí puedes agregar capturas de pantalla de tu proyecto -->
-![RED-RED Preview](./main-screenshot.png)
+![RED-RED Preview](./docs/images/main-screenshot.png)
 
 </div>
 

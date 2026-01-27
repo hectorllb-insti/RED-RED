@@ -1,6 +1,6 @@
 # 🚀 Despliegue del Frontend en Vercel
 
-> **Guía visual para deployar RED-RED en Vercel**
+> **Guía visual para desplegar RED-RED en Vercel**
 
 ## 📋 Tabla de Contenidos
 
@@ -32,6 +32,8 @@ graph LR
 ---
 
 ## ⚙️ Configuración del Proyecto
+
+![RED-RED Preview](../images/frontend1.png)
 
 ### 1. **Estructura del Frontend**
 
@@ -105,6 +107,8 @@ export default nextConfig
 
 ## 🎬 Despliegue
 
+![RED-RED Preview](../images/frontend2.png)
+
 ### **Método 1: Deploy desde GitHub** (Recomendado)
 
 ```mermaid
@@ -169,6 +173,8 @@ vercel --prod
 
 ## 🔐 Variables de Entorno
 
+![RED-RED Preview](../images/frontend3.png)
+
 ### Configurar en Vercel Dashboard
 
 ```mermaid
@@ -178,19 +184,6 @@ graph TD
     C --> D[Environment Variables]
     D --> E[Add Variable]
     E --> F[Save & Redeploy]
-```
-
-### Variables Necesarias:
-
-```bash
-# API Backend
-REACT_APP_API_URL=https://tu-usuario.pythonanywhere.com
-
-# WebSocket Backend
-REACT_APP_WS_URL=wss://tu-usuario.pythonanywhere.com
-
-# Entorno
-NODE_ENV=production
 ```
 
 ### 📝 Añadir Variables:
@@ -209,6 +202,8 @@ NODE_ENV=production
 ---
 
 ## 🎨 Proceso de Build
+
+![RED-RED Preview](../images/frontend4.png)
 
 ```mermaid
 graph LR
@@ -232,7 +227,7 @@ graph LR
 | 📦 **Install** | 30-60s | Instala dependencias |
 | 🔧 **Build** | 60-90s | Compila el proyecto |
 | 📤 **Deploy** | 10-20s | Sube a CDN |
-| ✅ **Total** | **~2-3min** | Deploy completo |
+| ✅ **Total** | **~50-60s** | Deploy completo |
 
 ---
 

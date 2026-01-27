@@ -1,6 +1,6 @@
 # 🐍 Despliegue del Backend en PythonAnywhere
 
-> **Guía completa para deployar Django en PythonAnywhere**
+> **Guía completa para desplegar Django en PythonAnywhere**
 
 ## 📋 Tabla de Contenidos
 
@@ -34,6 +34,8 @@ graph TD
 ---
 
 ## 🚀 Configuración Inicial
+
+![RED-RED Preview](../images/backend1.png)
 
 ### 1. **Crear Cuenta y Web App**
 
@@ -72,6 +74,8 @@ sequenceDiagram
 ---
 
 ## 📦 Despliegue del Backend
+
+![RED-RED Preview](../images/backend2.png)
 
 ### 2. **Clonar Repositorio**
 
@@ -153,14 +157,14 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Hosts permitidos
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS', 
-    default='.pythonanywhere.com,.vercel.app',
+    default='.tu-dominio-python',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
 # Base de datos
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.x',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
@@ -184,7 +188,7 @@ MIDDLEWARE = [
 # CORS
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='https://red-red.vercel.app',
+    default='https://tu-dominio',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
@@ -196,6 +200,8 @@ CORS_ALLOW_CREDENTIALS = True
 ## 🔧 Configurar Web App en PythonAnywhere
 
 ### 6. **Configuración WSGI**
+
+![RED-RED Preview](../images/backend3.png)
 
 ```mermaid
 graph LR
@@ -215,24 +221,30 @@ graph LR
 import os
 import sys
 
-# Añadir proyecto al path
-path = '/home/tu-usuario/RED-RED/backend'
+# Añadir el directorio backend al path
+path = '/home/redredorganization/RED-RED/backend'
 if path not in sys.path:
     sys.path.insert(0, path)
 
-# Configurar Django settings
+# Añadir el directorio raíz
+root_path = '/home/redredorganization/RED-RED'
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
+
+# Configurar Django
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
 
-# Cargar variables de entorno
-from pathlib import Path
-from decouple import config as decouple_config
+# Variables de entorno
+os.environ.setdefault('DEBUG', 'False')
+os.environ.setdefault('ALLOWED_HOSTS', '.tu-dominio')
 
-# Activar virtualenv
-activate_this = '/home/tu-usuario/.virtualenvs/redred-env/bin/activate_this.py'
-with open(activate_this) as file_:
-    exec(file_.read(), dict(__file__=activate_this))
+# COMENTAR ESTA LÍNEA PARA USAR SQLite
+# os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:red-red-project-database@db.bibtyqwtedepkfganoqo.supabase.co:5432/postgres')
 
-# Importar aplicación Django
+# Configuración de cors
+os.environ.setdefault('CORS_ALLOWED_ORIGINS', 'https://tu-link')
+
+# Cargar Django
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
@@ -244,6 +256,8 @@ Virtualenv path: /home/tu-usuario/.virtualenvs/redred-env
 ```
 
 ### 8. **Configurar Static Files**
+
+![RED-RED Preview](../images/backend4.png)
 
 En el tab `Web`, sección **Static files**:
 
