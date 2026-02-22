@@ -58,7 +58,7 @@ const Login = () => {
       if (result.success) {
         // Easter Egg: 10% de probabilidad
         if (Math.random() < 0.1) {
-          let targetUrl = "https://www.tiktok.com/@1peto/video/7555065483729440022?is_from_webapp=1&sender_device=pc";
+          let targetUrl = "https://www.tiktok.com/@currofinalboss/video/7588231447438249238";
           try {
             const settingRes = await api.get('/users/settings/easter_egg_url/');
             if (settingRes.data && settingRes.data.value) {

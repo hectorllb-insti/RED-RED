@@ -23,7 +23,8 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import NotificationCenter from "./NotificationCenter";
 import ThemeToggle from "./ThemeToggle";
-import Avatar from "./ui/Avatar";
+import UserAvatar from "./UserAvatar";
+import { BADGE_CONFIG, EFFECT_CONFIG } from "../cosmetics/config";
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -203,26 +204,57 @@ const Layout = ({ children }) => {
               </Link>
 
               <Link to={`/profile/${user?.username}`}>
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-3 px-4 py-2 rounded-2xl transition-all duration-300"
-                >
-                  <Avatar
-                    src={user?.profile_picture}
-                    alt={user?.full_name}
-                    size="sm"
-                    online
-                  />
-                  <span
-                    className={`text-sm font-semibold ${isDark
-                      ? "bg-gradient-to-r from-slate-200 to-slate-100 bg-clip-text text-transparent"
-                      : "bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent"
-                      }`}
-                  >
-                    {user?.full_name}
-                  </span>
-                </motion.div>
+                {(() => {
+                  const effectCfg = user?.equippedEffect ? EFFECT_CONFIG[user.equippedEffect.id] : null;
+                  const badgeCfg  = user?.equippedBadge  ? BADGE_CONFIG[user.equippedBadge.id]   : null;
+                  return (
+                    <motion.div
+                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 px-3 rounded-xl transition-all duration-300"
+                      style={{
+                        /* Tama\u00f1o fijo: avatar(46) + gap(8) + nombre(108) + gap(8) + badge(20) + padding(24) */
+                        width: 230,
+                        paddingTop: 3,
+                        paddingBottom: 3,
+                        flexShrink: 0,
+                        ...(effectCfg ? {
+                          background: effectCfg.hoverBg,
+                          boxShadow:  effectCfg.hoverShadow,
+                        } : {}),
+                      }}
+                    >
+                      {/* Slot avatar: siempre 46×46px (tamaño máximo con marco) */}
+                      <div style={{ width: 46, height: 46, flexShrink: 0 }} className="flex items-center justify-center">
+                        <UserAvatar
+                          src={user?.profile_picture}
+                          alt={user?.full_name}
+                          size="sm"
+                          showOnline
+                        />
+                      </div>
+
+                      {/* Nombre: ancho fijo con truncado */}
+                      <span
+                        className={`text-sm font-semibold truncate ${isDark ? "text-slate-200" : "text-gray-700"}`}
+                        style={{ width: 108, flexShrink: 0 }}
+                      >
+                        {user?.full_name}
+                      </span>
+
+                      {/* Slot insignia: siempre reservado (20px) */}
+                      <span
+                        className="flex items-center justify-center text-base leading-none"
+                        style={{ width: 20, flexShrink: 0 }}
+                        title={badgeCfg?.title || ""}
+                      >
+                        {badgeCfg ? (
+                          <span className="cosmetic-badge">{badgeCfg.emoji}</span>
+                        ) : null}
+                      </span>
+                    </motion.div>
+                  );
+                })()}
               </Link>
 
               <motion.button
