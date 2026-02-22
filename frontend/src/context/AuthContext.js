@@ -219,22 +219,58 @@ export const AuthProvider = ({ children }) => {
   const equipItem = (item) => {
     if (!state.user) return;
 
+    // Toggle: if this exact item is already equipped → unequip it
     let updates = {};
     if (item.type === 'frame') {
-      updates = { equippedFrame: item };
+      updates = { equippedFrame: state.user.equippedFrame?.id === item.id ? null : item };
     } else if (item.type === 'effect') {
-      updates = { equippedEffect: item };
+      updates = { equippedEffect: state.user.equippedEffect?.id === item.id ? null : item };
     } else if (item.type === 'badge') {
-      updates = { equippedBadge: item };
+      updates = { equippedBadge: state.user.equippedBadge?.id === item.id ? null : item };
     }
 
     const updatedUser = { ...state.user, ...updates };
     dispatch({ type: "UPDATE_USER", payload: updatedUser });
 
     localStorage.setItem(`equipped_${state.user.id}`, JSON.stringify({
-      frame: updatedUser.equippedFrame,
+      frame:  updatedUser.equippedFrame,
       effect: updatedUser.equippedEffect,
-      badge: updatedUser.equippedBadge
+      badge:  updatedUser.equippedBadge,
+    }));
+  };
+
+  // Compra atómica: descuenta puntos y añade al inventario en un solo dispatch
+  const buyItem = (item) => {
+    if (!state.user) return false;
+    const currentPoints = state.user.points || 0;
+    if (currentPoints < item.price) return false;
+
+    const newPoints = currentPoints - item.price;
+    const currentInventory = state.user.inventory || [];
+    if (currentInventory.find(i => i.id === item.id)) return false;
+    const newInventory = [...currentInventory, item];
+
+    const updatedUser = { ...state.user, points: newPoints, inventory: newInventory };
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`points_${state.user.id}`, newPoints);
+    localStorage.setItem(`inventory_${state.user.id}`, JSON.stringify(newInventory));
+    return true;
+  };
+
+  // Explicitly unequip a cosmetic by type ('frame' | 'effect' | 'badge')
+  const unequipItem = (type) => {
+    if (!state.user) return;
+    let updates = {};
+    if (type === 'frame')  updates = { equippedFrame:  null };
+    if (type === 'effect') updates = { equippedEffect: null };
+    if (type === 'badge')  updates = { equippedBadge:  null };
+
+    const updatedUser = { ...state.user, ...updates };
+    dispatch({ type: "UPDATE_USER", payload: updatedUser });
+    localStorage.setItem(`equipped_${state.user.id}`, JSON.stringify({
+      frame:  updatedUser.equippedFrame,
+      effect: updatedUser.equippedEffect,
+      badge:  updatedUser.equippedBadge,
     }));
   };
 
@@ -269,7 +305,9 @@ export const AuthProvider = ({ children }) => {
     addPoints,
     deductPoints,
     addToInventory,
+    buyItem,
     equipItem,
+    unequipItem,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

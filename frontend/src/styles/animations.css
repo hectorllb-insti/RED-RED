@@ -482,3 +482,103 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================
+   COSMETICS — FRAMES, BADGES & EFFECTS
+   ============================================ */
+
+/* --- Keyframes for animated frames --- */
+@keyframes cosmetic-neon-spin {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+@keyframes cosmetic-fire-dance {
+  0%   { background-position: 0%   0%;   }
+  33%  { background-position: 100% 0%;   }
+  66%  { background-position: 100% 100%; }
+  100% { background-position: 0%   0%;   }
+}
+@keyframes cosmetic-rainbow-spin {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+@keyframes cosmetic-diamond-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* --- Frame wrapper base --- */
+.cosmetic-frame-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+/* Neon — cyan/magenta animated gradient */
+.cosmetic-frame-neon {
+  background: linear-gradient(45deg, #ff00ff, #00ffff, #7c3aed, #00ffff, #ff00ff);
+  background-size: 300% 300%;
+  animation: cosmetic-neon-spin 2.5s linear infinite;
+  box-shadow: 0 0 8px rgba(0,255,255,0.7), 0 0 14px rgba(0,255,255,0.3);
+}
+
+/* Gold — static shimmer */
+.cosmetic-frame-gold {
+  background: linear-gradient(135deg, #f59e0b, #fde68a, #d97706, #fcd34d, #f59e0b);
+  box-shadow: 0 0 8px rgba(245,158,11,0.7), 0 0 14px rgba(245,158,11,0.3);
+}
+
+/* Fire — orange/red animated */
+.cosmetic-frame-fire {
+  background: linear-gradient(45deg, #ef4444, #f97316, #fbbf24, #f97316, #ef4444);
+  background-size: 300% 300%;
+  animation: cosmetic-fire-dance 1.8s ease infinite;
+  box-shadow: 0 0 8px rgba(239,68,68,0.7), 0 0 14px rgba(249,115,22,0.3);
+}
+
+/* Diamond — light-blue shimmer */
+.cosmetic-frame-diamond {
+  background: linear-gradient(135deg, #bfdbfe, #e0f2fe, #93c5fd, #bae6fd, #bfdbfe);
+  background-size: 400% 100%;
+  animation: cosmetic-diamond-shimmer 3s linear infinite;
+  box-shadow: 0 0 8px rgba(147,197,253,0.8), 0 0 14px rgba(147,197,253,0.4);
+}
+
+/* Rainbow — slow rotating all colors */
+.cosmetic-frame-rainbow {
+  background: linear-gradient(45deg, #ef4444,#f97316,#eab308,#22c55e,#3b82f6,#8b5cf6,#ef4444);
+  background-size: 400% 400%;
+  animation: cosmetic-rainbow-spin 4s linear infinite;
+  box-shadow: 0 0 8px rgba(139,92,246,0.6), 0 0 14px rgba(59,130,246,0.3);
+}
+
+/* --- Effect hover overlay --- */
+.cosmetic-effect-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.cosmetic-effect-active {
+  opacity: 1;
+}
+
+/* --- Badge pulse animation --- */
+@keyframes cosmetic-badge-pulse {
+  0%, 100% { transform: scale(1);   }
+  50%       { transform: scale(1.2); }
+}
+.cosmetic-badge {
+  display: inline-flex;
+  align-items: center;
+  animation: cosmetic-badge-pulse 3s ease-in-out infinite;
+  cursor: default;
+  user-select: none;
+}
