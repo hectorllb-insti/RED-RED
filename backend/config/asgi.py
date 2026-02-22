@@ -8,14 +8,18 @@ https://docs.djangoproject.com/en/5.0/howto/deployment/asgi/
 """
 
 import os
+import django
+
+# IMPORTANTE: configurar settings y setup() ANTES de cualquier import de Django/apps
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
+
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from apps.chat.middleware import JwtAuthMiddlewareStack
 import apps.chat.routing
 import notifications.routing
 import live.routing
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 # Combinar todas las rutas WebSocket
 websocket_patterns = (

@@ -1,0 +1,114 @@
+# ============================================================
+# RED-RED Social Network — Docker Compose
+# ============================================================
+# Servicios:
+#   red-red-db       → Volumen SQLite con persistencia de datos
+#   red-red-backend  → Django + Daphne (ASGI / WebSockets)
+#   red-red-frontend → React (CRA)
+#
+# Uso rápido:
+#   docker compose up --build          # Primer arranque
+#   docker compose up -d               # En segundo plano
+#   docker compose down                # Parar contenedores
+#   docker compose down -v             # Parar + borrar volúmenes
+# ============================================================
+
+name: red-red-social-network
+
+services:
+
+  # ----------------------------------------------------------
+  # red-red-backend
+  # Django 4.2 + Daphne (ASGI) con soporte de WebSockets
+  # Base de datos: SQLite montado en el volumen sqlite-data
+  # Puerto expuesto: 8000
+  # ----------------------------------------------------------
+  red-red-backend:
+    container_name: red-red-backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Base de datos SQLite persistente
+      - sqlite-data:/app/db_storage
+      # Archivos multimedia persistentes
+      - media-data:/app/media
+    environment:
+      # Django core
+      DJANGO_SETTINGS_MODULE: "config.settings"
+      SECRET_KEY: "django-insecure-docker-dev-key-change-in-production-!@#$$%^&*()"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,red-red-backend"
+      # Ruta de la base de datos SQLite dentro del volumen persistente
+      DB_PATH: "/app/db_storage/db.sqlite3"
+      # CORS — permite acceso desde el frontend (host y Docker interno)
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://red-red-frontend:3000"
+      CORS_ALLOW_ALL_ORIGINS: "True"
+      # JWT
+      JWT_ACCESS_TOKEN_LIFETIME: "60"
+      JWT_REFRESH_TOKEN_LIFETIME: "7"
+      JWT_ROTATE_REFRESH_TOKENS: "True"
+      # Archivos
+      MEDIA_ROOT: "media"
+      MEDIA_URL: "/media/"
+      STATIC_ROOT: "staticfiles"
+      STATIC_URL: "/static/"
+      # Logs
+      LOG_LEVEL: "INFO"
+    restart: unless-stopped
+    networks:
+      - red-red-network
+
+  # ----------------------------------------------------------
+  # red-red-frontend
+  # React (Create React App) — react-scripts start
+  # Puerto expuesto: 3000
+  # ----------------------------------------------------------
+  red-red-frontend:
+    container_name: red-red-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # URL de la API del backend (accesible desde el navegador del host)
+      REACT_APP_API_URL: "http://localhost:8000/api"
+      REACT_APP_WS_URL: "ws://localhost:8000"
+      # React dev server
+      HOST: "0.0.0.0"
+      PORT: "3000"
+      # Evita que react-scripts abra el navegador automáticamente
+      BROWSER: "none"
+      # Polling para hot-reload dentro de Docker en Windows/Mac
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      - red-red-backend
+    restart: unless-stopped
+    networks:
+      - red-red-network
+
+# ============================================================
+# Volúmenes persistentes
+# ============================================================
+volumes:
+  # Volumen SQLite — base de datos del backend
+  sqlite-data:
+    name: red-red-db-sqlite
+    driver: local
+
+  # Volumen de archivos multimedia subidos por usuarios
+  media-data:
+    name: red-red-media
+    driver: local
+
+# ============================================================
+# Red interna del proyecto
+# ============================================================
+networks:
+  red-red-network:
+    name: red-red-social-network
+    driver: bridge

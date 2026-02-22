@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+.npm
+.pnpm-store/
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+
+# Entornos
+.env
+.env.*
+!.env.example
+
+# Testing
+coverage/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files alternativos (usa package-lock.json)
+pnpm-lock.yaml
+yarn.lock
