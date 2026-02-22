@@ -90,7 +90,8 @@ ASGI_APPLICATION = 'config.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # DB_PATH permite sobreescribir la ruta en Docker/producción
+        'NAME': config('DB_PATH', default=str(BASE_DIR / 'db.sqlite3')),
     }
 }
 

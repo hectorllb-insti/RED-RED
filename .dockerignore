@@ -1,0 +1,64 @@
+# ============================================================
+# .dockerignore — raíz del proyecto
+# Aplica al build del servicio red-red-backend (context: .)
+# El frontend usa su propio context (./frontend) con su propio
+# .dockerignore, por lo que este fichero no le afecta.
+# ============================================================
+
+# Entornos virtuales Python
+.venv/
+venv/
+env/
+ENV/
+
+# Dependencias de Node (frontend)
+frontend/node_modules/
+frontend/build/
+frontend/.next/
+
+# Archivos de build / distribución
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# SQLite (se usa el volumen Docker)
+backend/db.sqlite3
+backend/db_storage/
+
+# Archivos multimedia subidos (se usan volúmenes Docker)
+backend/media/
+
+# Estáticos generados
+backend/staticfiles/
+
+# Logs
+backend/logs/
+*.log
+
+# Entornos y secretos
+.env
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Testing / cobertura
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
