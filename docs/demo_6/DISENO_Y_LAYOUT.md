@@ -7,12 +7,17 @@
 La interfaz de RED-RED se basa en un sistema de rejilla dinámica y un layout principal definido en `frontend/src/components/Layout.js`.
 
 ```mermaid
-layout BT
+graph TD
     subgraph "Estructura de Pantalla"
         Header[Header sticky / glassmorphism]
         Sidebar[Sidebar Navigation]
         Main[Main Content / Feed]
         Modals[Overlays / Modals]
+        
+        Header --- Sidebar
+        Header --- Main
+        Sidebar --- Main
+        Main --- Modals
     end
 ```
 
