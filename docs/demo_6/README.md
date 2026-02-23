@@ -50,6 +50,16 @@ Detalles sobre CSS Keyframes y el uso de Framer Motion.
 
 ---
 
+### [🎰 Ruleta y Recompensas](./SISTEMA_RULETA.md)
+**Gamificación y Economía Virtual**
+Análisis del motor de azar, sistema de Pity y personalización.
+
+- 🎲 Mecánicas de azar y Pity
+- 🎵 Motor de sonido (Web Audio API)
+- 🛍️ Tienda e Inventario cosmético
+
+---
+
 ## 📊 Resumen de Arquitectura
 
 ```mermaid
@@ -58,6 +68,8 @@ graph TB
         L[Layout System] --> C[UI Components]
         C --> A[Animations Engine]
         L --> T[Theme Engine]
+        A --> R[Roulette System]
+        R --> T
     end
     
     style Frontend fill:#f9f9f9,stroke:#e11d48,stroke-width:2px
