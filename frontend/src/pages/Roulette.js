@@ -716,30 +716,33 @@ const Roulette = () => {
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         whileHover={{ y: -5 }}
-                                        className={`relative p-6 rounded-2xl border backdrop-blur-xl flex flex-col ${isDark ? "bg-slate-900/60 border-slate-800" : "bg-white/60 border-gray-200"
+                                        className={`relative p-4 sm:p-6 rounded-2xl border backdrop-blur-xl flex flex-col overflow-hidden min-w-0 ${isDark ? "bg-slate-900/60 border-slate-800" : "bg-white/60 border-gray-200"
                                             }`}
                                     >
-                                        <div className={`w-16 h-16 rounded-2xl mb-4 flex items-center justify-center text-3xl ${isDark ? "bg-slate-800" : "bg-gray-100"
+                                        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 flex items-center justify-center text-3xl flex-shrink-0 ${isDark ? "bg-slate-800" : "bg-gray-100"
                                             }`}>
                                             {item.image}
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className={`text-base sm:text-lg font-bold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                                                 {item.name}
                                             </h3>
-                                            <p className={`text-sm mt-1 mb-4 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                                            <p className={`text-sm mt-1 mb-4 line-clamp-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
                                                 {item.description}
                                             </p>
                                         </div>
-                                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-slate-800">
-                                            <div className={`font-bold flex items-center gap-1 ${isOwned ? "text-green-500" : canAfford ? "text-yellow-500" : "text-slate-400"
+                                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mt-4 pt-4 border-t border-gray-200 dark:border-slate-800">
+                                            <div className={`font-bold flex items-center gap-1 flex-shrink min-w-0 ${isOwned ? "text-green-500" : canAfford ? "text-yellow-500" : "text-slate-400"
                                                 }`}>
-                                                {isOwned ? <><Check className="w-4 h-4" /> En propiedad</> : <><Tag className="w-4 h-4" /> {item.price}</>}
+                                                {isOwned
+                                                    ? <><Check className="w-4 h-4 flex-shrink-0" /><span className="truncate">En propiedad</span></>
+                                                    : <><Tag className="w-4 h-4 flex-shrink-0" /><span>{item.price}</span></>
+                                                }
                                             </div>
                                             <button
                                                 onClick={() => handleBuy(item)}
                                                 disabled={isOwned || !canAfford}
-                                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${isOwned
+                                                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${isOwned
                                                     ? "bg-green-500/10 text-green-500 cursor-default"
                                                     : canAfford
                                                         ? "bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/25"
