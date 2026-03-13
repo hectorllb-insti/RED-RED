@@ -472,9 +472,27 @@ const Roulette = () => {
                     >
                         {/* Wheel Section */}
                         <div className="flex flex-col items-center justify-start p-4 md:p-6 relative">
+                            {/* Indicador de tiradas disponibles */}
+                            <div className="flex justify-center mb-4">
+                                <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full border backdrop-blur-md ${isDark ? "bg-slate-800/80 border-slate-700" : "bg-white/80 border-slate-200"
+                                    }`}>
+                                    <span className={`text-xs md:text-sm font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                                        Disponibles: {3 - dailySpins}/3
+                                    </span>
+                                    <div className="flex gap-1.5">
+                                        {[1, 2, 3].map(i => (
+                                            <div key={i} className={`w-3 h-3 rounded-full transition-all duration-500 ${i <= (3 - dailySpins)
+                                                ? "bg-gradient-to-tr from-green-500 to-emerald-400 shadow-[0_0_12px_rgba(34,197,94,0.6)]"
+                                                : "bg-slate-300 dark:bg-slate-700"
+                                                }`} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Dynamic Counter Above Wheel */}
                             <motion.div
-                                className={`mb-4 px-8 py-4 rounded-2xl border-2 shadow-2xl backdrop-blur-xl ${isDark
+                                className={`mb-6 px-8 py-4 rounded-2xl border-2 shadow-2xl backdrop-blur-xl ${isDark
                                     ? "bg-slate-800/90 border-slate-600 text-white"
                                     : "bg-white/90 border-slate-200 text-slate-900"
                                     }`}
@@ -537,81 +555,81 @@ const Roulette = () => {
                                         {/* Glossy overlay */}
                                         <div className="absolute inset-0 rounded-full" style={{ background: "conic-gradient(rgba(255,255,255,0.12) 0deg, rgba(0,0,0,0.12) 180deg, rgba(255,255,255,0.12) 360deg)" }} />
                                     </motion.div>
-
-                                    {/* Center Cap */}
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 shadow-[0_4px_12px_rgba(0,0,0,0.3)] z-20 flex items-center justify-center border-4 border-slate-300">
-                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-white to-slate-100 flex items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)]">
-                                            <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-slate-600 fill-slate-600" />
-                                        </div>
-                                    </div>
                                 </div>
+                                
+                                {/* Center Cap - Botón interactivo para girar */}
+                                <button
+                                    onClick={spinWheel}
+                                    disabled={spinning || dailySpins >= 3}
+                                    className={`absolute top-[calc(50%+2px)] left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.3)] z-30 flex items-center justify-center border-4 transition-all duration-300 ${
+                                        spinning || dailySpins >= 3
+                                            ? "bg-gradient-to-br from-slate-300 to-slate-400 border-slate-400 cursor-not-allowed"
+                                            : "bg-gradient-to-br from-red-400 to-rose-500 border-red-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(239,68,68,0.6)] hover:border-red-100 active:shadow-[0_2px_10px_rgba(239,68,68,0.4)]"
+                                    }`}
+                                >
+                                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)] ${
+                                        spinning || dailySpins >= 3
+                                            ? "bg-gradient-to-br from-slate-100 to-slate-200"
+                                            : "bg-gradient-to-br from-white to-red-50"
+                                    }`}>
+                                        {spinning ? (
+                                            <Dices className="w-5 h-5 md:w-6 md:h-6 text-red-600 fill-red-600 animate-spin" />
+                                        ) : dailySpins >= 3 ? (
+                                            <Lock className="w-5 h-5 md:w-6 md:h-6 text-slate-600" />
+                                        ) : (
+                                            <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-red-600 fill-red-600" />
+                                        )}
+                                    </div>
+                                </button>
                             </div>
 
                             {/* Controls */}
-                            <div className="mt-8 md:mt-12 text-center z-10 space-y-4 md:space-y-6">
-                                <div className="flex flex-col md:flex-row items-center gap-3">
-                                    <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full border backdrop-blur-md ${isDark ? "bg-slate-800/80 border-slate-700" : "bg-white/80 border-slate-200"
-                                        }`}>
-                                        <span className={`text-xs md:text-sm font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                                            Disponibles: {3 - dailySpins}/3
-                                        </span>
-                                        <div className="flex gap-1.5">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className={`w-3 h-3 rounded-full transition-all duration-500 ${i <= (3 - dailySpins)
-                                                    ? "bg-gradient-to-tr from-green-500 to-emerald-400 shadow-[0_0_12px_rgba(34,197,94,0.6)]"
-                                                    : "bg-slate-300 dark:bg-slate-700"
-                                                    }`} />
-                                            ))}
-                                        </div>
-                                    </div>
-
+                            <div className="mt-4 md:mt-6 text-center z-10">
+                                {/* Botones de acción - DEV y Restaurar */}
+                                <div className="flex flex-wrap justify-center items-center gap-2 md:gap-3">
                                     {process.env.NODE_ENV === 'development' && (
-                                        <div className="flex gap-1.5">
+                                        <>
                                             <button
                                                 onClick={resetSpins}
-                                                className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all"
+                                                className="px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-md hover:shadow-lg whitespace-nowrap"
                                                 title="Solo visible en development"
                                             >
                                                 DEV: Reset 3/3
                                             </button>
                                             <button
                                                 onClick={() => { addPoints(15000); toast.success('DEV: +15 000 pts añadidos'); }}
-                                                className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-blue-500 hover:bg-blue-600 text-white transition-all"
+                                                className="px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white transition-all shadow-md hover:shadow-lg whitespace-nowrap"
                                                 title="Solo visible en development"
                                             >
                                                 DEV: +15k pts
                                             </button>
-                                        </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (user?.id) {
+                                                        localStorage.removeItem(`inventory_${user.id}`);
+                                                        localStorage.removeItem(`equipped_${user.id}`);
+                                                        toast.success('Inventario limpiado. Recarga la página.');
+                                                    }
+                                                }}
+                                                className="px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold bg-red-500 hover:bg-red-600 text-white transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                                                title="Solo visible en development - Limpia inventario"
+                                            >
+                                                DEV: Limpiar Inventario
+                                            </button>
+                                        </>
                                     )}
 
                                     <button
                                         onClick={restoreSpin}
                                         disabled={dailySpins === 0 || (user?.points || 0) < 100}
                                         className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${dailySpins > 0 && (user?.points || 0) >= 100
-                                            ? "bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg shadow-yellow-500/25"
+                                            ? "bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg shadow-yellow-500/25 hover:shadow-xl"
                                             : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                             }`}
                                     >
                                         Restaurar (100pts)
                                     </button>
                                 </div>
-
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={spinWheel}
-                                    disabled={spinning || dailySpins >= 3}
-                                    className={`w-full md:w-auto px-12 md:px-16 py-4 md:py-5 rounded-3xl font-black text-lg md:text-xl tracking-wide shadow-[0_15px_40px_-10px_rgba(239,68,68,0.5)] transition-all ${spinning || dailySpins >= 3
-                                        ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
-                                        : "bg-gradient-to-r from-red-500 via-red-600 to-rose-600 text-white border-b-6 border-red-800 active:border-b-0 active:translate-y-1"
-                                        }`}
-                                >
-                                    {spinning ? (
-                                        <span className="flex items-center gap-3">
-                                            <Dices className="w-5 h-5 md:w-6 md:h-6 animate-spin" /> GIRANDO...
-                                        </span>
-                                    ) : dailySpins >= 3 ? "SIN TIRADAS" : "¡GIRAR AHORA!"}
-                                </motion.button>
                             </div>
                         </div>
 
