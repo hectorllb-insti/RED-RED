@@ -37,6 +37,18 @@
 
 ---
 
+### [🐳 Estructura y Despliegue con Docker](./DOCKER_ESTRUCTURA.md)
+**Guía para levantar RED-RED con contenedores Docker**
+
+- 🧱 Estructura de servicios y redes
+- ⚙️ Variables y configuración
+- ▶️ Comandos de arranque y parada
+- 🐛 Resolución de incidencias habituales
+
+**Ideal para:** Ejecutar el proyecto en entornos containerizados
+
+---
+
 ## 🎮 Sistemas del Proyecto
 
 ### [📙 Sistema de Streaming en Vivo](./SISTEMA_STREAMING.md)
