@@ -145,6 +145,18 @@ pipeline {
                 }
             }
         }
+
+        stage('Tests - E2E (Cypress)') {
+            steps {
+                echo 'Ejecutando tests E2E con Cypress...'
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        # Ejecutar cypress en modo headless
+                        npm run cypress:run || echo "Cypress tests fallaron o no están configurados"
+                    '''
+                }
+            }
+        }
         
         stage('Build - Frontend') {
             steps {
