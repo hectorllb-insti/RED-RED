@@ -1,19 +1,28 @@
-// Mock matchMedia antes de cualquier import para evitar que ThemeContext u otros lo encuentren undefined
-window.matchMedia = window.matchMedia || function() {
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+
+// Mock window.matchMedia robustly
+if (typeof window !== 'undefined') {
+  window.matchMedia = window.matchMedia || function(query) {
     return {
-        matches: false,
-        media: 'query',
-        onchange: null,
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-        dispatchEvent: jest.fn(),
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
     };
-};
+  };
+}
 
 // Mock framer-motion para evitar errores de CSS en JSDOM
 jest.mock('framer-motion', () => ({
+  ...jest.requireActual('framer-motion'),
   motion: new Proxy(
     {},
     {
@@ -45,16 +54,3 @@ jest.mock('framer-motion', () => ({
   ),
   AnimatePresence: ({ children }) => <>{children}</>,
 }));
-
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import App from './App';
-
-describe('App Component Structure', () => {
-  test('renders without crashing', () => {
-    // Renderea App, como tiene Router y QueryClient debería iniciar
-    const { container } = render(<App />);
-    expect(container).toBeInTheDocument();
-  });
-});

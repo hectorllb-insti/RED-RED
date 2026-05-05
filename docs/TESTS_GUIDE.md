@@ -31,7 +31,7 @@ Asegúrate de estar en la carpeta `backend/`. Estos comandos usan el entorno vir
   ```
 - **Hashtags (Script)**:
   ```powershell
-  .\venv\Scripts\python.exe manage.py shell < test_hashtags.py
+  Get-Content test_hashtags.py | .\venv\Scripts\python.exe manage.py shell
   ```
 - **Stream Creation (Script)**:
   ```powershell
@@ -57,11 +57,11 @@ Asegúrate de estar en la carpeta `frontend/`.
 ### 2. Pruebas End-to-End (Cypress)
 - **Ejecutar en consola (Headless)**:
   ```bash
-  npx cypress run --spec cypress/e2e/flow.cy.js
+  npm run cypress:run -- --spec cypress/e2e/flow.cy.js
   ```
 - **Abrir interfaz de Cypress**:
   ```bash
-  npx cypress open
+  npm run cypress:open
   ```
 
 ---

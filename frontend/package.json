@@ -7,8 +7,8 @@
     "eject": "react-scripts eject",
     "start": "set HOST=0.0.0.0&& react-scripts start",
     "test": "react-scripts test",
-    "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:open": "npx cypress open",
+    "cypress:run": "npx cypress run"
   },
   "browserslist": {
     "production": [
@@ -62,5 +62,10 @@
     "@types/react-dom": "^18.0.11",
     "cypress": "^13.8.0",
     "typescript": "^4.9.5"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^axios$": "axios/dist/node/axios.cjs"
+    }
   }
 }

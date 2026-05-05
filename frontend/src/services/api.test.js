@@ -3,7 +3,24 @@ import api from './api';
 import { tokenManager } from './tokenManager';
 
 // Hacemos mock de axios y de tokenManager para las pruebas
-jest.mock('axios');
+jest.mock('axios', () => {
+  const mockAxios = {
+    create: jest.fn(() => mockAxios),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() },
+    },
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    patch: jest.fn(),
+    request: jest.fn(),
+    defaults: { headers: { common: {} } },
+  };
+  return mockAxios;
+});
+
 jest.mock('./tokenManager', () => ({
   tokenManager: {
     getToken: jest.fn(),
