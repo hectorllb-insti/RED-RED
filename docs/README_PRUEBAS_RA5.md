@@ -30,6 +30,37 @@ Se han implementado simulaciones para no depender de servicios externos reales d
 
 ---
 
+## 🔍 Detalle de los Archivos de Pruebas
+
+A continuación se detalla la función de cada uno de los 5 archivos principales que conforman la infraestructura de pruebas:
+
+### 1. `backend/apps/users/tests.py` (Integración y Modelos)
+Este archivo contiene la lógica para validar el backend. Se divide en:
+- **Pruebas de API (FollowTestCase)**: Verifica flujos completos como seguir/dejar de seguir usuarios, búsqueda de perfiles y eliminación de cuentas.
+- **Pruebas de Modelos (UserModel/FollowModel)**: Asegura que la base de datos se comporte correctamente, validando restricciones de unicidad y métodos de representación de datos.
+
+### 2. `backend/apps/users/test_mocks.py` (Simulación de Servicios)
+Utiliza la librería `unittest.mock` para interceptar llamadas externas:
+- **Objetivo**: Simular un servicio de detección de Spam.
+- **Funcionamiento**: Mediante `@patch`, intercepta las peticiones `requests.get` para devolver respuestas controladas (Éxito, Spam detectado, Error de servidor) sin realizar una conexión real a internet.
+
+### 3. `frontend/src/App.test.js` (Unitaria de Interfaz)
+Es la prueba de humo del frontend:
+- **Función**: Utiliza `React Testing Library` para renderizar el componente principal `App`.
+- **Garantía**: Asegura que la aplicación arranca sin errores críticos y que la estructura base del DOM es correcta antes de profundizar en tests más complejos.
+
+### 4. `frontend/src/services/api.test.js` (Mocks de API Frontend)
+Simula la capa de comunicación del cliente:
+- **Herramientas**: Utiliza `jest.mock` para suplantar a la librería **Axios**.
+- **Acciones**: Emula respuestas exitosas y errores del servidor para las peticiones GET y POST, permitiendo probar la lógica de los servicios sin depender de que el backend esté encendido.
+
+### 5. `frontend/cypress/e2e/flow.cy.js` (E2E - Flujo Completo)
+Es la prueba de mayor nivel de integración:
+- **Escenario**: Simula a un usuario real abriendo el navegador.
+- **Validaciones**: Comprueba la redirección automática a la página de login al intentar acceder a rutas privadas, verifica la presencia de los campos del formulario y valida que los mensajes de error aparezcan al ingresar datos incorrectos.
+
+---
+
 ## 🛠️ Cómo ejecutar las pruebas
 
 ### Backend
